@@ -45,21 +45,21 @@ O sistema expõe APIs REST para o painel do Host e utiliza WebSockets para toda 
 
 ## 2. Glossário de Domínio
 
-| Termo | Definição |
-|---|---|
-| **Host (Apresentador)** | Usuário autenticado que cria quizzes, gerencia perguntas, inicia sessões de jogo e projeta a tela principal. |
-| **Player (Participante)** | Usuário anônimo que entra em uma sessão ativa através de um PIN de 6 dígitos usando seu próprio dispositivo, sem necessidade de criar conta. |
-| **Quiz (Questionário)** | Template de perguntas criado pelo Host. Pode ser reutilizado em múltiplas sessões de jogo. Contém título, descrição e uma lista ordenada de perguntas. |
-| **Pergunta (Question)** | Item individual do quiz. Pode ser de múltipla escolha (A/B/C/D) ou verdadeiro/falso (T/F). Possui pontuação base configurável. |
-| **Alternativa (Alternative)** | Opção de resposta de uma pergunta. Apenas uma é marcada como correta. O gabarito nunca é exposto ao Player antes do timeout. |
-| **Sessão de Jogo (Game Session)** | Uma "aplicação" de um quiz. Possui PIN único de 6 dígitos, tempo limite de resposta configurável por sessão, e ciclo de vida: lobby → playing → finished. |
-| **PIN** | Código numérico de 6 dígitos gerado aleatoriamente. Identificador público da sessão. Players usam o PIN + um nickname para entrar. |
-| **Lobby** | Estado inicial da sessão onde Players aguardam. O Host vê a contagem de participantes e seus nicknames em tempo real. |
-| **Gameplay** | Fase ativa do jogo: o Host avança perguntas, Players respondem, o sistema calcula pontuações. |
-| **Leaderboard** | Ranking dos jogadores exibido entre perguntas e ao final da partida. Ordenado por pontuação total decrescente. |
-| **Pontuação (Score)** | Calculada pelo backend com base na precisão (resposta correta) e na velocidade de resposta (tempo de reação). |
-| **Tempo de Resposta (Response Time)** | Milissegundos entre o momento em que a pergunta é revelada e o momento em que o Player envia sua resposta. |
-| **Reconexão** | Mecanismo que permite um Player que desconectou brevemente reconectar-se à mesma sessão sem perder sua pontuação acumulada. |
+| Termo                                 | Definição                                                                                                                                                 |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Host (Apresentador)**               | Usuário autenticado que cria quizzes, gerencia perguntas, inicia sessões de jogo e projeta a tela principal.                                              |
+| **Player (Participante)**             | Usuário anônimo que entra em uma sessão ativa através de um PIN de 6 dígitos usando seu próprio dispositivo, sem necessidade de criar conta.              |
+| **Quiz (Questionário)**               | Template de perguntas criado pelo Host. Pode ser reutilizado em múltiplas sessões de jogo. Contém título, descrição e uma lista ordenada de perguntas.    |
+| **Pergunta (Question)**               | Item individual do quiz. Pode ser de múltipla escolha (A/B/C/D) ou verdadeiro/falso (T/F). Possui pontuação base configurável.                            |
+| **Alternativa (Alternative)**         | Opção de resposta de uma pergunta. Apenas uma é marcada como correta. O gabarito nunca é exposto ao Player antes do timeout.                              |
+| **Sessão de Jogo (Game Session)**     | Uma "aplicação" de um quiz. Possui PIN único de 6 dígitos, tempo limite de resposta configurável por sessão, e ciclo de vida: lobby → playing → finished. |
+| **PIN**                               | Código numérico de 6 dígitos gerado aleatoriamente. Identificador público da sessão. Players usam o PIN + um nickname para entrar.                        |
+| **Lobby**                             | Estado inicial da sessão onde Players aguardam. O Host vê a contagem de participantes e seus nicknames em tempo real.                                     |
+| **Gameplay**                          | Fase ativa do jogo: o Host avança perguntas, Players respondem, o sistema calcula pontuações.                                                             |
+| **Leaderboard**                       | Ranking dos jogadores exibido entre perguntas e ao final da partida. Ordenado por pontuação total decrescente.                                            |
+| **Pontuação (Score)**                 | Calculada pelo backend com base na precisão (resposta correta) e na velocidade de resposta (tempo de reação).                                             |
+| **Tempo de Resposta (Response Time)** | Milissegundos entre o momento em que a pergunta é revelada e o momento em que o Player envia sua resposta.                                                |
+| **Reconexão**                         | Mecanismo que permite um Player que desconectou brevemente reconectar-se à mesma sessão sem perder sua pontuação acumulada.                               |
 
 ---
 
@@ -86,9 +86,9 @@ A plataforma **não é responsável por**:
 
 ### 3.2 Integrações Externas
 
-| Sistema Externo | Tipo de Integração | Responsabilidade |
-|---|---|---|
-| Nenhum na v1.0 | — | A plataforma é autocontida. |
+| Sistema Externo | Tipo de Integração | Responsabilidade            |
+| --------------- | ------------------ | --------------------------- |
+| Nenhum na v1.0  | —                  | A plataforma é autocontida. |
 
 ### 3.3 Modelo de Comunicação
 
@@ -125,34 +125,34 @@ A plataforma **não é responsável por**:
 
 ### 4.1 Host (Apresentador)
 
-| Ação | Permitido |
-|---|---|
-| Registrar-se e fazer login | ✅ |
-| Criar, editar e excluir quizzes | ✅ |
-| Adicionar, editar, remover e reordenar perguntas | ✅ |
-| Adicionar, editar e remover alternativas | ✅ |
-| Marcar alternativa correta | ✅ |
-| Criar sessão de jogo a partir de um quiz | ✅ |
-| Iniciar, avançar e encerrar sessão | ✅ |
-| Visualizar leaderboard durante e após a partida | ✅ |
-| Acessar relatórios dos seus quizzes e sessões | ✅ |
-| Acessar quizzes de outros Hosts | ❌ |
-| Entrar como Player na própria sessão | ❌ |
+| Ação                                             | Permitido |
+| ------------------------------------------------ | --------- |
+| Registrar-se e fazer login                       | ✅        |
+| Criar, editar e excluir quizzes                  | ✅        |
+| Adicionar, editar, remover e reordenar perguntas | ✅        |
+| Adicionar, editar e remover alternativas         | ✅        |
+| Marcar alternativa correta                       | ✅        |
+| Criar sessão de jogo a partir de um quiz         | ✅        |
+| Iniciar, avançar e encerrar sessão               | ✅        |
+| Visualizar leaderboard durante e após a partida  | ✅        |
+| Acessar relatórios dos seus quizzes e sessões    | ✅        |
+| Acessar quizzes de outros Hosts                  | ❌        |
+| Entrar como Player na própria sessão             | ❌        |
 
 ### 4.2 Player (Participante)
 
-| Ação | Permitido |
-|---|---|
-| Entrar em sessão ativa via PIN + nickname | ✅ |
-| Visualizar perguntas conforme reveladas pelo Host | ✅ |
-| Enviar resposta dentro do tempo limite | ✅ |
-| Visualizar feedback individual (certo/errado + pontos) | ✅ |
-| Visualizar leaderboard entre perguntas e pódio final | ✅ |
-| Reconectar-se à sessão após desconexão | ✅ |
-| Criar ou editar quizzes | ❌ |
-| Iniciar ou controlar uma sessão | ❌ |
-| Ver respostas de outros Players | ❌ |
-| Ver gabarito antes do timeout | ❌ |
+| Ação                                                   | Permitido |
+| ------------------------------------------------------ | --------- |
+| Entrar em sessão ativa via PIN + nickname              | ✅        |
+| Visualizar perguntas conforme reveladas pelo Host      | ✅        |
+| Enviar resposta dentro do tempo limite                 | ✅        |
+| Visualizar feedback individual (certo/errado + pontos) | ✅        |
+| Visualizar leaderboard entre perguntas e pódio final   | ✅        |
+| Reconectar-se à sessão após desconexão                 | ✅        |
+| Criar ou editar quizzes                                | ❌        |
+| Iniciar ou controlar uma sessão                        | ❌        |
+| Ver respostas de outros Players                        | ❌        |
+| Ver gabarito antes do timeout                          | ❌        |
 
 ---
 
@@ -160,169 +160,163 @@ A plataforma **não é responsável por**:
 
 ### 5.1 Gestão de Quizzes
 
-**RF-01** — O sistema deve permitir que o Host crie quizzes com título e descrição opcional.
+**RF-01** — O sistema deve permitir que o Apresentador crie questionários, informando obrigatoriamente um título e opcionalmente uma descrição.
 
-**RF-02** — O sistema deve permitir que o Host edite título e descrição dos seus quizzes.
+**RF-02** — O sistema deve permitir que o Apresentador edite o título e a descrição dos seus questionários a qualquer momento.
 
-**RF-03** — O sistema deve permitir que o Host exclua quizzes de sua autoria (soft delete ou hard delete).
+**RF-03** — O sistema deve permitir que o Apresentador exclua questionários de sua autoria. A exclusão pode ser definitiva ou manter os dados para consulta futura.
 
-**RF-04** — O sistema deve listar todos os quizzes do Host autenticado, com paginação.
+**RF-04** — O sistema deve listar todos os questionários do Apresentador autenticado, permitindo navegação por páginas quando houver muitos registros.
 
-**RF-05** — Um quiz é um template reutilizável: o mesmo quiz pode ser usado em múltiplas sessões de jogo independentes.
+**RF-05** — Um questionário é um modelo reutilizável: o mesmo questionário pode ser aplicado em múltiplas partidas independentes.
 
-**RF-06** — O Host pode publicar ou despublicar um quiz. Quizzes não publicados não podem ser usados em sessões.
+**RF-06** — O Apresentador pode publicar ou despublicar um questionário. Questionários não publicados ficam ocultos e não podem ser utilizados para iniciar uma partida.
 
 ---
 
 ### 5.2 Gestão de Perguntas e Alternativas
 
-**RF-07** — O sistema deve permitir adicionar perguntas a um quiz. Cada pergunta possui: texto, tipo (múltipla escolha ou verdadeiro/falso), pontuação base (padrão 1000) e ordem de exibição.
+**RF-07** — O sistema deve permitir adicionar perguntas a um questionário. Cada pergunta possui: texto, tipo (múltipla escolha ou verdadeiro/falso), pontuação máxima e posição na ordem de exibição.
 
-**RF-08** — O tipo da pergunta é definido como `multiple_choice` (até 4 alternativas: A, B, C, D) ou `true_false` (exatamente 2 alternativas: Verdadeiro, Falso).
+**RF-08** — Perguntas de múltipla escolha devem ter entre duas e quatro opções de resposta. Perguntas de verdadeiro/falso devem ter exatamente duas opções (Verdadeiro e Falso).
 
-**RF-09** — O sistema deve permitir editar e excluir perguntas.
+**RF-09** — O sistema deve permitir editar o texto e o tipo de qualquer pergunta, bem como excluí-la do questionário.
 
-**RF-10** — O sistema deve permitir reordenar perguntas dentro de um quiz (arrastar na UI).
+**RF-10** — O sistema deve permitir alterar a ordem das perguntas dentro de um questionário.
 
-**RF-11** — Cada pergunta deve ter no mínimo 2 alternativas. Para verdadeiro/falso, exatamente 2. Para múltipla escolha, entre 2 e 4.
+**RF-11** — Cada pergunta deve ter no mínimo duas opções de resposta. Para perguntas de verdadeiro/falso, exatamente duas. Para múltipla escolha, entre duas e quatro.
 
-**RF-12** — O sistema deve permitir adicionar, editar e remover alternativas de uma pergunta.
+**RF-12** — O sistema deve permitir adicionar, editar e remover opções de resposta de uma pergunta.
 
-**RF-13** — Exatamente uma alternativa por pergunta deve ser marcada como correta. Ao marcar uma nova, a anterior é desmarcada automaticamente.
-
----
-
-### 5.3 Lobby e Sessão de Jogo
-
-**RF-14** — O sistema deve gerar um PIN único de 6 dígitos (`crypto.randomInt(100000, 999999)`) quando o Host criar uma sessão a partir de um quiz.
-
-**RF-15** — O PIN deve ser único entre todas as sessões com status diferente de `finished`.
-
-**RF-16** — O Host configura o tempo limite de resposta (em segundos, entre 5 e 300) ao iniciar a sessão. Esse valor se aplica a todas as perguntas daquela sessão.
-
-**RF-17** — A sessão possui três estados: `lobby` (aguardando jogadores), `playing` (perguntas em andamento), `finished` (partida encerrada).
-
-**RF-18** — No estado `lobby`, Players podem entrar usando o PIN + nickname. O Host vê a lista de nicknames e a contagem de jogadores em tempo real.
-
-**RF-19** — O nickname deve ser único dentro da sessão. Se um Player tentar entrar com nickname já em uso, o sistema deve rejeitar.
-
-**RF-20** — O Host decide quando iniciar o jogo (transição `lobby` → `playing`). Após o início, novos Players não podem mais entrar.
-
-**RF-21** — O Host decide quando encerrar a partida (transição `playing` → `finished`), tipicamente após a última pergunta.
-
-**RF-22** — Ao encerrar a partida, o sistema persiste os resultados (respostas individuais + ranking final) no PostgreSQL e limpa o estado efêmero do Redis.
+**RF-13** — Exatamente uma opção de resposta por pergunta deve ser marcada como correta. Ao marcar uma nova opção como correta, a marcação anterior é removida automaticamente.
 
 ---
 
-### 5.4 Gameplay em Tempo Real
+### 5.3 Entrada e Sessão de Jogo
 
-**RF-23** — O Host controla o fluxo de perguntas manualmente: ao pressionar "próxima pergunta", o servidor revela a pergunta simultaneamente para todos os Players conectados.
+**RF-14** — O sistema deve gerar um código de acesso (PIN) de 6 dígitos numéricos, aleatório e imprevisível, sempre que o Apresentador criar uma partida a partir de um questionário.
 
-**RF-24** — As alternativas enviadas aos Players NÃO devem conter o campo `isCorrect`. O gabarito só é revelado após o timeout ou após todos os Players responderem.
+**RF-15** — O código de acesso deve ser único entre todas as partidas que estejam em andamento (abertas ou com perguntas ativas). Códigos de partidas já encerradas podem ser reutilizados.
 
-**RF-25** — Cada Player pode enviar exatamente uma resposta por pergunta. Respostas adicionais na mesma pergunta devem ser rejeitadas.
+**RF-16** — O Apresentador define o tempo máximo de resposta, em segundos, ao abrir a partida. Esse valor pode variar entre 5 segundos e 5 minutos e se aplica igualmente a todas as perguntas daquela partida.
 
-**RF-26** — O sistema deve exibir ao Host o progresso de respostas em tempo real (quantos já responderam do total de jogadores).
+**RF-17** — Uma partida possui três estágios: Aguardando (os Participantes podem entrar), Em Andamento (as perguntas estão sendo exibidas) e Encerrada (a partida terminou).
 
-**RF-27** — Quando o tempo limite da pergunta se esgota, o sistema automaticamente encerra a janela de respostas, revela a alternativa correta e calcula as pontuações da rodada.
+**RF-18** — No estágio Aguardando, os Participantes podem entrar na partida informando o código de acesso e um apelido. O Apresentador visualiza a lista de apelidos e a quantidade de participantes presentes, com atualização em tempo real.
 
-**RF-28** — O sistema deve sincronizar a exibição das perguntas: o texto e as alternativas devem aparecer nos dispositivos dos Players no exato momento em que o Host avança, com latência inferior a 500ms.
+**RF-19** — O apelido deve ser único dentro da partida. Se um Participante tentar entrar com um apelido já em uso, sua entrada deve ser recusada com uma mensagem informativa.
 
-**RF-29** — O sistema deve exibir feedback individual ao Player após cada resposta: se acertou ou errou, quantos pontos ganhou e seu total acumulado.
+**RF-20** — O Apresentador decide quando iniciar a partida, passando-a do estágio Aguardando para Em Andamento. Após o início, novos Participantes não podem mais entrar.
+
+**RF-21** — O Apresentador decide quando encerrar a partida, passando-a do estágio Em Andamento para Encerrada, tipicamente após a última pergunta.
+
+**RF-22** — Ao encerrar a partida, o sistema deve armazenar definitivamente todos os resultados (respostas de cada Participante, pontuações e a classificação final). As informações temporárias mantidas durante o jogo ao vivo devem ser descartadas.
+
+---
+
+### 5.4 Andamento da Partida em Tempo Real
+
+**RF-23** — O Apresentador controla manualmente o avanço das perguntas. Ao comandar a próxima pergunta, ela deve ser exibida simultaneamente para todos os Participantes conectados.
+
+**RF-24** — As opções de resposta exibidas aos Participantes não devem conter indicação de qual é a correta. O gabarito só é revelado a todos após o encerramento da janela de respostas daquela pergunta — seja por esgotamento do tempo ou porque todos já responderam.
+
+**RF-25** — Cada Participante pode enviar exatamente uma resposta por pergunta. Uma vez enviada, a resposta é definitiva. Tentativas adicionais na mesma pergunta devem ser ignoradas.
+
+**RF-26** — O sistema deve exibir ao Apresentador, em tempo real, o progresso de respostas: quantos Participantes já responderam em relação ao total presente na partida.
+
+**RF-27** — Quando o tempo limite da pergunta se esgota, o sistema automaticamente encerra a janela de respostas, revela a opção correta a todos e divulga as pontuações daquela rodada.
+
+**RF-28** — A exibição das perguntas deve ser sincronizada: o texto e as opções de resposta devem aparecer nos dispositivos dos Participantes simultaneamente, com atraso inferior a meio segundo em condições normais de conexão.
+
+**RF-29** — Após cada resposta, o sistema deve exibir ao Participante: se acertou ou errou, quantos pontos ganhou naquela pergunta e qual sua pontuação total acumulada na partida.
 
 ---
 
 ### 5.5 Sistema de Pontuação
 
-**RF-30** — A pontuação é calculada exclusivamente no backend, usando a fórmula:
+**RF-30** — A pontuação de cada Participante em uma pergunta é determinada por três fatores:
 
-```
-score = base_points × (1 - response_time_ms / time_limit_ms) × accuracy
+- A **pontuação-base** da pergunta, definida pelo Apresentador ao criá-la (padrão: 1000 pontos);
+- A **velocidade de resposta**: quanto mais rápido o Participante responder, maior a parcela da pontuação-base que ele recebe. A relação é linear: uma resposta instantânea e correta vale 100% da pontuação-base; uma resposta correta no último instante do tempo limite vale uma fração mínima;
+- A **precisão**: se o Participante acertar, recebe a pontuação calculada; se errar, recebe zero.
 
-Onde:
-  base_points     = definido na pergunta (padrão 1000)
-  response_time_ms = tempo entre revelação da pergunta e envio da resposta
-  time_limit_ms   = configurado na sessão (padrão 30000ms)
-  accuracy        = 1.0 se correta, 0.0 se errada
-```
+**RF-31** — Nenhuma pergunta pode gerar pontuação negativa. O piso de pontuação por pergunta é zero.
 
-**RF-31** — A pontuação por pergunta é sempre ≥ 0 (mínimo 0, sem pontuação negativa).
+**RF-32** — A pontuação total de um Participante ao longo da partida é a soma das pontuações obtidas em cada pergunta.
 
-**RF-32** — A pontuação total do Player é a soma das pontuações de cada pergunta respondida.
-
-**RF-33** — O Player que não responder dentro do tempo limite recebe 0 pontos naquela pergunta.
+**RF-33** — O Participante que não enviar resposta dentro do tempo limite recebe zero pontos naquela pergunta.
 
 ---
 
-### 5.6 Leaderboard
+### 5.6 Classificação (Leaderboard)
 
-**RF-34** — O sistema deve exibir o ranking dos 10 melhores jogadores após cada pergunta (leaderboard parcial).
+**RF-34** — O sistema deve exibir a classificação dos dez melhores Participantes após cada pergunta (classificação parcial).
 
-**RF-35** — O sistema deve exibir o pódio final com o ranking completo de todos os jogadores ao término da partida (leaderboard final).
+**RF-35** — O sistema deve exibir a classificação final completa de todos os Participantes ao término da partida.
 
-**RF-36** — O leaderboard deve mostrar: posição (rank), nickname, pontuação total e quantidade de acertos.
+**RF-36** — A classificação deve mostrar: posição, apelido, pontuação total e quantidade de acertos de cada Participante.
 
-**RF-37** — Cada Player deve ver sua própria posição destacada no leaderboard, mesmo que esteja fora do top 10.
+**RF-37** — Cada Participante deve ver sua própria posição em destaque na classificação, mesmo que esteja fora dos dez primeiros colocados.
 
-**RF-38** — O leaderboard é consultado via Redis Sorted Set (`ZREVRANGE`) para garantir baixa latência e ordenação correta.
+**RF-38** — A classificação deve refletir as pontuações em tempo real e ser atualizada imediatamente após cada rodada de respostas.
 
 ---
 
 ### 5.7 Histórico e Relatórios
 
-**RF-39** — O sistema deve persistir cada resposta individual do Player ao final da sessão, contendo: sessão, pergunta, nickname, alternativa selecionada, se acertou, tempo de resposta em ms e pontos ganhos.
+**RF-39** — O sistema deve registrar cada resposta individual ao final da partida, contendo: partida, pergunta, apelido do Participante, opção escolhida, se acertou, tempo de resposta e pontos obtidos.
 
-**RF-40** — O sistema deve persistir o resultado final de cada sessão, contendo: ranking, pontuação total, total de acertos, total de perguntas e tempo médio de resposta de cada Player.
+**RF-40** — O sistema deve registrar o resultado final de cada partida, contendo: classificação, pontuação total, total de acertos, total de perguntas e tempo médio de resposta de cada Participante.
 
-**RF-41** — O Host deve poder acessar relatórios por quiz: taxa de acerto por pergunta, tempo médio de resposta por pergunta, e questões mais erradas (ranking de dificuldade).
+**RF-41** — O Apresentador deve poder consultar relatórios por questionário, incluindo: taxa de acerto por pergunta, tempo médio de resposta por pergunta e identificação das questões com maior índice de erro.
 
-**RF-42** — O Host deve poder acessar o histórico de sessões de um quiz: data, PIN, número de jogadores, pontuação média e vencedor de cada sessão.
+**RF-42** — O Apresentador deve poder consultar o histórico de partidas de um questionário, incluindo: data, código de acesso, número de Participantes, pontuação média e vencedor de cada partida.
 
-**RF-43** — O Host deve poder acessar o relatório detalhado de uma sessão específica: respostas de cada Player por pergunta e ranking final completo.
+**RF-43** — O Apresentador deve poder consultar o relatório detalhado de uma partida específica, incluindo: respostas de cada Participante por pergunta e a classificação final completa.
 
 ---
 
 ## 6. Requisitos Não Funcionais
 
-### 6.1 Performance e Latência
+### 6.1 Desempenho e Capacidade
 
-**RNF-01** — A latência de broadcast de uma pergunta (do clique do Host até a exibição em todos os Players) deve ser inferior a 500ms em condições normais de rede.
+**RNF-01** — O intervalo entre o comando do Apresentador para exibir uma pergunta e sua aparição nos dispositivos de todos os Participantes não deve ultrapassar meio segundo em condições normais de conexão.
 
-**RNF-02** — O sistema deve suportar até 500 Players simultâneos em uma única sessão de jogo, em uma única instância de servidor.
+**RNF-02** — O sistema deve suportar até quinhentos Participantes simultâneos em uma mesma partida.
 
-**RNF-03** — A validação de resposta do Player (envio → confirmação) deve ter latência inferior a 200ms.
+**RNF-03** — O intervalo entre o envio de uma resposta pelo Participante e a confirmação de recebimento não deve ultrapassar duzentos milissegundos em condições normais de conexão.
 
-**RNF-04** — O leaderboard deve ser computado e servido em tempo real a partir do Redis, sem queries ao PostgreSQL durante o jogo.
+**RNF-04** — A classificação dos Participantes deve ser exibida em tempo real, sem atraso perceptível, independentemente da quantidade de jogadores na partida.
 
 ### 6.2 Disponibilidade e Tolerância a Falhas
 
-**RNF-05** — O sistema deve suportar reconexão automática de Players via Socket.IO. Um Player que desconecte por até 30 segundos deve poder reconectar-se à mesma sessão sem perder sua pontuação acumulada.
+**RNF-05** — Se um Participante perder a conexão temporariamente, ele deve poder retornar à mesma partida em até trinta segundos sem perder sua pontuação acumulada nem seu apelido.
 
-**RNF-06** — O estado da sessão (players, pontuações, pergunta atual) deve ser armazenado em Redis com TTL configurável. Em caso de queda do servidor, o estado pode ser restaurado a partir do Redis.
+**RNF-06** — As informações da partida em andamento (participantes presentes, pontuações, pergunta atual) devem ser mantidas de forma que, em caso de interrupção inesperada, possam ser recuperadas.
 
-**RNF-07** — A aplicação Node.js deve ser stateless em relação ao estado de jogo — todo estado de sessão vive no Redis.
+**RNF-07** — O sistema deve separar as informações de uma partida ao vivo (voláteis, de curta duração) dos dados permanentes (questionários, resultados finais, histórico). Nenhuma informação permanente pode ser perdida por falha durante uma partida.
 
-### 6.3 Segurança
+### 6.3 Segurança e Privacidade
 
-**RNF-08** — Senhas dos Hosts devem ser armazenadas com bcrypt (12 rounds de salt).
+**RNF-08** — As credenciais de acesso dos Apresentadores devem ser armazenadas de forma protegida, utilizando técnica de embaralhamento irreversível reconhecida como segura.
 
-**RNF-09** — A autenticação do Host deve usar JWT: access token (15 min) + refresh token (7 dias, cookie httpOnly, secure, sameSite).
+**RNF-09** — O acesso do Apresentador deve expirar automaticamente após um período curto de inatividade. O sistema deve oferecer um mecanismo seguro de renovação de acesso sem exigir nova digitação de credenciais.
 
-**RNF-10** — O PIN da sessão deve ser gerado com `crypto.randomInt` — sem previsibilidade.
+**RNF-10** — O código de acesso (PIN) da partida deve ser gerado de forma aleatória e imprevisível, sem seguir padrões sequenciais ou baseados em dados da partida.
 
-**RNF-11** —Alternativas sem `isCorrect` devem ser enviadas aos Players. O gabarito só é revelado pelo servidor após o encerramento da janela de respostas.
+**RNF-11** — Em nenhum momento as opções de resposta exibidas ao Participante devem conter a indicação de qual é a correta. O gabarito somente é revelado após o fechamento da janela de respostas da pergunta.
 
-**RNF-12** — Quizzes completos (com gabarito) só devem ser servidos ao Host autor daquele quiz.
+**RNF-12** — Questionários completos com seus respectivos gabaritos devem ser acessíveis apenas pelo Apresentador que os criou. Nenhum Participante ou outro Apresentador pode ter acesso ao gabarito.
 
-**RNF-13** — Rate limiting deve ser aplicado: 5 req/min em `/api/auth/*`, 30 req/10s em `/api/sessions/join/:pin`, 10 conexões/5s no namespace `/play` por IP.
+**RNF-13** — O sistema deve limitar a quantidade de tentativas repetidas em operações sensíveis, especialmente no acesso a partidas por código e na autenticação de Apresentadores, para impedir varredura ou adivinhação.
 
-**RNF-14** — Erros 500 não devem expor stack traces ao cliente.
+**RNF-14** — Mensagens de erro exibidas aos usuários finais não devem revelar detalhes técnicos de implementação ou de infraestrutura.
 
-### 6.4 Auditoria
+### 6.4 Auditoria e Registro
 
-**RNF-15** — Toda resposta de Player deve ser persistida com data/hora exata, permitindo auditoria completa de cada partida.
+**RNF-15** — Toda resposta de Participante deve ser registrada com data e hora exatas, permitindo a auditoria completa de cada partida.
 
-**RNF-16** — Alterações em quizzes (criação, edição, exclusão) devem registrar o autor e a data/hora.
+**RNF-16** — Toda alteração em questionários (criação, edição, exclusão) deve registrar o Apresentador responsável e o momento da alteração.
 
 ---
 
@@ -330,55 +324,53 @@ Onde:
 
 ### RN-01 — Questionário como Template
 
-Um quiz é uma entidade independente da sessão. O mesmo quiz pode ser "aplicado" em múltiplas sessões com configurações diferentes (tempo limite, data, público). Cada sessão gera seus próprios resultados.
+Um questionário (quiz) é independente da sua aplicação em uma partida. O mesmo questionário pode ser aplicado em múltiplas partidas com configurações diferentes, como tempo limite, data e público. Cada partida gera seus próprios resultados, sem alterar o questionário original nem os resultados de partidas anteriores.
 
-### RN-02 — PIN Único por Sessão Ativa
+### RN-02 — PIN Único por Partida em Andamento
 
-O PIN de 6 dígitos identifica unicamente uma sessão. Dois PINs iguais não podem coexistir entre sessões com status diferente de `finished`. PINs de sessões finalizadas podem ser reutilizados.
+O PIN de 6 dígitos identifica uma partida. Enquanto uma partida estiver em andamento (aberta para entrada ou com perguntas ativas), o PIN é exclusivo e não pode ser reutilizado. Ao término da partida, o PIN é liberado e pode ser gerado novamente para outra partida.
 
-### RN-03 — Um Quiz, Múltiplas Sessões
+### RN-03 — Um Questionário, Múltiplas Partidas
 
-Uma sessão está vinculada a exatamente um quiz. Um quiz pode ter múltiplas sessões. Editar um quiz após ele ter sido usado em sessões não altera os resultados já persistidos — os resultados referenciam as perguntas pelo ID no momento da partida.
+Uma partida está vinculada a exatamente um questionário. Um questionário pode ter múltiplas partidas. Alterações feitas no questionário após a realização de uma partida não afetam os resultados já registrados — os resultados da partida refletem as perguntas e alternativas exatamente como estavam no momento em que a partida foi iniciada.
 
-### RN-04 — Exclusividade de Resposta
+### RN-04 — Resposta Única por Jogador
 
-Cada Player pode responder no máximo uma vez por pergunta. O servidor rejeita respostas duplicadas com erro `ALREADY_ANSWERED`.
+Cada Participante pode responder no máximo uma vez a cada pergunta. Uma vez enviada, a resposta é definitiva e não pode ser alterada. Tentativas de responder novamente à mesma pergunta devem ser ignoradas.
 
-### RN-05 — Tempo Limite por Sessão
+### RN-05 — Tempo Limite Definido na Partida
 
-O tempo limite de resposta é configurado na sessão, não na pergunta. O valor definido pelo Host ao iniciar a sessão aplica-se uniformemente a todas as perguntas daquela partida.
+O tempo máximo para responder cada pergunta é definido pelo Apresentador no momento em que a partida é iniciada. Esse tempo se aplica igualmente a todas as perguntas daquela partida, independentemente da pontuação ou do conteúdo de cada pergunta.
 
-### RN-06 — Pontuação Proporcional ao Tempo
+### RN-06 — Pontuação Proporcional à Velocidade
 
-Quanto mais rápido o Player responder corretamente, mais pontos ganha. A pontuação decai linearmente com o tempo: de 100% dos `base_points` (resposta instantânea) até próximo de 0 (resposta no último ms do limite).
+Quanto mais rápido o Participante responder corretamente, maior será sua pontuação naquela pergunta. A pontuação máxima possível é atingida com uma resposta instantânea e correta; a pontuação mínima para um acerto ocorre quando a resposta é enviada no último instante do tempo limite. A relação entre tempo e pontuação é linearmente decrescente.
 
-### RN-07 — Sem Pontuação Negativa
+### RN-07 — Resposta Errada ou Sem Resposta Não Pontua
 
-Errar ou não responder resulta em 0 pontos na pergunta, nunca em valor negativo. O piso da fórmula é 0.
+Responder incorretamente ou não responder dentro do tempo limite resulta em zero pontos naquela pergunta. Nenhuma pergunta pode gerar pontuação negativa — o piso é sempre zero.
 
-### RN-08 — Nickname Único por Sessão
+### RN-08 — Apelido Único por Partida
 
-Dentro de uma sessão, cada Player deve ter um nickname único. A validação é case-insensitive. Se um Player tentar entrar com nickname já em uso, o sistema retorna erro.
+Dentro de uma partida, cada Participante deve usar um apelido (nickname) que o identifique unicamente. Dois Participantes não podem usar o mesmo apelido na mesma partida, desconsiderando-se diferenças entre letras maiúsculas e minúsculas. Caso um Participante tente entrar com um apelido já em uso, sua entrada deve ser recusada.
 
-### RN-09 — Transição de Estados da Sessão
+### RN-09 — Ciclo de Vida da Partida
 
-```
-lobby ──(Host inicia)──► playing ──(Host encerra)──► finished
-```
+Uma partida passa por três estágios, nesta ordem e sem possibilidade de retrocesso:
 
-- `lobby`: Players podem entrar. Perguntas não são exibidas.
-- `playing`: Perguntas são exibidas. Novos Players não podem entrar.
-- `finished`: Partida encerrada. Resultados persistidos. Estado Redis expira (TTL).
+- **Aguardando (Lobby):** O Apresentador abriu a partida. Os Participantes podem entrar livremente informando o PIN e um apelido. Nenhuma pergunta é exibida ainda. O Apresentador visualiza a lista de Participantes presentes.
+- **Em Andamento (Jogo Ativo):** O Apresentador iniciou as perguntas. A partir deste momento, novos Participantes não podem mais entrar. As perguntas são exibidas uma a uma pelo Apresentador e os Participantes respondem dentro do tempo limite.
+- **Encerrada (Finalizada):** O Apresentador declarou a partida como concluída. O pódio final é exibido e os resultados são definitivos. Nenhuma ação adicional de jogo é possível.
 
-A transição é sempre unidirecional. Não é possível retornar de `playing` para `lobby` ou de `finished` para qualquer outro estado.
+Uma partida nunca pode retornar de "Em Andamento" para "Aguardando", nem de "Encerrada" para qualquer estágio anterior.
 
-### RN-10 — Persistência ao Final
+### RN-10 — Resultados Definitivos somente ao Final
 
-Os resultados (player_answers + game_results) só são persistidos no PostgreSQL quando a sessão transiciona para `finished`. Durante o jogo, todo estado vive exclusivamente no Redis.
+Os resultados de uma partida (respostas, pontuações, ranking) só se tornam permanentes quando o Apresentador a encerra. Enquanto a partida estiver em andamento, as informações de jogo existem apenas de forma temporária para suportar a velocidade da experiência ao vivo. Após o encerramento, os resultados são preservados para consulta futura e relatórios.
 
-### RN-11 — Isolamento de Dados entre Hosts
+### RN-11 — Isolamento entre Apresentadores
 
-Um Host só pode acessar, editar e excluir seus próprios quizzes. Um Host não pode ver quizzes, sessões ou resultados de outro Host.
+Cada Apresentador gerencia apenas seus próprios questionários. Um Apresentador não pode visualizar, editar ou excluir questionários criados por outro Apresentador. Da mesma forma, os resultados e relatórios de partidas conduzidas por um Apresentador não são acessíveis a outros Apresentadores.
 
 ---
 
@@ -560,16 +552,16 @@ Os seguintes itens foram explicitamente excluídos do escopo da versão 1.0:
 
 As seguintes questões ainda não foram definidas e devem ser respondidas antes do início do desenvolvimento dos módulos relacionados:
 
-| # | Módulo | Questão |
-|---|---|---|
-| DP-01 | Sessão | O Host pode pausar uma pergunta após revelá-la (ex: para dar mais tempo)? |
-| DP-02 | Sessão | O Host pode pular uma pergunta durante o jogo? |
-| DP-03 | Sessão | O Host pode expulsar um Player do lobby ou durante o jogo? |
-| DP-04 | Pontuação | Deve haver bônus por streak (acertos consecutivos)? |
-| DP-05 | Leaderboard | O leaderboard parcial mostra todos os jogadores ou apenas o top 10? |
-| DP-06 | Quiz | Um quiz pode ser clonado/duplicado por outro Host (com atribuição de autoria)? |
-| DP-07 | Autenticação | Haverá "login como convidado" para testar a plataforma antes de se registrar? |
-| DP-08 | Player | O sistema deve suportar avatar/emoji como identificador visual além do nickname? |
+| #     | Módulo       | Questão                                                                          |
+| ----- | ------------ | -------------------------------------------------------------------------------- |
+| DP-01 | Sessão       | O Host pode pausar uma pergunta após revelá-la (ex: para dar mais tempo)?        |
+| DP-02 | Sessão       | O Host pode pular uma pergunta durante o jogo?                                   |
+| DP-03 | Sessão       | O Host pode expulsar um Player do lobby ou durante o jogo?                       |
+| DP-04 | Pontuação    | Deve haver bônus por streak (acertos consecutivos)?                              |
+| DP-05 | Leaderboard  | O leaderboard parcial mostra todos os jogadores ou apenas o top 10?              |
+| DP-06 | Quiz         | Um quiz pode ser clonado/duplicado por outro Host (com atribuição de autoria)?   |
+| DP-07 | Autenticação | Haverá "login como convidado" para testar a plataforma antes de se registrar?    |
+| DP-08 | Player       | O sistema deve suportar avatar/emoji como identificador visual além do nickname? |
 
 ---
 
@@ -995,16 +987,16 @@ Tela do Player (anônimo)
 
 ## Stack Tecnológica — Resumo
 
-| Camada | Tecnologia |
-|---|---|
-| Runtime | Node.js 22 + TypeScript 5.x |
-| HTTP Framework | Fastify 5.x |
-| WebSocket | Socket.IO 4.x |
-| ORM | Drizzle ORM (migrations geradas do schema TS) |
-| Database | PostgreSQL 16 |
-| Cache / Estado Efêmero | Redis 7 |
-| Frontend | SvelteKit 2.x (MVVM) |
-| Reverse Proxy | Nginx + Certbot |
-| Validação | Zod |
-| Autenticação | bcrypt + JWT (access + refresh tokens) |
-| Hospedagem | VPS (Docker Compose) |
+| Camada                 | Tecnologia                                    |
+| ---------------------- | --------------------------------------------- |
+| Runtime                | Node.js 22 + TypeScript 5.x                   |
+| HTTP Framework         | Fastify 5.x                                   |
+| WebSocket              | Socket.IO 4.x                                 |
+| ORM                    | Drizzle ORM (migrations geradas do schema TS) |
+| Database               | PostgreSQL 16                                 |
+| Cache / Estado Efêmero | Redis 7                                       |
+| Frontend               | SvelteKit 2.x (MVVM)                          |
+| Reverse Proxy          | Nginx + Certbot                               |
+| Validação              | Zod                                           |
+| Autenticação           | bcrypt + JWT (access + refresh tokens)        |
+| Hospedagem             | VPS (Docker Compose)                          |
