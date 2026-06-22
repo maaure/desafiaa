@@ -15,7 +15,9 @@ function signAccess(userId: string): string {
 }
 
 function signRefresh(userId: string): string {
-  return jwt.sign({ sub: userId }, env.JWT_REFRESH_SECRET, { expiresIn: REFRESH_TTL });
+  return jwt.sign({ sub: userId }, env.JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TTL,
+  });
 }
 
 function toUserResponse(user: typeof schema.users.$inferSelect): UserResponse {
@@ -32,7 +34,8 @@ export const authService = {
     const existing = await db.query.users.findFirst({
       where: eq(schema.users.email, input.email),
     });
-    if (existing) throw new AppError("Email já cadastrado", 409, "EMAIL_EXISTS");
+    if (existing)
+      throw new AppError("Email já cadastrado", 409, "EMAIL_EXISTS");
 
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
     const [user] = await db
@@ -63,7 +66,9 @@ export const authService = {
 
   async refresh(refreshToken: string) {
     try {
-      const payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as { sub: string };
+      const payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
+        sub: string;
+      };
       const user = await db.query.users.findFirst({
         where: eq(schema.users.id, payload.sub),
       });

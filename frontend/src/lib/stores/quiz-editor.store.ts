@@ -68,6 +68,27 @@ function createQuizEditorStore() {
       quiz.update((q) => q ? { ...q, questions: q.questions.filter((x) => x.id !== id) } : q);
     },
 
+    updateQuestionText(questionId: string, text: string) {
+      quiz.update((q) => {
+        if (!q) return q;
+        return { ...q, questions: q.questions.map((qn) => qn.id === questionId ? { ...qn, text } : qn) };
+      });
+    },
+
+    updateAlternativeText(questionId: string, altId: string, text: string) {
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) =>
+            qn.id === questionId
+              ? { ...qn, alternatives: qn.alternatives.map((a) => (a.id === altId ? { ...a, text } : a)) }
+              : qn,
+          ),
+        };
+      });
+    },
+
     addAlternative(questionId: string) {
       quiz.update((q) => {
         if (!q) return q;
