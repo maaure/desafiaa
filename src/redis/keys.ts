@@ -24,6 +24,12 @@ export const keys = {
   questionRevealed: (pin: string, questionIndex: number) =>
     `pin:${pin}:q:${questionIndex}:revealed` as const,
 
+  /** Set de nicknames (lowercase) para verificacao atomica de unicidade */
+  sessionNicknames: (pin: string) => `pin:${pin}:nicknames` as const,
+
+  /** Hash de nicknames desconectados: { nickname -> old_socket_id } para reconexao */
+  disconnectedPlayers: (pin: string) => `pin:${pin}:disconnected` as const,
+
   /** Lookup reverso PIN -> sessionId UUID (TTL 24h) */
   pinLookup: (pin: string) => `pin:lookup:${pin}` as const,
 };
