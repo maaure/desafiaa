@@ -34,7 +34,7 @@ export function registerHostGateway(io: Namespace) {
       }
 
       // Reutiliza sessionService ou faz inline (KISS: inline é mais simples aqui)
-      const { sessionService } = await import("../session/session.service");
+      const { sessionService } = await import("../session/session.service.js");
       const session = await sessionService.create(quizId, socket.data.userId);
       currentPin = session.pin;
       socket.join(`session:${session.pin}`);
