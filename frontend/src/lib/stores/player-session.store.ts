@@ -4,13 +4,7 @@ import { createPlayerSocket } from "$lib/game/socket-player";
 import { setLeaderboard, resetLeaderboard } from "$lib/stores/leaderboard.store";
 import type { LeaderboardEntry } from "$lib/types/session";
 
-export type PlayerPhase =
-  | "join"
-  | "lobby"
-  | "question"
-  | "feedback"
-  | "leaderboard"
-  | "ended";
+export type PlayerPhase = "join" | "lobby" | "question" | "feedback" | "leaderboard" | "ended";
 
 interface QuestionData {
   questionIndex: number;
@@ -206,22 +200,19 @@ function createPlayerSessionStore() {
       }));
     });
 
-    socket.on(
-      "game:leaderboard:show",
-      (payload: { rankings: LeaderboardEntry[] }) => {
-        state.update((s) => {
-          const nickname = s.nickname;
-          if (nickname) {
-            setLeaderboard(payload.rankings, nickname);
-          }
-          return {
-            ...s,
-            phase: "leaderboard",
-            leaderboard: payload.rankings,
-          };
-        });
-      },
-    );
+    socket.on("game:leaderboard:show", (payload: { rankings: LeaderboardEntry[] }) => {
+      state.update((s) => {
+        const nickname = s.nickname;
+        if (nickname) {
+          setLeaderboard(payload.rankings, nickname);
+        }
+        return {
+          ...s,
+          phase: "leaderboard",
+          leaderboard: payload.rankings,
+        };
+      });
+    });
 
     socket.on(
       "game:ended",

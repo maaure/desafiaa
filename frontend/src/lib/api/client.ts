@@ -19,8 +19,7 @@ const instance = axios.create({
 
 // Request interceptor — attach auth token from localStorage
 instance.interceptors.request.use((config) => {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
   if (token) {
     config.headers.set("Authorization", `Bearer ${token}`);
@@ -44,11 +43,7 @@ instance.interceptors.response.use(
         body.message ?? "Erro desconhecido",
       );
     }
-    throw new ApiError(
-      0,
-      "NETWORK_ERROR",
-      "Erro de rede ou servidor indisponível",
-    );
+    throw new ApiError(0, "NETWORK_ERROR", "Erro de rede ou servidor indisponível");
   },
 );
 
@@ -57,21 +52,9 @@ instance.interceptors.response.use(
 interface UnwrappedApi {
   get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
   delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
-  post<T = unknown>(
-    url: string,
-    data?: unknown,
-    config?: AxiosRequestConfig,
-  ): Promise<T>;
-  put<T = unknown>(
-    url: string,
-    data?: unknown,
-    config?: AxiosRequestConfig,
-  ): Promise<T>;
-  patch<T = unknown>(
-    url: string,
-    data?: unknown,
-    config?: AxiosRequestConfig,
-  ): Promise<T>;
+  post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
   interceptors: typeof instance.interceptors;
 }
 

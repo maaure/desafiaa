@@ -3,6 +3,7 @@
   import { get } from "svelte/store";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import QuestionEditor from "$lib/components/quiz/QuestionEditor.svelte";
   import type { Quiz } from "$lib/types/quiz";
@@ -21,7 +22,7 @@
 
     if (quizId === "new") {
       if (!get(quizEditor)) {
-        goto("/quiz/new");
+        goto(resolve("/quiz/new"));
         return;
       }
       isLoading = false;
@@ -46,7 +47,7 @@
       if (quizId === "new") {
         const saved = get(quizEditor);
         if (saved && saved.id) {
-          goto(`/quiz/${saved.id}/edit`);
+          goto(resolve(`/quiz/${saved.id}/edit`));
         }
       }
     }
@@ -60,16 +61,10 @@
 <div class="px-8 py-8 max-w-3xl">
   <!-- Back -->
   <a
-    href="/dashboard"
+    href={resolve("/dashboard")}
     class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-6"
   >
-    <svg
-      class="w-4 h-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      stroke-width="1.5"
-    >
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -90,9 +85,7 @@
 
     <!-- Not found -->
   {:else if !quiz}
-    <div
-      class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-    >
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
       Questionário não encontrado
     </div>
 
@@ -102,9 +95,7 @@
       <div>
         <h1 class="text-2xl font-bold text-slate-900">Editar Questionário</h1>
         <p class="text-sm text-slate-500 mt-1">
-          {quiz.questions.length} pergunta{quiz.questions.length !== 1
-            ? "s"
-            : ""}
+          {quiz.questions.length} pergunta{quiz.questions.length !== 1 ? "s" : ""}
         </p>
       </div>
     </div>
@@ -113,17 +104,13 @@
     <div class="bg-white rounded-xl border border-slate-200 p-6 mb-6">
       <div class="grid gap-5">
         <div>
-          <label
-            for="title"
-            class="block text-sm font-semibold text-slate-700 mb-1.5"
-            >Título</label
+          <label for="title" class="block text-sm font-semibold text-slate-700 mb-1.5">Título</label
           >
           <input
             id="title"
             type="text"
             value={quiz.title}
-            oninput={(e) =>
-              quizEditor.updateTitle((e.target as HTMLInputElement).value)}
+            oninput={(e) => quizEditor.updateTitle((e.target as HTMLInputElement).value)}
             placeholder="Título do quiz"
             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm
               placeholder:text-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100
@@ -132,10 +119,7 @@
         </div>
 
         <div>
-          <label
-            for="desc"
-            class="block text-sm font-semibold text-slate-700 mb-1.5"
-          >
+          <label for="desc" class="block text-sm font-semibold text-slate-700 mb-1.5">
             Descrição
             <span class="text-slate-300 font-normal">— opcional</span>
           </label>
@@ -150,8 +134,7 @@
             rows="2"
             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm resize-y
               placeholder:text-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100
-              transition-colors outline-none"
-          ></textarea>
+              transition-colors outline-none"></textarea>
         </div>
 
         <!-- Publish toggle -->
@@ -192,11 +175,9 @@
     <!-- Validation errors -->
     {#if Object.keys(errors).length > 0}
       <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 mb-6">
-        <p class="text-sm font-semibold text-red-700 mb-1">
-          Corrija os seguintes erros:
-        </p>
+        <p class="text-sm font-semibold text-red-700 mb-1">Corrija os seguintes erros:</p>
         <ul class="list-disc list-inside">
-          {#each Object.entries(errors) as [, msg]}
+          {#each Object.entries(errors) as [key, msg] (key)}
             <li class="text-sm text-red-600">{msg}</li>
           {/each}
         </ul>
@@ -221,9 +202,7 @@
             d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
           />
         </svg>
-        <span class="text-sm font-medium text-emerald-700"
-          >Questionário salvo com sucesso</span
-        >
+        <span class="text-sm font-medium text-emerald-700">Questionário salvo com sucesso</span>
       </div>
     {/if}
 
@@ -231,17 +210,13 @@
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-slate-800">
         Perguntas
-        <span class="text-sm font-normal text-slate-400 ml-2"
-          >{quiz.questions.length}</span
-        >
+        <span class="text-sm font-normal text-slate-400 ml-2">{quiz.questions.length}</span>
       </h2>
     </div>
 
     <!-- Empty questions -->
     {#if quiz.questions.length === 0}
-      <div
-        class="text-center py-12 bg-white rounded-xl border border-dashed border-slate-200 mb-6"
-      >
+      <div class="text-center py-12 bg-white rounded-xl border border-dashed border-slate-200 mb-6">
         <div
           class="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center"
         >
@@ -259,12 +234,8 @@
             />
           </svg>
         </div>
-        <p class="text-sm font-medium text-slate-500 mb-1">
-          Nenhuma pergunta ainda
-        </p>
-        <p class="text-xs text-slate-400">
-          Adicione perguntas usando os botões abaixo
-        </p>
+        <p class="text-sm font-medium text-slate-500 mb-1">Nenhuma pergunta ainda</p>
+        <p class="text-xs text-slate-400">Adicione perguntas usando os botões abaixo</p>
       </div>
     {:else}
       <!-- Questions list -->
@@ -277,9 +248,7 @@
 
     <!-- Add question -->
     <div class="bg-white rounded-xl border border-slate-200 p-5 mb-6">
-      <p class="text-sm font-semibold text-slate-700 mb-3">
-        Adicionar pergunta
-      </p>
+      <p class="text-sm font-semibold text-slate-700 mb-3">Adicionar pergunta</p>
       <div class="flex items-center gap-2">
         <button
           onclick={() => handleAddQuestion("multiple_choice")}
@@ -299,11 +268,7 @@
               stroke-linejoin="round"
               d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"
             />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M6 6h.008v.008H6V6z"
-            />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
           </svg>
           Múltipla escolha
         </button>
@@ -364,7 +329,7 @@
       </button>
 
       <a
-        href="/dashboard"
+        href={resolve("/dashboard")}
         class="text-sm text-slate-400 hover:text-slate-600 transition-colors"
       >
         Voltar ao Dashboard

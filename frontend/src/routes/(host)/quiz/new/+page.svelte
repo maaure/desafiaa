@@ -1,6 +1,7 @@
 <script lang="ts">
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
 
   let title = $state("");
   let error = $state<string | null>(null);
@@ -13,23 +14,17 @@
     }
     error = null;
     quizEditor.initNew(title.trim());
-    goto("/quiz/new/edit");
+    goto(resolve("/quiz/new/edit"));
   }
 </script>
 
 <div class="px-8 py-8 max-w-2xl">
   <!-- Back -->
   <a
-    href="/dashboard"
+    href={resolve("/dashboard")}
     class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-6"
   >
-    <svg
-      class="w-4 h-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      stroke-width="1.5"
-    >
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -40,17 +35,10 @@
   </a>
 
   <h1 class="text-2xl font-bold text-slate-900 mb-2">Novo Questionário</h1>
-  <p class="text-sm text-slate-500 mb-8">
-    Dê um nome ao seu quiz para começar a editá-lo
-  </p>
+  <p class="text-sm text-slate-500 mb-8">Dê um nome ao seu quiz para começar a editá-lo</p>
 
-  <form
-    onsubmit={handleCreate}
-    class="bg-white rounded-xl border border-slate-200 p-6"
-  >
-    <label for="title" class="block text-sm font-semibold text-slate-700 mb-2">
-      Título
-    </label>
+  <form onsubmit={handleCreate} class="bg-white rounded-xl border border-slate-200 p-6">
+    <label for="title" class="block text-sm font-semibold text-slate-700 mb-2"> Título </label>
     <input
       id="title"
       type="text"
@@ -75,13 +63,7 @@
           transition-colors shadow-sm"
       >
         Criar e editar
-        <svg
-          class="w-4 h-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path
             stroke-linecap="round"
             stroke-linejoin="round"
@@ -90,9 +72,8 @@
         </svg>
       </button>
       <a
-        href="/dashboard"
-        class="text-sm text-slate-400 hover:text-slate-600 transition-colors"
-        >Cancelar</a
+        href={resolve("/dashboard")}
+        class="text-sm text-slate-400 hover:text-slate-600 transition-colors">Cancelar</a
       >
     </div>
   </form>

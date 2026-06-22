@@ -18,7 +18,7 @@
     disabled?: boolean;
     required?: boolean;
     oninput?: (e: Event) => void;
-    [key: string]: any;
+    [key: string]: unknown;
   } = $props();
 </script>
 

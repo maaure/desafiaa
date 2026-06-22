@@ -2,7 +2,11 @@
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import type { Alternative } from "$lib/types/quiz";
 
-  let { alt, questionId, letter }: {
+  let {
+    alt,
+    questionId,
+    letter,
+  }: {
     alt: Alternative;
     questionId: string;
     letter: string;
@@ -18,11 +22,17 @@
   }
 </script>
 
-<div class="flex items-center gap-3 p-3 rounded-lg border transition-colors
-  {alt.isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white hover:border-slate-300'}">
+<div
+  class="flex items-center gap-3 p-3 rounded-lg border transition-colors
+  {alt.isCorrect
+    ? 'border-emerald-300 bg-emerald-50'
+    : 'border-slate-200 bg-white hover:border-slate-300'}"
+>
   <!-- Letter badge -->
-  <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0
-    {alt.isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}">
+  <span
+    class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0
+    {alt.isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}"
+  >
     {letter}
   </span>
 
@@ -45,8 +55,10 @@
       onchange={handleCorrect}
       class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer"
     />
-    <span class="text-xs font-medium select-none
-      {alt.isCorrect ? 'text-emerald-600' : 'text-slate-400'}">
+    <span
+      class="text-xs font-medium select-none
+      {alt.isCorrect ? 'text-emerald-600' : 'text-slate-400'}"
+    >
       Correta
     </span>
   </label>

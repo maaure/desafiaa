@@ -2,11 +2,9 @@
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { playerSession } from "$lib/stores/player-session.store";
-  import {
-    leaderboardMyRank,
-    leaderboardMyScore,
-  } from "$lib/stores/leaderboard.store";
+  import { leaderboardMyRank, leaderboardMyScore } from "$lib/stores/leaderboard.store";
 
   const LABELS = ["A", "B", "C", "D", "E", "F"];
   const BUTTON_COLORS = [
@@ -41,7 +39,7 @@
 
   function handleLeave() {
     playerSession.reset();
-    goto("/play");
+    goto(resolve("/play"));
   }
 
   let phase = $derived($playerSession.phase);
@@ -53,9 +51,7 @@
 
 <div class="min-h-screen bg-slate-50 flex flex-col">
   <!-- Header -->
-  <header
-    class="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shrink-0"
-  >
+  <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shrink-0">
     <span class="text-sm font-bold text-slate-900 truncate flex-1">
       {$playerSession.nickname || "Jogador"}
     </span>
@@ -82,18 +78,8 @@
         onclick={() => playerSession.clearError()}
         class="text-red-400 hover:text-red-600 p-1"
       >
-        <svg
-          class="w-4 h-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
@@ -105,9 +91,7 @@
     {#if phase === "join"}
       <div class="flex-1 flex flex-col items-center justify-center text-center">
         <h2 class="text-xl font-bold text-slate-800 mb-2">Entrar na partida</h2>
-        <p
-          class="text-2xl font-mono font-bold text-cyan-600 tracking-[0.3em] mb-6 tabular-nums"
-        >
+        <p class="text-2xl font-mono font-bold text-cyan-600 tracking-[0.3em] mb-6 tabular-nums">
           {pin}
         </p>
 
@@ -139,22 +123,17 @@
         <div
           class="w-12 h-12 mb-4 rounded-full border-2 border-slate-200 border-t-cyan-500 animate-spin-slow"
         ></div>
-        <h2 class="text-lg font-semibold text-slate-800 mb-1">
-          Aguardando o host
-        </h2>
-        <p class="text-sm text-slate-400 mb-8">
-          A partida vai começar em breve
-        </p>
+        <h2 class="text-lg font-semibold text-slate-800 mb-1">Aguardando o host</h2>
+        <p class="text-sm text-slate-400 mb-8">A partida vai começar em breve</p>
 
         <div class="text-sm font-medium text-cyan-600 mb-4">
-          {$playerSession.totalPlayers} jogador{($playerSession.totalPlayers ??
-            0) !== 1
+          {$playerSession.totalPlayers} jogador{($playerSession.totalPlayers ?? 0) !== 1
             ? "es"
             : ""} na sala
         </div>
 
         <div class="flex flex-wrap gap-2 justify-center max-w-sm">
-          {#each $playerSession.nicknames as nick}
+          {#each $playerSession.nicknames as nick (nick)}
             <span
               class="px-3 py-1.5 rounded-full bg-white border border-slate-200 text-sm font-medium text-slate-600"
               >{nick}</span
@@ -180,30 +159,25 @@
 
         <!-- Question text -->
         {#if $playerSession.currentQuestion}
-          <p
-            class="text-lg font-semibold text-slate-800 text-center leading-relaxed mb-6"
-          >
+          <p class="text-lg font-semibold text-slate-800 text-center leading-relaxed mb-6">
             {$playerSession.currentQuestion.text}
           </p>
 
           <!-- Alternatives -->
           <div
-            class="flex-1 flex flex-col gap-3 {($playerSession.currentQuestion
-              ?.alternatives?.length ?? 0) === 2
+            class="flex-1 flex flex-col gap-3 {($playerSession.currentQuestion?.alternatives
+              ?.length ?? 0) === 2
               ? 'flex-row items-stretch'
               : ''}"
           >
-            {#each $playerSession.currentQuestion.alternatives as alt, i}
+            {#each $playerSession.currentQuestion.alternatives as alt, i (alt.id)}
               <button
                 onclick={() => handleAnswer(i, alt.text)}
                 disabled={$playerSession.hasAnswered}
                 class="flex items-center gap-3 p-4 rounded-xl text-white text-left font-semibold text-sm
                   transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
-                  active:scale-[0.98] shadow-sm {BUTTON_COLORS[
-                  i % BUTTON_COLORS.length
-                ]}
-                  {($playerSession.currentQuestion?.alternatives?.length ??
-                  0) === 2
+                  active:scale-[0.98] shadow-sm {BUTTON_COLORS[i % BUTTON_COLORS.length]}
+                  {($playerSession.currentQuestion?.alternatives?.length ?? 0) === 2
                   ? 'flex-1 flex-col justify-center text-center gap-2 py-8'
                   : ''}"
               >
@@ -246,8 +220,8 @@
                 ? 'text-emerald-600'
                 : 'text-slate-400'}"
             >
-              {#if $playerSession.lastResult.isCorrect}+{$playerSession
-                  .lastResult.pointsEarned} pts{:else}0 pts{/if}
+              {#if $playerSession.lastResult.isCorrect}+{$playerSession.lastResult.pointsEarned} pts{:else}0
+                pts{/if}
             </p>
             <p class="text-sm text-slate-400 mt-1">
               Total: {$playerSession.totalScore} pts
@@ -256,9 +230,7 @@
         {/if}
 
         {#if $playerSession.correctAnswer}
-          <div
-            class="bg-white rounded-xl border border-slate-200 px-5 py-3 max-w-xs w-full"
-          >
+          <div class="bg-white rounded-xl border border-slate-200 px-5 py-3 max-w-xs w-full">
             <p class="text-xs text-slate-400 mb-1">Resposta correta</p>
             <p class="text-sm font-semibold text-emerald-600">
               {$playerSession.correctAnswer}
@@ -272,17 +244,13 @@
       <!-- ── Phase: Leaderboard ── -->
     {:else if phase === "leaderboard"}
       <div class="flex-1 flex flex-col">
-        <h2 class="text-xl font-bold text-slate-900 text-center mb-4">
-          Placar
-        </h2>
+        <h2 class="text-xl font-bold text-slate-900 text-center mb-4">Placar</h2>
 
         {#if $leaderboardMyRank}
           <div
             class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 flex items-center gap-3"
           >
-            <span class="text-lg font-bold text-amber-700"
-              >#{$leaderboardMyRank}</span
-            >
+            <span class="text-lg font-bold text-amber-700">#{$leaderboardMyRank}</span>
             <span class="text-sm text-amber-700">Sua posição</span>
             <span class="ml-auto text-sm font-bold text-amber-700 tabular-nums"
               >{$leaderboardMyScore} pts</span
@@ -291,18 +259,16 @@
         {/if}
 
         <div class="space-y-2">
-          {#each $playerSession.leaderboard as entry, i}
+          {#each $playerSession.leaderboard as entry, i (entry.rank)}
             <div
               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm
-              {entry.nickname.toLowerCase() ===
-              ($playerSession.nickname ?? '').toLowerCase()
+              {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
                 ? 'bg-cyan-50 border border-cyan-200'
                 : 'bg-white border border-slate-100'}"
             >
               <span
                 class="w-8 text-center font-bold shrink-0
-                {entry.nickname.toLowerCase() ===
-                ($playerSession.nickname ?? '').toLowerCase()
+                {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
                   ? 'text-cyan-700'
                   : 'text-slate-400'}"
               >
@@ -312,12 +278,8 @@
                 {:else}#{entry.rank}
                 {/if}
               </span>
-              <span class="font-medium text-slate-700 truncate flex-1"
-                >{entry.nickname}</span
-              >
-              <span class="font-bold text-slate-900 tabular-nums"
-                >{entry.score}</span
-              >
+              <span class="font-medium text-slate-700 truncate flex-1">{entry.nickname}</span>
+              <span class="font-bold text-slate-900 tabular-nums">{entry.score}</span>
               <span class="text-xs text-slate-400 tabular-nums w-10 text-right"
                 >{entry.correctCount} ✓</span
               >
@@ -353,7 +315,7 @@
         <!-- Podium top 3 -->
         {#if $playerSession.leaderboard.length > 0}
           <div class="flex items-end justify-center gap-3 mb-6">
-            {#each $playerSession.leaderboard.slice(0, 3) as entry, i}
+            {#each $playerSession.leaderboard.slice(0, 3) as entry, i (entry.rank)}
               {@const medals = ["🥇", "🥈", "🥉"]}
               {@const heights = ["h-24", "h-16", "h-14"]}
               {@const podiumBg = [
@@ -362,8 +324,7 @@
                 "bg-orange-50 border-orange-100",
               ]}
               <div class="flex flex-col items-center gap-2">
-                <span
-                  class="text-xs font-semibold text-slate-700 text-center max-w-[72px] truncate"
+                <span class="text-xs font-semibold text-slate-700 text-center max-w-[72px] truncate"
                   >{entry.nickname}</span
                 >
                 <div
@@ -372,9 +333,7 @@
                   ]} border border-b-0 flex flex-col items-center justify-center"
                 >
                   <span class="text-xl">{medals[i]}</span>
-                  <span class="text-xs font-bold text-slate-600 tabular-nums"
-                    >{entry.score}</span
-                  >
+                  <span class="text-xs font-bold text-slate-600 tabular-nums">{entry.score}</span>
                 </div>
               </div>
             {/each}
@@ -383,23 +342,16 @@
 
         <!-- Full rankings -->
         <div class="space-y-1.5 mb-6">
-          {#each $playerSession.leaderboard as entry}
+          {#each $playerSession.leaderboard as entry (entry.rank)}
             <div
               class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm
-              {entry.nickname.toLowerCase() ===
-              ($playerSession.nickname ?? '').toLowerCase()
+              {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
                 ? 'bg-cyan-50 font-semibold'
                 : 'bg-white'}"
             >
-              <span class="w-6 text-center text-slate-400 text-xs tabular-nums"
-                >#{entry.rank}</span
-              >
-              <span class="flex-1 text-slate-700 truncate"
-                >{entry.nickname}</span
-              >
-              <span class="font-bold text-slate-900 tabular-nums"
-                >{entry.score} pts</span
-              >
+              <span class="w-6 text-center text-slate-400 text-xs tabular-nums">#{entry.rank}</span>
+              <span class="flex-1 text-slate-700 truncate">{entry.nickname}</span>
+              <span class="font-bold text-slate-900 tabular-nums">{entry.score} pts</span>
             </div>
           {/each}
         </div>
@@ -408,8 +360,7 @@
           <div
             class="bg-cyan-50 border border-cyan-200 rounded-xl px-4 py-3 text-center text-sm font-medium text-cyan-700 mb-4"
           >
-            Você terminou em <span class="font-bold">#{$leaderboardMyRank}</span
-            >
+            Você terminou em <span class="font-bold">#{$leaderboardMyRank}</span>
             de {$playerSession.totalPlayers} jogadores com
             <span class="font-bold">{$playerSession.totalScore} pts</span>
           </div>

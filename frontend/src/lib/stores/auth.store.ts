@@ -67,7 +67,10 @@ function createAuthStore() {
     isAuthenticated,
     loading: { subscribe: loading.subscribe },
     error: { subscribe: error.subscribe },
-    login, register, logout, tryRefresh,
+    login,
+    register,
+    logout,
+    tryRefresh,
   };
 }
 

@@ -31,8 +31,7 @@ export function useRegister() {
   const qc = useQueryClient();
 
   return createMutation(() => ({
-    mutationFn: (body: { name: string; email: string; password: string }) =>
-      authApi.register(body),
+    mutationFn: (body: { name: string; email: string; password: string }) => authApi.register(body),
     onSuccess: (data) => {
       qc.setQueryData(["auth", "me"], { user: data.user } satisfies {
         user: UserResponse;

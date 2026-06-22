@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { page } from "$app/stores";
+  import { resolve } from "$app/paths";
   import { report } from "$lib/stores/report.store";
   import type { QuizReportItem, SessionSummary } from "$lib/types/report";
 
@@ -61,16 +62,10 @@
 <div class="px-8 py-8 max-w-5xl">
   <!-- Back + title -->
   <a
-    href="/quiz/{quizId}/edit"
+    href={resolve(`/quiz/${quizId}/edit`)}
     class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-6"
   >
-    <svg
-      class="w-4 h-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      stroke-width="1.5"
-    >
+    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
       <path
         stroke-linecap="round"
         stroke-linejoin="round"
@@ -81,9 +76,7 @@
   </a>
 
   <h1 class="text-2xl font-bold text-slate-900 mb-2">Relatório do Quiz</h1>
-  <p class="text-sm text-slate-500 mb-8">
-    Métricas de desempenho e histórico de sessões
-  </p>
+  <p class="text-sm text-slate-500 mb-8">Métricas de desempenho e histórico de sessões</p>
 
   <!-- Loading -->
   {#if loading}
@@ -96,9 +89,7 @@
 
     <!-- Error -->
   {:else if storeError}
-    <div
-      class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
-    >
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
       {storeError}
     </div>
 
@@ -122,23 +113,15 @@
           />
         </svg>
       </div>
-      <h3 class="text-base font-semibold text-slate-700 mb-1">
-        Nenhum dado disponível
-      </h3>
-      <p class="text-sm text-slate-400">
-        Realize uma sessão para gerar relatórios
-      </p>
+      <h3 class="text-base font-semibold text-slate-700 mb-1">Nenhum dado disponível</h3>
+      <p class="text-sm text-slate-400">Realize uma sessão para gerar relatórios</p>
     </div>
   {:else}
     <!-- Per-question metrics -->
     {#if reportItems.length > 0}
       <section class="mb-10">
-        <h2 class="text-lg font-semibold text-slate-800 mb-4">
-          Métricas por Pergunta
-        </h2>
-        <div
-          class="bg-white rounded-xl border border-slate-200 overflow-hidden"
-        >
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Métricas por Pergunta</h2>
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead>
@@ -171,21 +154,17 @@
                     class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors"
                   >
                     <td class="px-5 py-3">
-                      <span
-                        class="text-sm font-medium text-slate-700 line-clamp-2"
+                      <span class="text-sm font-medium text-slate-700 line-clamp-2"
                         >{item.text}</span
                       >
                     </td>
                     <td class="px-5 py-3 text-right">
-                      <span
-                        class="text-sm font-semibold text-emerald-600 tabular-nums"
+                      <span class="text-sm font-semibold text-emerald-600 tabular-nums"
                         >{item.correctCount}</span
                       >
                     </td>
                     <td class="px-5 py-3 text-right">
-                      <span class="text-sm text-slate-500 tabular-nums"
-                        >{item.totalAnswers}</span
-                      >
+                      <span class="text-sm text-slate-500 tabular-nums">{item.totalAnswers}</span>
                     </td>
                     <td class="px-5 py-3 text-right">
                       <span
@@ -213,12 +192,8 @@
     <!-- Session history -->
     {#if sessions.length > 0}
       <section>
-        <h2 class="text-lg font-semibold text-slate-800 mb-4">
-          Histórico de Sessões
-        </h2>
-        <div
-          class="bg-white rounded-xl border border-slate-200 overflow-hidden"
-        >
+        <h2 class="text-lg font-semibold text-slate-800 mb-4">Histórico de Sessões</h2>
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <div class="overflow-x-auto">
             <table class="w-full">
               <thead>
@@ -259,51 +234,35 @@
                     class="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors"
                   >
                     <td class="px-5 py-3">
-                      <span
-                        class="text-sm font-mono font-semibold text-slate-600 tracking-wide"
+                      <span class="text-sm font-mono font-semibold text-slate-600 tracking-wide"
                         >{s.pin}</span
                       >
                     </td>
                     <td class="px-5 py-3">
                       <span
                         class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold
-                        {s.status === 'finished'
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : ''}
-                        {s.status === 'playing'
-                          ? 'bg-blue-50 text-blue-600'
-                          : ''}
-                        {s.status === 'lobby'
-                          ? 'bg-amber-50 text-amber-600'
-                          : ''}"
+                        {s.status === 'finished' ? 'bg-emerald-50 text-emerald-600' : ''}
+                        {s.status === 'playing' ? 'bg-blue-50 text-blue-600' : ''}
+                        {s.status === 'lobby' ? 'bg-amber-50 text-amber-600' : ''}"
                       >
                         {statusLabel(s.status)}
                       </span>
                     </td>
                     <td class="px-5 py-3 text-right">
-                      <span class="text-sm text-slate-600 tabular-nums"
-                        >{s.playerCount}</span
-                      >
+                      <span class="text-sm text-slate-600 tabular-nums">{s.playerCount}</span>
                     </td>
                     <td class="px-5 py-3">
-                      <span class="text-sm font-medium text-slate-700"
-                        >{s.winner ?? "—"}</span
-                      >
+                      <span class="text-sm font-medium text-slate-700">{s.winner ?? "—"}</span>
                     </td>
                     <td class="px-5 py-3 text-right">
-                      <span class="text-sm text-slate-600 tabular-nums"
-                        >{s.winnerScore ?? "—"}</span
+                      <span class="text-sm text-slate-600 tabular-nums">{s.winnerScore ?? "—"}</span
                       >
                     </td>
                     <td class="px-5 py-3">
-                      <span class="text-xs text-slate-500"
-                        >{formatDate(s.startedAt)}</span
-                      >
+                      <span class="text-xs text-slate-500">{formatDate(s.startedAt)}</span>
                     </td>
                     <td class="px-5 py-3">
-                      <span class="text-xs text-slate-500"
-                        >{formatDate(s.finishedAt)}</span
-                      >
+                      <span class="text-xs text-slate-500">{formatDate(s.finishedAt)}</span>
                     </td>
                   </tr>
                 {/each}

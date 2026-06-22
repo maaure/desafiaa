@@ -13,9 +13,8 @@ function createQuizEditorStore() {
   const isLoadingList = writable(false);
   const listError = writable<string | null>(null);
 
-  const selectedQuestion = derived(
-    [quiz, selectedQuestionIdx],
-    ([$q, $i]) => ($i !== null && $q) ? $q.questions[$i] : null,
+  const selectedQuestion = derived([quiz, selectedQuestionIdx], ([$q, $i]) =>
+    $i !== null && $q ? $q.questions[$i] : null,
   );
 
   function validate(q: Quiz): Record<string, string> {
@@ -43,7 +42,14 @@ function createQuizEditorStore() {
     },
 
     initNew(title: string) {
-      quiz.set({ id: "", title, description: null, isPublished: false, createdAt: "", questions: [] });
+      quiz.set({
+        id: "",
+        title,
+        description: null,
+        isPublished: false,
+        createdAt: "",
+        questions: [],
+      });
     },
 
     updateTitle(title: string) {
@@ -67,23 +73,29 @@ function createQuizEditorStore() {
           questionType: type,
           basePoints: 1000,
           sortOrder: q.questions.length,
-          alternatives: type === "true_false"
-            ? [{ id: `ta_${Date.now()}`, text: "Verdadeiro", isCorrect: false, sortOrder: 0 },
-               { id: `tb_${Date.now()}`, text: "Falso", isCorrect: false, sortOrder: 1 }]
-            : [],
+          alternatives:
+            type === "true_false"
+              ? [
+                  { id: `ta_${Date.now()}`, text: "Verdadeiro", isCorrect: false, sortOrder: 0 },
+                  { id: `tb_${Date.now()}`, text: "Falso", isCorrect: false, sortOrder: 1 },
+                ]
+              : [],
         };
         return { ...q, questions: [...q.questions, newQ] };
       });
     },
 
     removeQuestion(id: string) {
-      quiz.update((q) => q ? { ...q, questions: q.questions.filter((x) => x.id !== id) } : q);
+      quiz.update((q) => (q ? { ...q, questions: q.questions.filter((x) => x.id !== id) } : q));
     },
 
     updateQuestionText(questionId: string, text: string) {
       quiz.update((q) => {
         if (!q) return q;
-        return { ...q, questions: q.questions.map((qn) => qn.id === questionId ? { ...qn, text } : qn) };
+        return {
+          ...q,
+          questions: q.questions.map((qn) => (qn.id === questionId ? { ...qn, text } : qn)),
+        };
       });
     },
 
@@ -94,7 +106,10 @@ function createQuizEditorStore() {
           ...q,
           questions: q.questions.map((qn) =>
             qn.id === questionId
-              ? { ...qn, alternatives: qn.alternatives.map((a) => (a.id === altId ? { ...a, text } : a)) }
+              ? {
+                  ...qn,
+                  alternatives: qn.alternatives.map((a) => (a.id === altId ? { ...a, text } : a)),
+                }
               : qn,
           ),
         };
@@ -108,7 +123,18 @@ function createQuizEditorStore() {
           ...q,
           questions: q.questions.map((qn) =>
             qn.id === questionId
-              ? { ...qn, alternatives: [...qn.alternatives, { id: `a_${Date.now()}`, text: "", isCorrect: false, sortOrder: qn.alternatives.length }] }
+              ? {
+                  ...qn,
+                  alternatives: [
+                    ...qn.alternatives,
+                    {
+                      id: `a_${Date.now()}`,
+                      text: "",
+                      isCorrect: false,
+                      sortOrder: qn.alternatives.length,
+                    },
+                  ],
+                }
               : qn,
           ),
         };
@@ -122,7 +148,13 @@ function createQuizEditorStore() {
           ...q,
           questions: q.questions.map((qn) =>
             qn.id === questionId
-              ? { ...qn, alternatives: qn.alternatives.map((a) => ({ ...a, isCorrect: a.id === alternativeId })) }
+              ? {
+                  ...qn,
+                  alternatives: qn.alternatives.map((a) => ({
+                    ...a,
+                    isCorrect: a.id === alternativeId,
+                  })),
+                }
               : qn,
           ),
         };
@@ -143,9 +175,16 @@ function createQuizEditorStore() {
 
         // Step 1: Create or update quiz metadata
         if (quizId) {
-          await quizzesApi.update(quizId, { title: current.title, description: current.description, isPublished: current.isPublished });
+          await quizzesApi.update(quizId, {
+            title: current.title,
+            description: current.description,
+            isPublished: current.isPublished,
+          });
         } else {
-          const created = await quizzesApi.create({ title: current.title, description: current.description ?? undefined });
+          const created = await quizzesApi.create({
+            title: current.title,
+            description: current.description ?? undefined,
+          });
           quizId = created.id;
         }
 
@@ -175,7 +214,8 @@ function createQuizEditorStore() {
           const updatedAlternatives = [];
           for (const alt of qn.alternatives) {
             let altId = alt.id;
-            const isNewAlt = alt.id.startsWith("a_") || alt.id.startsWith("ta_") || alt.id.startsWith("tb_");
+            const isNewAlt =
+              alt.id.startsWith("a_") || alt.id.startsWith("ta_") || alt.id.startsWith("tb_");
 
             if (isNewAlt) {
               const created = await quizzesApi.addAlternative(questionId, {
@@ -208,8 +248,9 @@ function createQuizEditorStore() {
 
         errors.set({});
         return true;
-      } catch (e: any) {
-        errors.set({ save: e.message ?? "Erro ao salvar" });
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Erro ao salvar";
+        errors.set({ save: msg });
         return false;
       } finally {
         isSaving.set(false);
@@ -220,11 +261,12 @@ function createQuizEditorStore() {
       isLoadingList.set(true);
       listError.set(null);
       try {
-        const data: any = await quizzesApi.list();
-        const items: QuizListItem[] = data.data ?? [];
+        const response = await quizzesApi.list();
+        const items: QuizListItem[] = (response.data ?? []) as QuizListItem[];
         quizList.set(items);
-      } catch (e: any) {
-        listError.set(e.message ?? "Erro ao carregar lista");
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : "Erro ao carregar lista";
+        listError.set(msg);
       } finally {
         isLoadingList.set(false);
       }

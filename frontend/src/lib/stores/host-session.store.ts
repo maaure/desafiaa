@@ -110,50 +110,38 @@ function createHostSessionStore() {
       },
     );
 
-    socket.on(
-      "host:question:active",
-      (payload: { questionIndex: number; total: number }) => {
-        state.update((s) => ({
-          ...s,
-          phase: "playing",
-          currentQuestion: { index: payload.questionIndex, total: payload.total },
-          progress: { answered: 0, total: 0 },
-        }));
-      },
-    );
+    socket.on("host:question:active", (payload: { questionIndex: number; total: number }) => {
+      state.update((s) => ({
+        ...s,
+        phase: "playing",
+        currentQuestion: { index: payload.questionIndex, total: payload.total },
+        progress: { answered: 0, total: 0 },
+      }));
+    });
 
-    socket.on(
-      "host:answers:progress",
-      (payload: { answered: number; total: number }) => {
-        state.update((s) => ({
-          ...s,
-          progress: { answered: payload.answered, total: payload.total },
-        }));
-      },
-    );
+    socket.on("host:answers:progress", (payload: { answered: number; total: number }) => {
+      state.update((s) => ({
+        ...s,
+        progress: { answered: payload.answered, total: payload.total },
+      }));
+    });
 
-    socket.on(
-      "host:questions:exhausted",
-      (payload: { rankings: LeaderboardEntry[] }) => {
-        state.update((s) => ({
-          ...s,
-          phase: "leaderboard",
-          leaderboard: payload.rankings,
-          questionsExhausted: true,
-        }));
-      },
-    );
+    socket.on("host:questions:exhausted", (payload: { rankings: LeaderboardEntry[] }) => {
+      state.update((s) => ({
+        ...s,
+        phase: "leaderboard",
+        leaderboard: payload.rankings,
+        questionsExhausted: true,
+      }));
+    });
 
-    socket.on(
-      "game:leaderboard:show",
-      (payload: { rankings: LeaderboardEntry[] }) => {
-        state.update((s) => ({
-          ...s,
-          phase: "leaderboard",
-          leaderboard: payload.rankings,
-        }));
-      },
-    );
+    socket.on("game:leaderboard:show", (payload: { rankings: LeaderboardEntry[] }) => {
+      state.update((s) => ({
+        ...s,
+        phase: "leaderboard",
+        leaderboard: payload.rankings,
+      }));
+    });
 
     socket.on(
       "game:ended",
@@ -230,6 +218,27 @@ function createHostSessionStore() {
     state.update((s) => ({ ...s, error: null }));
   }
 
+  function reset() {
+    disconnect();
+    localStorage.removeItem("currentQuizId");
+    state.set({
+      phase: "idle",
+      pin: null,
+      sessionId: null,
+      quizId: null,
+      playerCount: 0,
+      nicknames: [],
+      currentQuestion: null,
+      currentQuestionData: null,
+      timeLimitSeconds: 30,
+      progress: { answered: 0, total: 0 },
+      leaderboard: [],
+      error: null,
+      isConnected: false,
+      questionsExhausted: false,
+    });
+  }
+
   return {
     subscribe: state.subscribe,
     phase: derived(state, ($s) => $s.phase),
@@ -255,6 +264,7 @@ function createHostSessionStore() {
     showLeaderboard,
     endSession,
     clearError,
+    reset,
   };
 }
 

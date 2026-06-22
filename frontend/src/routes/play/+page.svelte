@@ -1,5 +1,6 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { playerSession } from "$lib/stores/player-session.store";
 
   let pin = $state("");
@@ -34,7 +35,7 @@
     if (!joined) return;
     const p = $playerSession;
     if (p.phase === "lobby" && p.pin) {
-      goto(`/play/${p.pin}`);
+      goto(resolve(`/play/${p.pin}`));
     }
   });
 </script>
@@ -68,10 +69,7 @@
 
       <form onsubmit={handleSubmit} class="space-y-5">
         <div>
-          <label
-            for="pin"
-            class="block text-sm font-semibold text-slate-700 mb-1.5"
-          >
+          <label for="pin" class="block text-sm font-semibold text-slate-700 mb-1.5">
             PIN da partida
           </label>
           <input
@@ -95,10 +93,7 @@
         </div>
 
         <div>
-          <label
-            for="nickname"
-            class="block text-sm font-semibold text-slate-700 mb-1.5"
-          >
+          <label for="nickname" class="block text-sm font-semibold text-slate-700 mb-1.5">
             Seu apelido
           </label>
           <input
@@ -141,9 +136,7 @@
       {/if}
 
       <p class="mt-8 text-xs text-center text-slate-400">
-        É um host? <a
-          href="/login"
-          class="text-cyan-600 hover:text-cyan-700 font-medium"
+        É um host? <a href={resolve("/login")} class="text-cyan-600 hover:text-cyan-700 font-medium"
           >Acesse o painel</a
         >
       </p>

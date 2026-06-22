@@ -12,9 +12,7 @@ export const leaderboardMyRank = derived(
   [leaderboardRankings, leaderboardMyNickname],
   ([$rankings, $nick]) => {
     if (!$nick) return null;
-    const entry = $rankings.find(
-      (e) => e.nickname.toLowerCase() === $nick.toLowerCase(),
-    );
+    const entry = $rankings.find((e) => e.nickname.toLowerCase() === $nick.toLowerCase());
     return entry?.rank ?? null;
   },
 );
@@ -24,9 +22,7 @@ export const leaderboardMyScore = derived(
   [leaderboardRankings, leaderboardMyNickname],
   ([$rankings, $nick]) => {
     if (!$nick) return 0;
-    const entry = $rankings.find(
-      (e) => e.nickname.toLowerCase() === $nick.toLowerCase(),
-    );
+    const entry = $rankings.find((e) => e.nickname.toLowerCase() === $nick.toLowerCase());
     return entry?.score ?? 0;
   },
 );

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { auth } from "$lib/stores/auth.store";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { onMount } from "svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Input from "$lib/components/ui/Input.svelte";
@@ -22,7 +23,7 @@
   function handleSubmit(e: Event) {
     e.preventDefault();
     auth.login(email, password).then((ok) => {
-      if (ok) goto("/dashboard");
+      if (ok) goto(resolve("/dashboard"));
     });
   }
 </script>
@@ -74,15 +75,13 @@
 
     <p class="mt-6 text-center text-sm text-slate-400">
       Não tem conta? <a
-        href="/register"
+        href={resolve("/register")}
         class="text-cyan-600 hover:text-cyan-700 font-medium">Criar conta</a
       >
     </p>
 
     <p class="mt-3 text-center text-xs text-slate-300">
-      <a href="/play" class="hover:text-slate-500 transition-colors"
-        >Sou um jogador</a
-      >
+      <a href={resolve("/play")} class="hover:text-slate-500 transition-colors">Sou um jogador</a>
     </p>
   </div>
 </div>

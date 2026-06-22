@@ -1,6 +1,7 @@
 <script lang="ts">
   import { auth } from "$lib/stores/auth.store";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { onMount } from "svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Input from "$lib/components/ui/Input.svelte";
@@ -30,7 +31,7 @@
       return;
     }
     auth.register(name, email, password).then((ok) => {
-      if (ok) goto("/dashboard");
+      if (ok) goto(resolve("/dashboard"));
     });
   }
 </script>
@@ -100,7 +101,7 @@
 
     <p class="mt-6 text-center text-sm text-slate-400">
       Já tem conta? <a
-        href="/login"
+        href={resolve("/login")}
         class="text-cyan-600 hover:text-cyan-700 font-medium">Entrar</a
       >
     </p>

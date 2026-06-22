@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
+  import { resolve } from "$app/paths";
   import { hostSession, type HostPhase } from "$lib/stores/host-session.store";
   import type { LeaderboardEntry } from "$lib/types/session";
 
@@ -19,9 +20,7 @@
     alternatives: { id: string; text: string; sortOrder: number }[];
   } | null>(get(hostSession.currentQuestionData));
   let timeLimitSeconds = $state(get(hostSession.timeLimitSeconds));
-  let progress = $state<{ answered: number; total: number }>(
-    get(hostSession.progress),
-  );
+  let progress = $state<{ answered: number; total: number }>(get(hostSession.progress));
   let leaderboard = $state<LeaderboardEntry[]>(get(hostSession.leaderboard));
   let error = $state<string | null>(get(hostSession.error));
   let questionsExhausted = $state(get(hostSession.questionsExhausted));
@@ -38,9 +37,7 @@
 
   const quizId =
     $hostSession.quizId ||
-    (typeof localStorage !== "undefined"
-      ? localStorage.getItem("currentQuizId")
-      : null);
+    (typeof localStorage !== "undefined" ? localStorage.getItem("currentQuizId") : null);
 
   onMount(() => {
     const unsubs: (() => void)[] = [
@@ -50,9 +47,7 @@
       hostSession.playerCount.subscribe((v) => (playerCount = v)),
       hostSession.nicknames.subscribe((v) => (nicknames = v)),
       hostSession.currentQuestion.subscribe((v) => (currentQuestion = v)),
-      hostSession.currentQuestionData.subscribe(
-        (v) => (currentQuestionData = v),
-      ),
+      hostSession.currentQuestionData.subscribe((v) => (currentQuestionData = v)),
       hostSession.timeLimitSeconds.subscribe((v) => (timeLimitSeconds = v)),
       hostSession.progress.subscribe((v) => (progress = v)),
       hostSession.leaderboard.subscribe((v) => (leaderboard = v)),
@@ -69,7 +64,7 @@
 
     return () => {
       unsubs.forEach((fn) => fn());
-      hostSession.disconnect();
+      hostSession.reset();
     };
   });
 
@@ -87,7 +82,8 @@
     hostSession.endSession();
   }
   function handleBackToDashboard() {
-    goto("/dashboard");
+    hostSession.reset();
+    goto(resolve("/dashboard"));
   }
   function handleDismissError() {
     hostSession.clearError();
@@ -100,16 +96,10 @@
   <!-- Top bar -->
   <div class="flex items-center justify-between mb-6">
     <a
-      href="/dashboard"
+      href={resolve("/dashboard")}
       class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors"
     >
-      <svg
-        class="w-4 h-4"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        stroke-width="1.5"
-      >
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
         <path
           stroke-linecap="round"
           stroke-linejoin="round"
@@ -153,18 +143,8 @@
         onclick={handleDismissError}
         class="text-red-400 hover:text-red-600 transition-colors p-1"
       >
-        <svg
-          class="w-4 h-4"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M6 18L18 6M6 6l12 12"
-          />
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
@@ -184,12 +164,8 @@
     <div class="space-y-6 animate-slide-up">
       <!-- PIN card -->
       {#if pin}
-        <div
-          class="bg-white rounded-xl border-2 border-dashed border-cyan-200 p-8 text-center"
-        >
-          <p
-            class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3"
-          >
+        <div class="bg-white rounded-xl border-2 border-dashed border-cyan-200 p-8 text-center">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
             PIN da Sessão
           </p>
           <p
@@ -197,20 +173,16 @@
           >
             {pin}
           </p>
-          <p class="text-sm text-slate-400 mt-4">
-            Compartilhe este código com os participantes
-          </p>
+          <p class="text-sm text-slate-400 mt-4">Compartilhe este código com os participantes</p>
         </div>
       {/if}
 
       <!-- Timer config (before opening room) -->
       {#if !sessionStarted}
         <div class="bg-white rounded-xl border border-slate-200 p-6">
-          <p class="text-sm font-semibold text-slate-700 mb-3">
-            Tempo por pergunta
-          </p>
+          <p class="text-sm font-semibold text-slate-700 mb-3">Tempo por pergunta</p>
           <div class="flex gap-2 mb-4">
-            {#each TIME_PRESETS as preset}
+            {#each TIME_PRESETS as preset (preset.label)}
               <button
                 onclick={() => (selectedTimeLimit = preset.value)}
                 class="flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors
@@ -233,9 +205,7 @@
 
         <!-- Lobby status (after room opened) -->
       {:else}
-        <div
-          class="bg-white rounded-xl border border-slate-200 p-6 text-center"
-        >
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center">
           <h2 class="text-lg font-semibold text-slate-800 mb-1">Sala aberta</h2>
           <p class="text-sm text-slate-400 mb-4">Aguardando jogadores...</p>
 
@@ -243,14 +213,12 @@
             {playerCount}
           </div>
           <p class="text-xs text-slate-400 mb-6">
-            jogador{playerCount !== 1 ? "es" : ""} conectado{playerCount !== 1
-              ? "s"
-              : ""}
+            jogador{playerCount !== 1 ? "es" : ""} conectado{playerCount !== 1 ? "s" : ""}
           </p>
 
           {#if nicknames.length > 0}
             <div class="flex flex-wrap gap-2 justify-center mb-6">
-              {#each nicknames as nick}
+              {#each nicknames as nick (nick)}
                 <span
                   class="px-3 py-1.5 rounded-full bg-slate-100 text-sm font-medium text-slate-600"
                   >{nick}</span
@@ -258,9 +226,7 @@
               {/each}
             </div>
           {:else}
-            <p class="text-sm text-slate-300 italic mb-6">
-              Nenhum jogador ainda
-            </p>
+            <p class="text-sm text-slate-300 italic mb-6">Nenhum jogador ainda</p>
           {/if}
 
           {#if playerCount > 0}
@@ -282,16 +248,12 @@
       <!-- Question header -->
       <div class="flex items-center justify-between">
         <p class="text-sm font-medium text-slate-500">
-          Pergunta <span class="text-slate-900 font-bold"
-            >{currentQuestion?.index ?? "?"}</span
-          >
+          Pergunta <span class="text-slate-900 font-bold">{currentQuestion?.index ?? "?"}</span>
           de <span class="text-slate-700">{currentQuestion?.total ?? "?"}</span>
         </p>
         <div
           class="flex items-center gap-2 px-4 py-2 rounded-lg font-mono tabular-nums
-          {timeLimitSeconds <= 5
-            ? 'bg-red-50 text-red-600'
-            : 'bg-slate-100 text-slate-700'}"
+          {timeLimitSeconds <= 5 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'}"
         >
           <span class="text-2xl font-bold">{timeLimitSeconds}</span>
           <span class="text-sm">s</span>
@@ -306,7 +268,7 @@
           </p>
 
           <div class="space-y-2.5">
-            {#each currentQuestionData.alternatives as alt, i}
+            {#each currentQuestionData.alternatives as alt, i (alt.id)}
               <div
                 class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 bg-slate-50"
               >
@@ -316,9 +278,7 @@
                 >
                   {LETTERS[i] ?? String(i + 1)}
                 </span>
-                <span class="text-sm font-medium text-slate-700"
-                  >{alt.text}</span
-                >
+                <span class="text-sm font-medium text-slate-700">{alt.text}</span>
               </div>
             {/each}
           </div>
@@ -328,9 +288,7 @@
       <!-- Progress -->
       <div class="bg-white rounded-xl border border-slate-200 p-5">
         <div class="flex items-center justify-between mb-2">
-          <span
-            class="text-xs font-semibold text-slate-400 uppercase tracking-wide"
-            >Respostas</span
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Respostas</span
           >
           <span class="text-sm font-medium text-slate-600 tabular-nums">
             {progress.answered} / {progress.total}
@@ -339,9 +297,7 @@
         <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
           <div
             class="h-full rounded-full bg-emerald-500 transition-all duration-500"
-            style="width: {progress.total > 0
-              ? (progress.answered / progress.total) * 100
-              : 0}%"
+            style="width: {progress.total > 0 ? (progress.answered / progress.total) * 100 : 0}%"
           ></div>
         </div>
       </div>
@@ -401,7 +357,7 @@
         <!-- Top 3 podium for final -->
         {#if questionsExhausted}
           <div class="flex items-end justify-center gap-3 mb-4">
-            {#each leaderboard.slice(0, 3) as entry, i}
+            {#each leaderboard.slice(0, 3) as entry, i (entry.rank)}
               {@const medals = ["🥇", "🥈", "🥉"]}
               {@const heights = ["h-28", "h-20", "h-16"]}
               {@const bgColors = [
@@ -410,8 +366,7 @@
                 "bg-orange-50 border-orange-100",
               ]}
               <div class="flex flex-col items-center gap-2">
-                <span
-                  class="text-sm font-semibold text-slate-800 text-center max-w-[80px] truncate"
+                <span class="text-sm font-semibold text-slate-800 text-center max-w-[80px] truncate"
                   >{entry.nickname}</span
                 >
                 <div
@@ -420,18 +375,14 @@
                   ]} border border-b-0 flex flex-col items-center justify-center"
                 >
                   <span class="text-2xl">{medals[i]}</span>
-                  <span class="text-sm font-bold text-slate-700 tabular-nums"
-                    >{entry.score}</span
-                  >
+                  <span class="text-sm font-bold text-slate-700 tabular-nums">{entry.score}</span>
                 </div>
               </div>
             {/each}
           </div>
         {/if}
 
-        <div
-          class="bg-white rounded-xl border border-slate-200 overflow-hidden"
-        >
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <table class="w-full">
             <thead>
               <tr class="border-b border-slate-100">
@@ -460,24 +411,16 @@
                   {entry.rank === 1 ? 'bg-amber-50' : ''}"
                 >
                   <td class="px-5 py-3">
-                    <span class="text-sm font-bold text-slate-400"
-                      >{entry.rank}</span
-                    >
+                    <span class="text-sm font-bold text-slate-400">{entry.rank}</span>
                   </td>
                   <td class="px-5 py-3">
-                    <span class="text-sm font-medium text-slate-800"
-                      >{entry.nickname}</span
-                    >
+                    <span class="text-sm font-medium text-slate-800">{entry.nickname}</span>
                   </td>
                   <td class="px-5 py-3 text-right">
-                    <span class="text-sm font-bold text-slate-900 tabular-nums"
-                      >{entry.score}</span
-                    >
+                    <span class="text-sm font-bold text-slate-900 tabular-nums">{entry.score}</span>
                   </td>
                   <td class="px-5 py-3 text-right">
-                    <span class="text-sm text-slate-500 tabular-nums"
-                      >{entry.correctCount}</span
-                    >
+                    <span class="text-sm text-slate-500 tabular-nums">{entry.correctCount}</span>
                   </td>
                 </tr>
               {/each}
@@ -485,9 +428,7 @@
           </table>
         </div>
       {:else}
-        <p class="text-center text-sm text-slate-400 py-8">
-          Nenhum dado disponível
-        </p>
+        <p class="text-center text-sm text-slate-400 py-8">Nenhum dado disponível</p>
       {/if}
 
       {#if questionsExhausted}
@@ -546,7 +487,7 @@
       {#if leaderboard.length > 0}
         <!-- Top 3 podium -->
         <div class="flex items-end justify-center gap-3 mb-4">
-          {#each leaderboard.slice(0, 3) as entry, i}
+          {#each leaderboard.slice(0, 3) as entry, i (entry.rank)}
             {@const medals = ["🥇", "🥈", "🥉"]}
             {@const heights = ["h-28", "h-20", "h-16"]}
             {@const bgColors = [
@@ -555,8 +496,7 @@
               "bg-orange-50 border-orange-100",
             ]}
             <div class="flex flex-col items-center gap-2">
-              <span
-                class="text-sm font-semibold text-slate-800 text-center max-w-[80px] truncate"
+              <span class="text-sm font-semibold text-slate-800 text-center max-w-[80px] truncate"
                 >{entry.nickname}</span
               >
               <div
@@ -565,18 +505,14 @@
                 ]} border border-b-0 flex flex-col items-center justify-center"
               >
                 <span class="text-2xl">{medals[i]}</span>
-                <span class="text-sm font-bold text-slate-700 tabular-nums"
-                  >{entry.score}</span
-                >
+                <span class="text-sm font-bold text-slate-700 tabular-nums">{entry.score}</span>
               </div>
             </div>
           {/each}
         </div>
 
         <!-- Full rankings -->
-        <div
-          class="bg-white rounded-xl border border-slate-200 overflow-hidden"
-        >
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
           <table class="w-full">
             <thead>
               <tr class="border-b border-slate-100">
@@ -605,24 +541,16 @@
                   {entry.rank === 1 ? 'bg-amber-50' : ''}"
                 >
                   <td class="px-5 py-3">
-                    <span class="text-sm font-bold text-slate-400"
-                      >{entry.rank}</span
-                    >
+                    <span class="text-sm font-bold text-slate-400">{entry.rank}</span>
                   </td>
                   <td class="px-5 py-3">
-                    <span class="text-sm font-medium text-slate-800"
-                      >{entry.nickname}</span
-                    >
+                    <span class="text-sm font-medium text-slate-800">{entry.nickname}</span>
                   </td>
                   <td class="px-5 py-3 text-right">
-                    <span class="text-sm font-bold text-slate-900 tabular-nums"
-                      >{entry.score}</span
-                    >
+                    <span class="text-sm font-bold text-slate-900 tabular-nums">{entry.score}</span>
                   </td>
                   <td class="px-5 py-3 text-right">
-                    <span class="text-sm text-slate-500 tabular-nums"
-                      >{entry.correctCount}</span
-                    >
+                    <span class="text-sm text-slate-500 tabular-nums">{entry.correctCount}</span>
                   </td>
                 </tr>
               {/each}
