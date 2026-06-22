@@ -20,6 +20,14 @@ export const errorHandler = (
       details: error.flatten().fieldErrors,
     });
   }
+  // Fastify built-in errors (e.g. empty JSON body) carry their own statusCode
+  const fastifyErr = error as { statusCode?: number; code?: string; message?: string };
+  if (fastifyErr.statusCode && fastifyErr.statusCode < 500) {
+    return reply.status(fastifyErr.statusCode).send({
+      error: fastifyErr.code ?? "BAD_REQUEST",
+      message: fastifyErr.message ?? "Erro de validação",
+    });
+  }
   request.log.error(error);
   return reply.status(500).send({
     error: "INTERNAL_ERROR",

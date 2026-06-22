@@ -11,10 +11,12 @@ export class ApiError extends Error {
 export const api = {
   async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem("accessToken");
+    const hasBody = !!options.body;
+
     const res = await fetch(path, {
       ...options,
       headers: {
-        "Content-Type": "application/json",
+        ...(hasBody ? { "Content-Type": "application/json" } : {}),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...options.headers,
       },
