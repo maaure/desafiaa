@@ -1,4 +1,4 @@
-import { eq, and, asc } from "drizzle-orm";
+import { eq, and, asc, sql } from "drizzle-orm";
 import { db, schema } from "../../db";
 import { NotFoundError } from "../../shared/errors";
 import type { CreateQuizInput, UpdateQuizInput } from "./quiz.schema";
@@ -6,6 +6,12 @@ import type { CreateQuizInput, UpdateQuizInput } from "./quiz.schema";
 export const quizService = {
   async list(userId: string, page = 1, limit = 20) {
     const offset = (page - 1) * limit;
+
+    const [{ count: total }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.quizzes)
+      .where(eq(schema.quizzes.authorId, userId));
+
     const quizzes = await db.query.quizzes.findMany({
       where: eq(schema.quizzes.authorId, userId),
       with: { questions: true },
@@ -23,7 +29,7 @@ export const quizService = {
         questionCount: q.questions.length,
         createdAt: q.createdAt.toISOString(),
       })),
-      total: quizzes.length,
+      total,
       page,
       limit,
     };
