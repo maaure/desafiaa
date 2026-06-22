@@ -2,7 +2,7 @@ import { writable, derived } from "svelte/store";
 import type { Socket } from "socket.io-client";
 import { createPlayerSocket } from "$lib/game/socket-player";
 import { setLeaderboard, resetLeaderboard } from "$lib/stores/leaderboard.store";
-import type { LeaderboardEntry } from "$lib/types/session";
+import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
 
 export type PlayerPhase = "join" | "lobby" | "question" | "feedback" | "leaderboard" | "ended";
 

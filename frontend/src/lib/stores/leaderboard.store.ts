@@ -1,5 +1,5 @@
 import { writable, derived } from "svelte/store";
-import type { LeaderboardEntry } from "$lib/types/session";
+import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
 
 /** Writable rankings list. Updated externally when leaderboard/game:ended arrives. */
 export const leaderboardRankings = writable<LeaderboardEntry[]>([]);

@@ -5,7 +5,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { hostSession, type HostPhase } from "$lib/stores/host-session.store";
-  import type { LeaderboardEntry } from "$lib/types/session";
+  import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
 
   let phase = $state<HostPhase>(get(hostSession.phase));
   let pin = $state<string | null>(get(hostSession.pin));

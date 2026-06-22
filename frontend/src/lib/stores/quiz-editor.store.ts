@@ -1,6 +1,7 @@
 import { writable, derived, get } from "svelte/store";
-import { quizzesApi } from "$lib/api/quizzes";
-import type { Quiz, QuizListItem } from "$lib/types/quiz";
+import { quizRequests } from "$lib/api/quizzes/quizzes.requests";
+import { validateQuiz } from "$lib/api/quizzes/quizzes.utils";
+import type { Quiz, QuizListItem } from "$lib/api/quizzes/quizzes.types";
 
 function createQuizEditorStore() {
   const quiz = writable<Quiz | null>(null);
@@ -18,13 +19,7 @@ function createQuizEditorStore() {
   );
 
   function validate(q: Quiz): Record<string, string> {
-    const e: Record<string, string> = {};
-    if (q.questions.length < 2) e.questions = "Mínimo 2 perguntas";
-    for (const qn of q.questions) {
-      if (qn.alternatives.length < 2) e[`q_${qn.id}`] = "Mínimo 2 alternativas";
-      if (!qn.alternatives.some((a) => a.isCorrect)) e[`q_${qn.id}`] = "Defina a correta";
-    }
-    return e;
+    return validateQuiz(q);
   }
 
   return {
@@ -37,7 +32,7 @@ function createQuizEditorStore() {
     listError: { subscribe: listError.subscribe },
 
     async load(quizId: string) {
-      const data = await quizzesApi.getById(quizId);
+      const data = await quizRequests.getById(quizId);
       quiz.set(data);
     },
 
@@ -175,13 +170,13 @@ function createQuizEditorStore() {
 
         // Step 1: Create or update quiz metadata
         if (quizId) {
-          await quizzesApi.update(quizId, {
+          await quizRequests.update(quizId, {
             title: current.title,
             description: current.description,
             isPublished: current.isPublished,
           });
         } else {
-          const created = await quizzesApi.create({
+          const created = await quizRequests.create({
             title: current.title,
             description: current.description ?? undefined,
           });
@@ -203,11 +198,11 @@ function createQuizEditorStore() {
           };
 
           if (isNewQuestion) {
-            const created = await quizzesApi.addQuestion(quizId, questionPayload);
+            const created = await quizRequests.addQuestion(quizId, questionPayload);
             questionId = created.id;
             qIdToRealId.set(qn.id, questionId);
           } else {
-            await quizzesApi.updateQuestion(questionId, questionPayload);
+            await quizRequests.updateQuestion(questionId, questionPayload);
           }
 
           // Sync alternatives
@@ -218,19 +213,19 @@ function createQuizEditorStore() {
               alt.id.startsWith("a_") || alt.id.startsWith("ta_") || alt.id.startsWith("tb_");
 
             if (isNewAlt) {
-              const created = await quizzesApi.addAlternative(questionId, {
+              const created = await quizRequests.addAlternative(questionId, {
                 text: alt.text,
                 isCorrect: alt.isCorrect,
               });
               altId = created.id;
             } else {
-              await quizzesApi.updateAlternative(altId, {
+              await quizRequests.updateAlternative(altId, {
                 text: alt.text,
                 isCorrect: alt.isCorrect,
               });
               // If marked correct, ensure consistency via the /correct endpoint
               if (alt.isCorrect) {
-                await quizzesApi.markCorrect(altId);
+                await quizRequests.markCorrect(altId);
               }
             }
 
@@ -261,7 +256,7 @@ function createQuizEditorStore() {
       isLoadingList.set(true);
       listError.set(null);
       try {
-        const response = await quizzesApi.list();
+        const response = await quizRequests.list();
         const items: QuizListItem[] = (response.data ?? []) as QuizListItem[];
         quizList.set(items);
       } catch (e: unknown) {
@@ -273,7 +268,7 @@ function createQuizEditorStore() {
     },
 
     async deleteQuiz(id: string) {
-      await quizzesApi.remove(id);
+      await quizRequests.remove(id);
       quizList.update((list) => list.filter((q) => q.id !== id));
     },
   };

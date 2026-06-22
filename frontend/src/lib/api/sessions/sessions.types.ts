@@ -11,12 +11,6 @@ export interface GameSession {
   timeLimitSeconds: number;
 }
 
-export interface PlayerState {
-  nickname: string;
-  totalScore: number;
-  correctCount: number;
-}
-
 export interface LeaderboardEntry {
   nickname: string;
   score: number;

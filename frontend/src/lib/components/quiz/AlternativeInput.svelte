@@ -1,6 +1,6 @@
 <script lang="ts">
   import { quizEditor } from "$lib/stores/quiz-editor.store";
-  import type { Alternative } from "$lib/types/quiz";
+  import type { Alternative } from "$lib/api/quizzes/quizzes.types";
 
   let {
     alt,

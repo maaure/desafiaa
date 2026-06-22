@@ -1,6 +1,6 @@
-import { api } from "./client";
+import { api } from "$lib/api/client";
 
-export const quizzesApi = {
+export const quizRequests = {
   list: (page = 1) =>
     api.get<{ data?: unknown[]; total?: number; page?: number; limit?: number }>(
       `/api/quizzes?page=${page}`,

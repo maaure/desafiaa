@@ -1,7 +1,5 @@
 import { createQuery } from "@tanstack/svelte-query";
-import { reportsApi } from "$lib/api/reports";
-
-// ── Query Keys ───────────────────────────────────────────────────────
+import { reportRequests } from "./reports.requests";
 
 export const reportKeys = {
   all: ["reports"] as const,
@@ -10,12 +8,10 @@ export const reportKeys = {
   sessionReport: (sessionId: string) => ["reports", "session", sessionId] as const,
 };
 
-// ── Queries ──────────────────────────────────────────────────────────
-
 export function useQuizReport(quizId: string) {
   return createQuery(() => ({
     queryKey: reportKeys.quizReport(quizId),
-    queryFn: () => reportsApi.quizReport(quizId),
+    queryFn: () => reportRequests.quizReport(quizId),
     enabled: !!quizId,
   }));
 }
@@ -23,7 +19,7 @@ export function useQuizReport(quizId: string) {
 export function useQuizSessions(quizId: string) {
   return createQuery(() => ({
     queryKey: reportKeys.quizSessions(quizId),
-    queryFn: () => reportsApi.quizSessions(quizId),
+    queryFn: () => reportRequests.quizSessions(quizId),
     enabled: !!quizId,
   }));
 }
@@ -31,7 +27,7 @@ export function useQuizSessions(quizId: string) {
 export function useSessionReport(sessionId: string) {
   return createQuery(() => ({
     queryKey: reportKeys.sessionReport(sessionId),
-    queryFn: () => reportsApi.sessionReport(sessionId),
+    queryFn: () => reportRequests.sessionReport(sessionId),
     enabled: !!sessionId,
   }));
 }

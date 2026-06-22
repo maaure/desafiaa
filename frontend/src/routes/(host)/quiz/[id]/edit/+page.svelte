@@ -7,7 +7,7 @@
   import { resolve } from "$app/paths";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import QuestionEditor from "$lib/components/quiz/QuestionEditor.svelte";
-  import type { Quiz } from "$lib/types/quiz";
+  import type { Quiz } from "$lib/api/quizzes/quizzes.types";
 
   let quizId = $page.params.id;
   let quiz = $state<Quiz | null>(get(quizEditor));

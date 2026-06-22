@@ -2,7 +2,7 @@
   import { Plus, Trash2 } from "@lucide/svelte";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import AlternativeInput from "./AlternativeInput.svelte";
-  import type { Question } from "$lib/types/quiz";
+  import type { Question } from "$lib/api/quizzes/quizzes.types";
 
   let {
     question,

@@ -1,7 +1,8 @@
 import { writable, derived } from "svelte/store";
-import { authApi } from "$lib/api/auth";
+import { authRequests } from "$lib/api/auth/auth.requests";
 import { ApiError } from "$lib/api/client";
-import type { UserResponse } from "$lib/types/user";
+import { getAccessToken, setAccessToken, removeAccessToken } from "$lib/api/auth/auth.utils";
+import type { UserResponse } from "$lib/api/auth/auth.types";
 
 function createAuthStore() {
   const user = writable<UserResponse | null>(null);
@@ -13,8 +14,8 @@ function createAuthStore() {
     error.set(null);
     loading.set(true);
     try {
-      const result = await authApi.login({ email, password });
-      localStorage.setItem("accessToken", result.accessToken);
+      const result = await authRequests.login({ email, password });
+      setAccessToken(result.accessToken);
       user.set(result.user);
       return true;
     } catch (err) {
@@ -31,8 +32,8 @@ function createAuthStore() {
     error.set(null);
     loading.set(true);
     try {
-      const result = await authApi.register({ name, email, password });
-      localStorage.setItem("accessToken", result.accessToken);
+      const result = await authRequests.register({ name, email, password });
+      setAccessToken(result.accessToken);
       user.set(result.user);
       return true;
     } catch (err) {
@@ -44,16 +45,16 @@ function createAuthStore() {
   }
 
   async function logout() {
-    await authApi.logout().catch(() => {});
-    localStorage.removeItem("accessToken");
+    await authRequests.logout().catch(() => {});
+    removeAccessToken();
     user.set(null);
   }
 
   async function tryRefresh(): Promise<boolean> {
     try {
-      const { accessToken } = await authApi.refresh();
-      localStorage.setItem("accessToken", accessToken);
-      const { user: freshUser } = await authApi.me();
+      const { accessToken } = await authRequests.refresh();
+      setAccessToken(accessToken);
+      const { user: freshUser } = await authRequests.me();
       user.set(freshUser);
       return true;
     } catch {

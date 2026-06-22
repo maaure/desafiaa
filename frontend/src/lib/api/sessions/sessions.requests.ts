@@ -1,6 +1,6 @@
-import { api } from "./client";
+import { api } from "$lib/api/client";
 
-export const sessionsApi = {
+export const sessionRequests = {
   create: (quizId: string) =>
     api.post<{
       id: string;

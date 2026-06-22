@@ -5,7 +5,8 @@
   import { page } from "$app/stores";
   import { resolve } from "$app/paths";
   import { report } from "$lib/stores/report.store";
-  import type { QuizReportItem, SessionSummary } from "$lib/types/report";
+  import { formatMs, statusLabel, formatDate, accuracyColor } from "$lib/api/reports/reports.utils";
+  import type { QuizReportItem, SessionSummary } from "$lib/api/reports/reports.types";
 
   let quizId = $page.params.id;
 
@@ -29,35 +30,6 @@
       unsub4();
     };
   });
-
-  function formatMs(ms: number): string {
-    if (ms < 1000) return `${ms}ms`;
-    return `${(ms / 1000).toFixed(1)}s`;
-  }
-
-  function statusLabel(status: string): string {
-    switch (status) {
-      case "lobby":
-        return "Aguardando";
-      case "playing":
-        return "Em andamento";
-      case "finished":
-        return "Finalizada";
-      default:
-        return status;
-    }
-  }
-
-  function formatDate(iso: string | null): string {
-    if (!iso) return "—";
-    return new Date(iso).toLocaleString("pt-BR");
-  }
-
-  function accuracyColor(rate: number): string {
-    if (rate >= 80) return "text-emerald-600";
-    if (rate >= 50) return "text-amber-600";
-    return "text-red-500";
-  }
 </script>
 
 <div class="px-8 py-8 max-w-5xl">

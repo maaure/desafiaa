@@ -6,7 +6,7 @@
   import { resolve } from "$app/paths";
   import { hostSession } from "$lib/stores/host-session.store";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
-  import type { QuizListItem } from "$lib/types/quiz";
+  import type { QuizListItem } from "$lib/api/quizzes/quizzes.types";
 
   let quizzes = $state<QuizListItem[]>(get(quizEditor.quizList));
   let isLoading = $state(get(quizEditor.isLoadingList));

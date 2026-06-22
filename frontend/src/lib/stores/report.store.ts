@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
-import { reportsApi } from "$lib/api/reports";
+import { reportRequests } from "$lib/api/reports/reports.requests";
 import { ApiError } from "$lib/api/client";
-import type { QuizReportItem, SessionSummary, SessionReport } from "$lib/types/report";
+import type { QuizReportItem, SessionSummary, SessionReport } from "$lib/api/reports/reports.types";
 
 function createReportStore() {
   const quizReport = writable<QuizReportItem[]>([]);
@@ -15,8 +15,8 @@ function createReportStore() {
     loading.set(true);
     try {
       const [report, sessionList] = await Promise.all([
-        reportsApi.quizReport(quizId),
-        reportsApi.quizSessions(quizId),
+        reportRequests.quizReport(quizId),
+        reportRequests.quizSessions(quizId),
       ]);
       quizReport.set(report ?? []);
       sessions.set(sessionList ?? []);
@@ -33,7 +33,7 @@ function createReportStore() {
     error.set(null);
     loading.set(true);
     try {
-      const report = await reportsApi.sessionReport(sessionId);
+      const report = await reportRequests.sessionReport(sessionId);
       sessionReport.set(report ?? null);
     } catch (err) {
       error.set(err instanceof ApiError ? err.message : "Erro ao carregar relatório da sessão");

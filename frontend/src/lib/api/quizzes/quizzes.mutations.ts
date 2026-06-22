@@ -1,38 +1,14 @@
-import { createQuery, createMutation, useQueryClient } from "@tanstack/svelte-query";
-import { quizzesApi } from "$lib/api/quizzes";
+import { createMutation, useQueryClient } from "@tanstack/svelte-query";
+import { quizRequests } from "./quizzes.requests";
+import { quizKeys } from "./quizzes.queries";
 
-// ── Query Keys ───────────────────────────────────────────────────────
-
-export const quizKeys = {
-  all: ["quizzes"] as const,
-  list: (page: number) => ["quizzes", "list", page] as const,
-  detail: (id: string) => ["quizzes", "detail", id] as const,
-};
-
-// ── Queries ──────────────────────────────────────────────────────────
-
-export function useQuizList(page = 1) {
-  return createQuery(() => ({
-    queryKey: quizKeys.list(page),
-    queryFn: () => quizzesApi.list(page),
-  }));
-}
-
-export function useQuiz(id: string) {
-  return createQuery(() => ({
-    queryKey: quizKeys.detail(id),
-    queryFn: () => quizzesApi.getById(id),
-    enabled: !!id,
-  }));
-}
-
-// ── Mutations ────────────────────────────────────────────────────────
+// ── Quiz mutations ───────────────────────────────────────────────────
 
 export function useCreateQuiz() {
   const qc = useQueryClient();
 
   return createMutation(() => ({
-    mutationFn: (body: { title: string; description?: string }) => quizzesApi.create(body),
+    mutationFn: (body: { title: string; description?: string }) => quizRequests.create(body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: quizKeys.all });
     },
@@ -48,8 +24,8 @@ export function useUpdateQuiz() {
       body,
     }: {
       id: string;
-      body: { title?: string; description?: string | null };
-    }) => quizzesApi.update(id, body),
+      body: { title?: string; description?: string | null; isPublished?: boolean };
+    }) => quizRequests.update(id, body),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: quizKeys.detail(variables.id) });
       qc.invalidateQueries({ queryKey: ["quizzes", "list"] });
@@ -61,7 +37,7 @@ export function useDeleteQuiz() {
   const qc = useQueryClient();
 
   return createMutation(() => ({
-    mutationFn: (id: string) => quizzesApi.remove(id),
+    mutationFn: (id: string) => quizRequests.remove(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: quizKeys.all });
     },
@@ -80,7 +56,7 @@ export function useAddQuestion() {
     }: {
       quizId: string;
       body: { text: string; questionType: "multiple_choice" | "true_false"; basePoints?: number };
-    }) => quizzesApi.addQuestion(quizId, body),
+    }) => quizRequests.addQuestion(quizId, body),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: quizKeys.detail(variables.quizId) });
     },
@@ -92,7 +68,7 @@ export function useUpdateQuestion() {
 
   return createMutation(() => ({
     mutationFn: ({ id, body }: { id: string; body: { text?: string; basePoints?: number } }) =>
-      quizzesApi.updateQuestion(id, body),
+      quizRequests.updateQuestion(id, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: quizKeys.all });
     },
@@ -103,7 +79,7 @@ export function useDeleteQuestion() {
   const qc = useQueryClient();
 
   return createMutation(() => ({
-    mutationFn: ({ id }: { id: string; quizId: string }) => quizzesApi.deleteQuestion(id),
+    mutationFn: ({ id, quizId }: { id: string; quizId: string }) => quizRequests.deleteQuestion(id),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: quizKeys.detail(variables.quizId) });
     },
@@ -117,7 +93,7 @@ export function useAddAlternative() {
 
   return createMutation(() => ({
     mutationFn: ({ questionId, body }: { questionId: string; body: { text: string } }) =>
-      quizzesApi.addAlternative(questionId, body),
+      quizRequests.addAlternative(questionId, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: quizKeys.all });
     },
@@ -128,8 +104,8 @@ export function useUpdateAlternative() {
   const qc = useQueryClient();
 
   return createMutation(() => ({
-    mutationFn: ({ id, body }: { id: string; body: { text?: string } }) =>
-      quizzesApi.updateAlternative(id, body),
+    mutationFn: ({ id, body }: { id: string; body: { text?: string; isCorrect?: boolean } }) =>
+      quizRequests.updateAlternative(id, body),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: quizKeys.all });
     },
@@ -140,7 +116,8 @@ export function useDeleteAlternative() {
   const qc = useQueryClient();
 
   return createMutation(() => ({
-    mutationFn: ({ id }: { id: string; quizId: string }) => quizzesApi.deleteAlternative(id),
+    mutationFn: ({ id, quizId }: { id: string; quizId: string }) =>
+      quizRequests.deleteAlternative(id),
     onSuccess: (_data, variables) => {
       qc.invalidateQueries({ queryKey: quizKeys.detail(variables.quizId) });
     },
@@ -151,7 +128,7 @@ export function useMarkCorrect() {
   const qc = useQueryClient();
 
   return createMutation(() => ({
-    mutationFn: (id: string) => quizzesApi.markCorrect(id),
+    mutationFn: (id: string) => quizRequests.markCorrect(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: quizKeys.all });
     },

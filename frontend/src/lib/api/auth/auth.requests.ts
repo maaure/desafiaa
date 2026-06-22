@@ -1,7 +1,7 @@
-import { api } from "./client";
-import type { UserResponse } from "../types/user";
+import { api } from "$lib/api/client";
+import type { UserResponse } from "./auth.types";
 
-export const authApi = {
+export const authRequests = {
   register: (body: { name: string; email: string; password: string }) =>
     api.post<{ user: UserResponse; accessToken: string }>("/api/auth/register", body),
 

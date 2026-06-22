@@ -1,7 +1,7 @@
 import { writable, derived } from "svelte/store";
 import type { Socket } from "socket.io-client";
 import { createHostSocket } from "$lib/game/socket-host";
-import type { LeaderboardEntry } from "$lib/types/session";
+import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
 
 export type HostPhase = "idle" | "lobby" | "playing" | "leaderboard" | "ended";
 
