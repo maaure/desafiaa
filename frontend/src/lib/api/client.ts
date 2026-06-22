@@ -1,5 +1,3 @@
-const BASE = import.meta.env.VITE_API_URL || (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
-
 export class ApiError extends Error {
   constructor(
     public statusCode: number,
@@ -13,7 +11,7 @@ export class ApiError extends Error {
 export const api = {
   async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem("accessToken");
-    const res = await fetch(`${BASE}${path}`, {
+    const res = await fetch(path, {
       ...options,
       headers: {
         "Content-Type": "application/json",
