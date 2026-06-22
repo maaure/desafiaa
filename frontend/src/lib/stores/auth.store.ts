@@ -53,6 +53,8 @@ function createAuthStore() {
     try {
       const { accessToken } = await authApi.refresh();
       localStorage.setItem("accessToken", accessToken);
+      const { user: freshUser } = await authApi.me();
+      user.set(freshUser);
       return true;
     } catch {
       user.set(null);

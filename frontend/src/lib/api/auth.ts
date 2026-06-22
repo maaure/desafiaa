@@ -17,5 +17,8 @@ export const authApi = {
   refresh: () =>
     api.fetch<{ accessToken: string }>("/api/auth/refresh", { method: "POST" }),
 
+  me: () =>
+    api.fetch<{ user: UserResponse }>("/api/auth/me"),
+
   logout: () => api.fetch<void>("/api/auth/logout", { method: "POST" }),
 };

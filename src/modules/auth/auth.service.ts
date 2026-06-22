@@ -81,4 +81,12 @@ export const authService = {
       throw new UnauthorizedError("Token inválido ou expirado");
     }
   },
+
+  async me(userId: string) {
+    const user = await db.query.users.findFirst({
+      where: eq(schema.users.id, userId),
+    });
+    if (!user) throw new UnauthorizedError();
+    return toUserResponse(user);
+  },
 };

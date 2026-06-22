@@ -1,6 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { authService } from "./auth.service";
 import { registerSchema, loginSchema } from "./auth.schema";
+import { authenticate } from "../../middleware/auth";
 
 export async function authRoutes(app: FastifyInstance) {
   app.post("/api/auth/register", async (request, reply) => {
@@ -48,6 +49,12 @@ export async function authRoutes(app: FastifyInstance) {
     });
 
     return reply.send({ accessToken });
+  });
+
+  app.get("/api/auth/me", { onRequest: authenticate }, async (request, reply) => {
+    const userId = (request as any).userId as string;
+    const user = await authService.me(userId);
+    return reply.send({ user });
   });
 
   app.post("/api/auth/logout", async (_request, reply) => {
