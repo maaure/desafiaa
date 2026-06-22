@@ -137,6 +137,8 @@ export function registerHostGateway(io: Namespace) {
 
       const rankings = await leaderboardService.getFullRankings(currentPin);
 
+      const quizId = config.quiz_id;
+
       // Persiste respostas individuais no PostgreSQL
       for (const [qIdx, answerMap] of allAnswers) {
         for (const [nickname, data] of Object.entries(answerMap as Record<string, string>)) {
