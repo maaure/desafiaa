@@ -3,70 +3,25 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { playerSession } from "$lib/stores/player-session.store";
-  import {
-    leaderboardMyRank,
-    leaderboardMyScore,
-  } from "$lib/stores/leaderboard.store";
+  import { leaderboardMyRank, leaderboardMyScore } from "$lib/stores/leaderboard.store";
 
   const LABELS = ["A", "B", "C", "D", "E", "F"];
   const BUTTON_COLORS = [
-    "#e74c3c",
-    "#3498db",
-    "#2ecc71",
-    "#9b59b6",
-    "#f39c12",
-    "#1abc9c",
+    "bg-red-500 hover:bg-red-600",
+    "bg-blue-500 hover:bg-blue-600",
+    "bg-emerald-500 hover:bg-emerald-600",
+    "bg-purple-500 hover:bg-purple-600",
+    "bg-amber-500 hover:bg-amber-600",
+    "bg-teal-500 hover:bg-teal-600",
   ];
 
   let pin = $derived($page.params.pin ?? "");
   let nickInput = $state("");
-  let countdown = $state(0);
-  let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
-  // Attempt reconnection on mount if store is empty
   onMount(() => {
     if ($playerSession.phase === "join" && !$playerSession.isConnected) {
-      // Check for saved session
-      const saved = loadSessionRaw();
-      if (saved && saved.pin === pin) {
-        playerSession.reconnect();
-      }
+      playerSession.reconnect(pin);
     }
-  });
-
-  function loadSessionRaw(): { pin: string; nickname: string } | null {
-    try {
-      const raw = localStorage.getItem("player_session");
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
-  }
-
-  // Countdown timer for question phase
-  $effect(() => {
-    const q = $playerSession.currentQuestion;
-    if ($playerSession.phase === "question" && q && q.timeLimit > 0) {
-      countdown = q.timeLimit;
-      if (countdownInterval) clearInterval(countdownInterval);
-      countdownInterval = setInterval(() => {
-        countdown = Math.max(0, countdown - 1);
-        if (countdown <= 0 && countdownInterval) {
-          clearInterval(countdownInterval);
-          countdownInterval = null;
-        }
-      }, 1000);
-    } else {
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
-    }
-
-    return () => {
-      if (countdownInterval) clearInterval(countdownInterval);
-    };
   });
 
   function handleJoin(e: Event) {
@@ -86,760 +41,244 @@
     goto("/play");
   }
 
-  // Derived values for convenience
   let phase = $derived($playerSession.phase);
-
-  // ── Helpers ──
 
   function getLetter(index: number): string {
     return LABELS[index] ?? String(index + 1);
   }
-
-  function getButtonColor(index: number): string {
-    return BUTTON_COLORS[index % BUTTON_COLORS.length];
-  }
 </script>
 
-<div class="game-container">
-  <!-- Header bar -->
-  <header class="game-header">
-    {#if $playerSession.nickname}
-      <span class="header-nick">{$playerSession.nickname}</span>
-    {/if}
+<div class="min-h-screen bg-slate-50 flex flex-col">
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shrink-0">
+    <span class="text-sm font-bold text-slate-900 truncate flex-1">
+      {$playerSession.nickname || "Jogador"}
+    </span>
     {#if $playerSession.totalScore > 0}
-      <span class="header-score">{$playerSession.totalScore} pts</span>
+      <span class="text-sm font-bold text-emerald-600 tabular-nums">{$playerSession.totalScore} pts</span>
     {/if}
-    <button class="leave-btn" onclick={handleLeave}>Sair</button>
+    <button onclick={handleLeave}
+      class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors">
+      Sair
+    </button>
   </header>
 
   <!-- Error banner -->
   {#if $playerSession.error}
-    <div class="error-banner">
+    <div class="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 flex items-center justify-between animate-fade-in">
       <span>{$playerSession.error}</span>
-      <button onclick={() => playerSession.clearError()}>x</button>
+      <button onclick={() => playerSession.clearError()} class="text-red-400 hover:text-red-600 p-1">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
   {/if}
 
-  <!-- ── Phase: Join (nickname entry on game page) ── -->
-  {#if phase === "join"}
-    <div class="phase-join">
-      <h2>Entrar na partida</h2>
-      <p class="pin-display">PIN: {pin}</p>
-      <form onsubmit={handleJoin} class="join-form">
-        <input
-          type="text"
-          bind:value={nickInput}
-          maxlength={20}
-          placeholder="Seu apelido"
-          required
-        />
-        <button type="submit" disabled={nickInput.trim().length < 2}>
-          Entrar
-        </button>
-      </form>
-    </div>
+  <!-- Main content -->
+  <div class="flex-1 flex flex-col p-4">
+    <!-- ── Phase: Join ── -->
+    {#if phase === "join"}
+      <div class="flex-1 flex flex-col items-center justify-center text-center">
+        <h2 class="text-xl font-bold text-slate-800 mb-2">Entrar na partida</h2>
+        <p class="text-2xl font-mono font-bold text-cyan-600 tracking-[0.3em] mb-6 tabular-nums">{pin}</p>
 
-  <!-- ── Phase: Lobby ── -->
-  {:else if phase === "lobby"}
-    <div class="phase-lobby">
-      <h2>Aguardando o host iniciar...</h2>
-      <div class="lobby-info">
-        <span class="player-count">{$playerSession.totalPlayers} jogador(es) conectado(s)</span>
+        <form onsubmit={handleJoin} class="w-full max-w-xs space-y-4">
+          <input
+            type="text"
+            bind:value={nickInput}
+            maxlength={20}
+            placeholder="Seu apelido"
+            required
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 text-center text-base
+              placeholder:text-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100
+              outline-none transition-colors"
+          />
+          <button type="submit" disabled={nickInput.trim().length < 2}
+            class="w-full py-3 rounded-xl bg-cyan-600 text-white text-base font-bold
+              hover:bg-cyan-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm">
+            Entrar
+          </button>
+        </form>
       </div>
-      <div class="lobby-players">
-        {#each $playerSession.nicknames as nick}
-          <span class="lobby-nick">{nick}</span>
-        {/each}
-      </div>
-    </div>
 
-  <!-- ── Phase: Question ── -->
-  {:else if phase === "question"}
-    <div class="phase-question">
-      {#if $playerSession.currentQuestion}
-        <div class="question-timer" class:warning={countdown <= 5}>
-          {countdown}s
+    <!-- ── Phase: Lobby ── -->
+    {:else if phase === "lobby"}
+      <div class="flex-1 flex flex-col items-center justify-center text-center">
+        <div class="w-12 h-12 mb-4 rounded-full border-2 border-slate-200 border-t-cyan-500 animate-spin-slow"></div>
+        <h2 class="text-lg font-semibold text-slate-800 mb-1">Aguardando o host</h2>
+        <p class="text-sm text-slate-400 mb-8">A partida vai começar em breve</p>
+
+        <div class="text-sm font-medium text-cyan-600 mb-4">
+          {$playerSession.totalPlayers} jogador{($playerSession.totalPlayers ?? 0) !== 1 ? 'es' : ''} na sala
         </div>
 
-        <p class="question-text">
-          {$playerSession.currentQuestion.text}
-        </p>
-
-        <div class="alternatives-grid" class:vf={$playerSession.currentQuestion.alternatives.length === 2}>
-          {#each $playerSession.currentQuestion.alternatives as alt, i}
-            <button
-              class="alt-btn"
-              style="background-color: {getButtonColor(i)}"
-              onclick={() => handleAnswer(i, alt.text)}
-              disabled={$playerSession.hasAnswered}
-            >
-              <span class="alt-label">{getLetter(i)}</span>
-              <span class="alt-text">{alt.text}</span>
-            </button>
+        <div class="flex flex-wrap gap-2 justify-center max-w-sm">
+          {#each $playerSession.nicknames as nick}
+            <span class="px-3 py-1.5 rounded-full bg-white border border-slate-200 text-sm font-medium text-slate-600">{nick}</span>
           {/each}
         </div>
-      {/if}
-    </div>
-
-  <!-- ── Phase: Feedback ── -->
-  {:else if phase === "feedback"}
-    <div class="phase-feedback">
-      {#if $playerSession.lastResult}
-        <div class="feedback-icon" class:correct={$playerSession.lastResult.isCorrect} class:incorrect={!$playerSession.lastResult.isCorrect}>
-          {$playerSession.lastResult.isCorrect ? "✓" : "✗"}
-        </div>
-
-        <p class="feedback-text">
-          {$playerSession.lastResult.isCorrect ? "Correto!" : "Errado!"}
-        </p>
-
-        <div class="feedback-points">
-          <span class="points-earned">
-            {#if $playerSession.lastResult.isCorrect}
-              +{$playerSession.lastResult.pointsEarned} pts
-            {:else}
-              0 pts
-            {/if}
-          </span>
-          <span class="total-score">
-            Total: {$playerSession.totalScore} pts
-          </span>
-        </div>
-      {/if}
-
-      {#if $playerSession.correctAnswer}
-        <div class="correct-answer">
-          <span class="correct-label">Resposta correta:</span>
-          <span class="correct-text">{$playerSession.correctAnswer}</span>
-        </div>
-      {:else}
-        <p class="waiting-msg">Aguardando o resultado da pergunta...</p>
-      {/if}
-    </div>
-
-  <!-- ── Phase: Leaderboard ── -->
-  {:else if phase === "leaderboard"}
-    <div class="phase-leaderboard">
-      <h2>Placar</h2>
-
-      {#if $leaderboardMyRank}
-        <div class="my-position">
-          <span class="rank-badge">#{$leaderboardMyRank}</span>
-          <span>{$leaderboardMyScore} pts</span>
-        </div>
-      {/if}
-
-      <div class="leaderboard-table">
-        {#each $playerSession.leaderboard as entry, i}
-          <div
-            class="leaderboard-row"
-            class:is-me={entry.nickname.toLowerCase() === ($playerSession.nickname ?? "").toLowerCase()}
-          >
-            <span class="row-rank">
-              {#if i === 0}
-                🥇
-              {:else if i === 1}
-                🥈
-              {:else if i === 2}
-                🥉
-              {:else}
-                #{entry.rank}
-              {/if}
-            </span>
-            <span class="row-nick">{entry.nickname}</span>
-            <span class="row-score">{entry.score}</span>
-            <span class="row-correct">{entry.correctCount} acertos</span>
-          </div>
-        {/each}
       </div>
-    </div>
 
-  <!-- ── Phase: Ended (Podium) ── -->
-  {:else if phase === "ended"}
-    <div class="phase-ended">
-      <h2>Partida encerrada!</h2>
+    <!-- ── Phase: Question ── -->
+    {:else if phase === "question"}
+      <div class="flex-1 flex flex-col">
+        <!-- Timer -->
+        <div class="text-center mb-4">
+          <span class="inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold font-mono tabular-nums
+            {$playerSession.countdown <= 5 ? 'bg-red-50 text-red-500' : 'bg-white border border-slate-200 text-slate-800'}">
+            {$playerSession.countdown}
+          </span>
+        </div>
 
-      <div class="podium">
+        <!-- Question text -->
+        {#if $playerSession.currentQuestion}
+          <p class="text-lg font-semibold text-slate-800 text-center leading-relaxed mb-6">
+            {$playerSession.currentQuestion.text}
+          </p>
+
+          <!-- Alternatives -->
+          <div class="flex-1 flex flex-col gap-3 {($playerSession.currentQuestion?.alternatives?.length ?? 0) === 2 ? 'flex-row items-stretch' : ''}">
+            {#each $playerSession.currentQuestion.alternatives as alt, i}
+              <button
+                onclick={() => handleAnswer(i, alt.text)}
+                disabled={$playerSession.hasAnswered}
+                class="flex items-center gap-3 p-4 rounded-xl text-white text-left font-semibold text-sm
+                  transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
+                  active:scale-[0.98] shadow-sm {BUTTON_COLORS[i % BUTTON_COLORS.length]}
+                  {($playerSession.currentQuestion?.alternatives?.length ?? 0) === 2 ? 'flex-1 flex-col justify-center text-center gap-2 py-8' : ''}"
+              >
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-sm font-bold shrink-0">
+                  {getLetter(i)}
+                </span>
+                <span>{alt.text}</span>
+              </button>
+            {/each}
+          </div>
+        {/if}
+      </div>
+
+    <!-- ── Phase: Feedback ── -->
+    {:else if phase === "feedback"}
+      <div class="flex-1 flex flex-col items-center justify-center text-center">
+        {#if $playerSession.lastResult}
+          <div class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4
+            {$playerSession.lastResult.isCorrect ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}">
+            {$playerSession.lastResult.isCorrect ? "✓" : "✗"}
+          </div>
+
+          <h2 class="text-2xl font-bold mb-3 {$playerSession.lastResult.isCorrect ? 'text-emerald-700' : 'text-red-600'}">
+            {$playerSession.lastResult.isCorrect ? "Correto!" : "Errado!"}
+          </h2>
+
+          <div class="text-center mb-6">
+            <p class="text-lg font-bold {$playerSession.lastResult.isCorrect ? 'text-emerald-600' : 'text-slate-400'}">
+              {#if $playerSession.lastResult.isCorrect}+{$playerSession.lastResult.pointsEarned} pts{:else}0 pts{/if}
+            </p>
+            <p class="text-sm text-slate-400 mt-1">Total: {$playerSession.totalScore} pts</p>
+          </div>
+        {/if}
+
+        {#if $playerSession.correctAnswer}
+          <div class="bg-white rounded-xl border border-slate-200 px-5 py-3 max-w-xs w-full">
+            <p class="text-xs text-slate-400 mb-1">Resposta correta</p>
+            <p class="text-sm font-semibold text-emerald-600">{$playerSession.correctAnswer}</p>
+          </div>
+        {:else}
+          <p class="text-sm text-slate-400">Aguardando o resultado...</p>
+        {/if}
+      </div>
+
+    <!-- ── Phase: Leaderboard ── -->
+    {:else if phase === "leaderboard"}
+      <div class="flex-1 flex flex-col">
+        <h2 class="text-xl font-bold text-slate-900 text-center mb-4">Placar</h2>
+
+        {#if $leaderboardMyRank}
+          <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 flex items-center gap-3">
+            <span class="text-lg font-bold text-amber-700">#{$leaderboardMyRank}</span>
+            <span class="text-sm text-amber-700">Sua posição</span>
+            <span class="ml-auto text-sm font-bold text-amber-700 tabular-nums">{$leaderboardMyScore} pts</span>
+          </div>
+        {/if}
+
+        <div class="space-y-2">
+          {#each $playerSession.leaderboard as entry, i}
+            <div class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm
+              {entry.nickname.toLowerCase() === ($playerSession.nickname ?? "").toLowerCase()
+                ? 'bg-cyan-50 border border-cyan-200' : 'bg-white border border-slate-100'}">
+              <span class="w-8 text-center font-bold shrink-0
+                {entry.nickname.toLowerCase() === ($playerSession.nickname ?? "").toLowerCase() ? 'text-cyan-700' : 'text-slate-400'}">
+                {#if i === 0}🥇
+                {:else if i === 1}🥈
+                {:else if i === 2}🥉
+                {:else}#{entry.rank}
+                {/if}
+              </span>
+              <span class="font-medium text-slate-700 truncate flex-1">{entry.nickname}</span>
+              <span class="font-bold text-slate-900 tabular-nums">{entry.score}</span>
+              <span class="text-xs text-slate-400 tabular-nums w-10 text-right">{entry.correctCount} ✓</span>
+            </div>
+          {/each}
+        </div>
+      </div>
+
+    <!-- ── Phase: Ended ── -->
+    {:else if phase === "ended"}
+      <div class="flex-1 flex flex-col">
+        <div class="text-center mb-6">
+          <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center">
+            <svg class="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-slate-900">Partida encerrada!</h2>
+        </div>
+
+        <!-- Podium top 3 -->
         {#if $playerSession.leaderboard.length > 0}
-          <!-- Pódio: top 3 destacado -->
-          <div class="podium-top3">
+          <div class="flex items-end justify-center gap-3 mb-6">
             {#each $playerSession.leaderboard.slice(0, 3) as entry, i}
-              <div class="podium-card" class:gold={i === 0} class:silver={i === 1} class:bronze={i === 2}>
-                <div class="podium-medal">
-                  {#if i === 0}
-                    🥇
-                  {:else if i === 1}
-                    🥈
-                  {:else}
-                    🥉
-                  {/if}
+              {@const medals = ["🥇", "🥈", "🥉"]}
+              {@const heights = ["h-24", "h-16", "h-14"]}
+              {@const podiumBg = ["bg-amber-50 border-amber-200", "bg-slate-50 border-slate-200", "bg-orange-50 border-orange-100"]}
+              <div class="flex flex-col items-center gap-2">
+                <span class="text-xs font-semibold text-slate-700 text-center max-w-[72px] truncate">{entry.nickname}</span>
+                <div class="w-18 {heights[i]} rounded-t-lg {podiumBg[i]} border border-b-0 flex flex-col items-center justify-center">
+                  <span class="text-xl">{medals[i]}</span>
+                  <span class="text-xs font-bold text-slate-600 tabular-nums">{entry.score}</span>
                 </div>
-                <div class="podium-nick">{entry.nickname}</div>
-                <div class="podium-score">{entry.score} pts</div>
-                <div class="podium-correct">{entry.correctCount} acertos</div>
               </div>
             {/each}
           </div>
         {/if}
 
-        <!-- Classificação completa -->
-        <div class="final-rankings">
-          <h3>Classificação final</h3>
-          <div class="leaderboard-table">
-            {#each $playerSession.leaderboard as entry}
-              <div
-                class="leaderboard-row"
-                class:is-me={entry.nickname.toLowerCase() === ($playerSession.nickname ?? "").toLowerCase()}
-              >
-                <span class="row-rank">#{entry.rank}</span>
-                <span class="row-nick">{entry.nickname}</span>
-                <span class="row-score">{entry.score} pts</span>
-                <span class="row-correct">{entry.correctCount} acertos</span>
-              </div>
-            {/each}
-          </div>
+        <!-- Full rankings -->
+        <div class="space-y-1.5 mb-6">
+          {#each $playerSession.leaderboard as entry}
+            <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm
+              {entry.nickname.toLowerCase() === ($playerSession.nickname ?? "").toLowerCase()
+                ? 'bg-cyan-50 font-semibold' : 'bg-white'}">
+              <span class="w-6 text-center text-slate-400 text-xs tabular-nums">#{entry.rank}</span>
+              <span class="flex-1 text-slate-700 truncate">{entry.nickname}</span>
+              <span class="font-bold text-slate-900 tabular-nums">{entry.score} pts</span>
+            </div>
+          {/each}
         </div>
 
         {#if $leaderboardMyRank}
-          <div class="final-my-rank">
-            Você terminou em #{ $leaderboardMyRank } de { $playerSession.totalPlayers } jogadores
-            com { $playerSession.totalScore } pontos.
+          <div class="bg-cyan-50 border border-cyan-200 rounded-xl px-4 py-3 text-center text-sm font-medium text-cyan-700 mb-4">
+            Você terminou em <span class="font-bold">#{$leaderboardMyRank}</span>
+            de {$playerSession.totalPlayers} jogadores com <span class="font-bold">{$playerSession.totalScore} pts</span>
           </div>
         {/if}
 
-        <button class="leave-btn final-leave" onclick={handleLeave}>
+        <button onclick={handleLeave}
+          class="w-full py-3 rounded-xl bg-cyan-600 text-white text-base font-bold
+            hover:bg-cyan-700 transition-colors shadow-sm">
           Voltar ao início
         </button>
       </div>
-    </div>
-  {/if}
+    {/if}
+  </div>
 </div>
-
-<style>
-  .game-container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 1rem;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* ── Header ── */
-
-  .game-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 1.5rem;
-  }
-
-  .header-nick {
-    font-weight: 600;
-    flex: 1;
-  }
-
-  .header-score {
-    font-weight: 700;
-    color: #2ecc71;
-  }
-
-  .leave-btn {
-    padding: 0.375rem 0.75rem;
-    background: transparent;
-    color: #666;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 0.8125rem;
-    cursor: pointer;
-  }
-
-  .leave-btn:hover {
-    background: #f5f5f5;
-    color: #e74c3c;
-    border-color: #e74c3c;
-  }
-
-  /* ── Error banner ── */
-
-  .error-banner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem 1rem;
-    background: #fef2f2;
-    color: #dc2626;
-    border-radius: 8px;
-    font-size: 0.875rem;
-    margin-bottom: 1rem;
-  }
-
-  .error-banner button {
-    background: none;
-    border: none;
-    color: #dc2626;
-    font-weight: 700;
-    cursor: pointer;
-    padding: 0 0.25rem;
-  }
-
-  /* ── Phase: Join ── */
-
-  .phase-join {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    text-align: center;
-  }
-
-  .phase-join h2 {
-    margin-bottom: 0.5rem;
-  }
-
-  .pin-display {
-    font-family: monospace;
-    font-size: 1.5rem;
-    letter-spacing: 0.3em;
-    color: #4a90d9;
-    font-weight: 700;
-    margin-bottom: 1.5rem;
-  }
-
-  .join-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    width: 100%;
-    max-width: 280px;
-  }
-
-  .join-form input {
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1.125rem;
-    text-align: center;
-  }
-
-  .join-form input:focus {
-    outline: none;
-    border-color: #4a90d9;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
-  }
-
-  .join-form button {
-    padding: 0.875rem;
-    background: #4a90d9;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .join-form button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  /* ── Phase: Lobby ── */
-
-  .phase-lobby {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    text-align: center;
-  }
-
-  .phase-lobby h2 {
-    margin-bottom: 1rem;
-    color: #444;
-  }
-
-  .lobby-info {
-    margin-bottom: 1.5rem;
-  }
-
-  .player-count {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #4a90d9;
-  }
-
-  .lobby-players {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
-  }
-
-  .lobby-nick {
-    padding: 0.5rem 1rem;
-    background: #f0f4ff;
-    border-radius: 20px;
-    font-size: 0.875rem;
-    color: #333;
-  }
-
-  /* ── Phase: Question ── */
-
-  .phase-question {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .question-timer {
-    text-align: center;
-    font-size: 2rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    color: #333;
-    margin-bottom: 1rem;
-  }
-
-  .question-timer.warning {
-    color: #e74c3c;
-    animation: pulse 1s ease-in-out infinite;
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  .question-text {
-    font-size: 1.25rem;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-    text-align: center;
-    padding: 1rem;
-    background: #f9f9f9;
-    border-radius: 12px;
-  }
-
-  .alternatives-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-top: auto;
-  }
-
-  .alternatives-grid.vf {
-    flex-direction: row;
-  }
-
-  .alternatives-grid.vf .alt-btn {
-    flex: 1;
-  }
-
-  .alt-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 1rem;
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.1s, opacity 0.2s;
-    text-align: left;
-  }
-
-  .alt-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  }
-
-  .alt-btn:active:not(:disabled) {
-    transform: translateY(0);
-  }
-
-  .alt-btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
-
-  .alt-label {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
-    font-weight: 700;
-    flex-shrink: 0;
-  }
-
-  .alt-text {
-    flex: 1;
-  }
-
-  /* ── Phase: Feedback ── */
-
-  .phase-feedback {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
-    text-align: center;
-  }
-
-  .feedback-icon {
-    font-size: 4rem;
-    width: 6rem;
-    height: 6rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    margin-bottom: 1rem;
-  }
-
-  .feedback-icon.correct {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .feedback-icon.incorrect {
-    background: #f8d7da;
-    color: #721c24;
-  }
-
-  .feedback-text {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-  }
-
-  .feedback-points {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .points-earned {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #2ecc71;
-  }
-
-  .total-score {
-    font-size: 0.9375rem;
-    color: #666;
-  }
-
-  .correct-answer {
-    padding: 0.75rem 1.5rem;
-    background: #f0f4ff;
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-  }
-
-  .correct-label {
-    font-size: 0.8125rem;
-    color: #666;
-  }
-
-  .correct-text {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #2ecc71;
-  }
-
-  .waiting-msg {
-    color: #999;
-    font-size: 0.9375rem;
-  }
-
-  /* ── Phase: Leaderboard ── */
-
-  .phase-leaderboard {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .phase-leaderboard h2 {
-    text-align: center;
-    margin-bottom: 0.75rem;
-  }
-
-  .my-position {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    padding: 0.75rem;
-    background: #fff3cd;
-    border-radius: 8px;
-  }
-
-  .rank-badge {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #856404;
-  }
-
-  .leaderboard-table {
-    display: flex;
-    flex-direction: column;
-    gap: 0.375rem;
-  }
-
-  .leaderboard-row {
-    display: grid;
-    grid-template-columns: 3rem 1fr 5rem 6rem;
-    align-items: center;
-    padding: 0.75rem;
-    background: #f9f9f9;
-    border-radius: 8px;
-    font-size: 0.9375rem;
-    gap: 0.5rem;
-  }
-
-  .leaderboard-row.is-me {
-    background: #e8f4fd;
-    font-weight: 600;
-    box-shadow: 0 0 0 2px #4a90d9;
-  }
-
-  .row-rank {
-    font-weight: 700;
-    text-align: center;
-  }
-
-  .row-nick {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .row-score {
-    font-weight: 600;
-    text-align: right;
-    color: #2ecc71;
-  }
-
-  .row-correct {
-    font-size: 0.8125rem;
-    color: #666;
-    text-align: right;
-  }
-
-  /* ── Phase: Ended (Podium) ── */
-
-  .phase-ended {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .phase-ended h2 {
-    text-align: center;
-    margin-bottom: 1.5rem;
-  }
-
-  .podium-top3 {
-    display: flex;
-    justify-content: center;
-    gap: 0.75rem;
-    margin-bottom: 2rem;
-  }
-
-  .podium-card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1rem;
-    border-radius: 12px;
-    background: #f5f5f5;
-    min-width: 100px;
-  }
-
-  .podium-card.gold {
-    background: #fff7e0;
-    box-shadow: 0 0 0 2px #f1c40f;
-    transform: scale(1.05);
-  }
-
-  .podium-card.silver {
-    background: #f0f4ff;
-    box-shadow: 0 0 0 2px #bdc3c7;
-  }
-
-  .podium-card.bronze {
-    background: #fef0e7;
-    box-shadow: 0 0 0 2px #e67e22;
-  }
-
-  .podium-medal {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .podium-nick {
-    font-weight: 600;
-    font-size: 1rem;
-    margin-bottom: 0.25rem;
-  }
-
-  .podium-score {
-    font-weight: 700;
-    color: #2ecc71;
-    font-size: 1.125rem;
-  }
-
-  .podium-correct {
-    font-size: 0.8125rem;
-    color: #666;
-  }
-
-  .final-rankings h3 {
-    text-align: center;
-    margin-bottom: 0.75rem;
-    font-size: 1rem;
-    color: #444;
-  }
-
-  .final-my-rank {
-    text-align: center;
-    margin: 1.5rem 0;
-    padding: 1rem;
-    background: #e8f4fd;
-    border-radius: 8px;
-    font-weight: 600;
-  }
-
-  .final-leave {
-    margin-top: auto;
-    width: 100%;
-    padding: 0.875rem;
-    background: #4a90d9;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-  }
-
-  .final-leave:hover {
-    background: #357abd;
-  }
-</style>

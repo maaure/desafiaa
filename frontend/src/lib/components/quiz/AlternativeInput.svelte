@@ -18,58 +18,36 @@
   }
 </script>
 
-<div class={"alternative" + (alt.isCorrect ? " correct" : "")}>
-  <span class="letter">{letter}</span>
+<div class="flex items-center gap-3 p-3 rounded-lg border transition-colors
+  {alt.isCorrect ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 bg-white hover:border-slate-300'}">
+  <!-- Letter badge -->
+  <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0
+    {alt.isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}">
+    {letter}
+  </span>
+
+  <!-- Text input -->
   <input
     type="text"
     value={alt.text}
-    placeholder={`Alternativa ${letter}`}
+    placeholder="Texto da alternativa"
     oninput={handleTextInput}
+    class="flex-1 px-3 py-1.5 rounded-md border-0 bg-transparent text-sm
+      placeholder:text-slate-300 focus:outline-none"
   />
-  <input
-    type="radio"
-    name={`correct_${questionId}`}
-    checked={alt.isCorrect}
-    onchange={handleCorrect}
-    title="Marcar como correta"
-  />
+
+  <!-- Correct toggle -->
+  <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="Marcar como correta">
+    <input
+      type="radio"
+      name={`correct_${questionId}`}
+      checked={alt.isCorrect}
+      onchange={handleCorrect}
+      class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer"
+    />
+    <span class="text-xs font-medium select-none
+      {alt.isCorrect ? 'text-emerald-600' : 'text-slate-400'}">
+      Correta
+    </span>
+  </label>
 </div>
-
-<style>
-  .alternative {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    margin-bottom: 0.5rem;
-    background: #fafafa;
-  }
-
-  .alternative.correct {
-    border-color: #27ae60;
-    background: #eafaf1;
-  }
-
-  .letter {
-    font-weight: 700;
-    font-size: 0.9rem;
-    color: #555;
-    min-width: 1.5rem;
-    text-align: center;
-  }
-
-  .alternative input[type="text"] {
-    flex: 1;
-    padding: 0.4rem 0.6rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 0.9rem;
-  }
-
-  .alternative input[type="radio"] {
-    cursor: pointer;
-    accent-color: #27ae60;
-  }
-</style>

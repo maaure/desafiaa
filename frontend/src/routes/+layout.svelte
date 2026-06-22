@@ -1,7 +1,6 @@
 <script lang="ts">
+  import "../app.css";
   let { children } = $props();
 </script>
 
-{#each [1] as _}
-  {@render children()}
-{/each}
+{@render children()}

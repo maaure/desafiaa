@@ -8,15 +8,12 @@
 
   const quizId = $page.params.id ?? "";
 
-  // --- Reactive state from the store ---
   let phase = $state<HostPhase>(get(hostSession.phase));
   let pin = $state<string | null>(get(hostSession.pin));
   let isConnected = $state(get(hostSession.isConnected));
   let playerCount = $state(get(hostSession.playerCount));
   let nicknames = $state<string[]>(get(hostSession.nicknames));
-  let currentQuestion = $state<{ index: number; total: number } | null>(
-    get(hostSession.currentQuestion),
-  );
+  let currentQuestion = $state<{ index: number; total: number } | null>(get(hostSession.currentQuestion));
   let currentQuestionData = $state<{
     text: string;
     timeLimit: number;
@@ -27,7 +24,6 @@
   let leaderboard = $state<LeaderboardEntry[]>(get(hostSession.leaderboard));
   let error = $state<string | null>(get(hostSession.error));
 
-  // --- Local UI state ---
   let selectedTimeLimit = $state(30);
   let sessionStarted = $state(false);
 
@@ -62,584 +58,310 @@
     };
   });
 
-  function handleOpenRoom() {
-    hostSession.startSession(selectedTimeLimit);
-    sessionStarted = true;
-  }
+  function handleOpenRoom() { hostSession.startSession(selectedTimeLimit); sessionStarted = true; }
+  function handleNextQuestion() { hostSession.nextQuestion(); }
+  function handleShowLeaderboard() { hostSession.showLeaderboard(); }
+  function handleEndSession() { hostSession.endSession(); }
+  function handleBackToDashboard() { goto("/dashboard"); }
+  function handleDismissError() { hostSession.clearError(); }
 
-  function handleNextQuestion() {
-    hostSession.nextQuestion();
-  }
-
-  function handleShowLeaderboard() {
-    hostSession.showLeaderboard();
-  }
-
-  function handleEndSession() {
-    hostSession.endSession();
-  }
-
-  function handleBackToDashboard() {
-    goto("/dashboard");
-  }
-
-  function handleDismissError() {
-    hostSession.clearError();
-  }
+  const LETTERS = ["A", "B", "C", "D", "E", "F"];
 </script>
 
-<div class="host-page">
-  <header class="top-bar">
-    <h1>Controle da Sessao</h1>
-    <span class="conn-status" class:connected={isConnected}>
-      {isConnected ? "Conectado" : "Desconectado"}
-    </span>
-  </header>
+<div class="px-8 py-8 max-w-3xl">
+  <!-- Top bar -->
+  <div class="flex items-center justify-between mb-6">
+    <a href="/dashboard" class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+      </svg>
+      Dashboard
+    </a>
 
+    <div class="flex items-center gap-2">
+      <span class="relative flex h-2.5 w-2.5">
+        <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"
+          class:bg-emerald-400={isConnected} class:bg-red-400={!isConnected}></span>
+        <span class="relative inline-flex rounded-full h-2.5 w-2.5"
+          class:bg-emerald-500={isConnected} class:bg-red-500={!isConnected}></span>
+      </span>
+      <span class="text-xs font-medium" class:text-emerald-600={isConnected} class:text-red-500={!isConnected}>
+        {isConnected ? "Conectado" : "Desconectado"}
+      </span>
+    </div>
+  </div>
+
+  <!-- Error banner -->
   {#if error}
-    <div class="alert error" role="alert">
-      <span>{error}</span>
-      <button class="dismiss" onclick={handleDismissError}>x</button>
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 mb-6 flex items-center justify-between animate-fade-in" role="alert">
+      <span class="text-sm font-medium text-red-700">{error}</span>
+      <button onclick={handleDismissError} class="text-red-400 hover:text-red-600 transition-colors p-1">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
   {/if}
 
+  <!-- ── Phase: Idle ── -->
   {#if phase === "idle"}
-    <div class="centered">
-      <p class="status-msg">Criando sessao...</p>
-      <div class="spinner"></div>
+    <div class="flex flex-col items-center justify-center py-24">
+      <div class="w-10 h-10 border-2 border-slate-200 border-t-cyan-500 rounded-full animate-spin mb-4"></div>
+      <p class="text-sm font-medium text-slate-500">Criando sessão...</p>
     </div>
 
+  <!-- ── Phase: Lobby ── -->
   {:else if phase === "lobby"}
-    <div class="lobby">
+    <div class="space-y-6 animate-slide-up">
+      <!-- PIN card -->
       {#if pin}
-        <div class="pin-section">
-          <p class="pin-label">PIN da Sessao</p>
-          <p class="pin-value">{pin}</p>
-          <p class="pin-hint">Compartilhe este PIN com os participantes</p>
+        <div class="bg-white rounded-xl border-2 border-dashed border-cyan-200 p-8 text-center">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">PIN da Sessão</p>
+          <p class="text-6xl font-bold text-slate-900 tabular-nums tracking-[0.3em] font-mono animate-pulse-glow rounded-xl inline-block px-8 py-2">
+            {pin}
+          </p>
+          <p class="text-sm text-slate-400 mt-4">Compartilhe este código com os participantes</p>
         </div>
       {/if}
 
+      <!-- Timer config (before opening room) -->
       {#if !sessionStarted}
-        <div class="timer-config">
-          <p class="section-title">Tempo por pergunta</p>
-          <div class="presets">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+          <p class="text-sm font-semibold text-slate-700 mb-3">Tempo por pergunta</p>
+          <div class="flex gap-2 mb-4">
             {#each TIME_PRESETS as preset}
               <button
-                class="preset-btn"
-                class:active={selectedTimeLimit === preset.value}
                 onclick={() => (selectedTimeLimit = preset.value)}
+                class="flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors
+                  {selectedTimeLimit === preset.value
+                    ? 'border-cyan-300 bg-cyan-50 text-cyan-700'
+                    : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'}"
               >
                 {preset.label}
               </button>
             {/each}
           </div>
-          <button class="btn primary" onclick={handleOpenRoom}>
+          <button onclick={handleOpenRoom}
+            class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
+              hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm">
             Abrir Sala
           </button>
         </div>
+
+      <!-- Lobby status (after room opened) -->
       {:else}
-        <div class="lobby-status">
-          <p class="section-title">Sala aberta — aguardando jogadores</p>
-          <p class="player-count">{playerCount} jogador(es)</p>
+        <div class="bg-white rounded-xl border border-slate-200 p-6 text-center">
+          <h2 class="text-lg font-semibold text-slate-800 mb-1">Sala aberta</h2>
+          <p class="text-sm text-slate-400 mb-4">Aguardando jogadores...</p>
+
+          <div class="text-3xl font-bold text-cyan-600 mb-2 tabular-nums">{playerCount}</div>
+          <p class="text-xs text-slate-400 mb-6">jogador{playerCount !== 1 ? 'es' : ''} conectado{playerCount !== 1 ? 's' : ''}</p>
 
           {#if nicknames.length > 0}
-            <ul class="nicknames">
+            <div class="flex flex-wrap gap-2 justify-center mb-6">
               {#each nicknames as nick}
-                <li>{nick}</li>
+                <span class="px-3 py-1.5 rounded-full bg-slate-100 text-sm font-medium text-slate-600">{nick}</span>
               {/each}
-            </ul>
+            </div>
           {:else}
-            <p class="status-msg">Nenhum jogador ainda...</p>
+            <p class="text-sm text-slate-300 italic mb-6">Nenhum jogador ainda</p>
           {/if}
 
           {#if playerCount > 0}
-            <button class="btn primary" onclick={handleNextQuestion}>
-              Primeira Pergunta
+            <button onclick={handleNextQuestion}
+              class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
+                hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm">
+              Iniciar Primeira Pergunta
             </button>
           {/if}
         </div>
       {/if}
     </div>
 
+  <!-- ── Phase: Playing ── -->
   {:else if phase === "playing"}
-    <div class="playing">
-      <div class="question-header">
-        <p class="question-counter">
-          Pergunta {currentQuestion?.index ?? "?"} de {currentQuestion?.total ?? "?"}
+    <div class="space-y-5 animate-slide-up">
+      <!-- Question header -->
+      <div class="flex items-center justify-between">
+        <p class="text-sm font-medium text-slate-500">
+          Pergunta <span class="text-slate-900 font-bold">{currentQuestion?.index ?? "?"}</span>
+          de <span class="text-slate-700">{currentQuestion?.total ?? "?"}</span>
         </p>
-        <p class="timer-display">{timeLimitSeconds}s</p>
+        <div class="flex items-center gap-2 px-4 py-2 rounded-lg font-mono tabular-nums
+          {timeLimitSeconds <= 5 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'}">
+          <span class="text-2xl font-bold">{timeLimitSeconds}</span>
+          <span class="text-sm">s</span>
+        </div>
       </div>
 
+      <!-- Question card -->
       {#if currentQuestionData}
-        <div class="question-card">
-          <p class="question-text">{currentQuestionData.text}</p>
-          <div class="alternatives">
+        <div class="bg-white rounded-xl border border-slate-200 p-6">
+          <p class="text-lg font-semibold text-slate-800 leading-relaxed mb-6">{currentQuestionData.text}</p>
+
+          <div class="space-y-2.5">
             {#each currentQuestionData.alternatives as alt, i}
-              <div class="alternative">
-                <span class="alt-letter">{String.fromCharCode(65 + i)}</span>
-                <span class="alt-text">{alt.text}</span>
+              <div class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 bg-slate-50">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700
+                  text-sm font-bold shrink-0">
+                  {LETTERS[i] ?? String(i + 1)}
+                </span>
+                <span class="text-sm font-medium text-slate-700">{alt.text}</span>
               </div>
             {/each}
           </div>
         </div>
       {/if}
 
-      <div class="progress-section">
-        <p class="progress-text">
-          {progress.answered} de {progress.total} responderam
-        </p>
-        <div class="progress-bar">
-          <div
-            class="progress-fill"
-            style="width: {progress.total > 0
-              ? (progress.answered / progress.total) * 100
-              : 0}%"
-          ></div>
+      <!-- Progress -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Respostas</span>
+          <span class="text-sm font-medium text-slate-600 tabular-nums">
+            {progress.answered} / {progress.total}
+          </span>
+        </div>
+        <div class="h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div class="h-full rounded-full bg-emerald-500 transition-all duration-500"
+            style="width: {progress.total > 0 ? (progress.answered / progress.total) * 100 : 0}%"></div>
         </div>
       </div>
 
-      <div class="actions">
-        <button class="btn primary" onclick={handleNextQuestion}>
-          Proxima Pergunta
+      <!-- Actions -->
+      <div class="flex gap-3">
+        <button onclick={handleNextQuestion}
+          class="flex-1 py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
+            hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm">
+          Próxima Pergunta
         </button>
-        <button class="btn secondary" onclick={handleShowLeaderboard}>
-          Mostrar Leaderboard
+        <button onclick={handleShowLeaderboard}
+          class="flex-1 py-3 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold
+            hover:bg-slate-50 active:bg-slate-100 transition-colors">
+          Mostrar Placar
         </button>
       </div>
     </div>
 
+  <!-- ── Phase: Leaderboard ── -->
   {:else if phase === "leaderboard"}
-    <div class="leaderboard">
-      <p class="section-title">Leaderboard</p>
+    <div class="space-y-5 animate-slide-up">
+      <div class="text-center">
+        <h2 class="text-xl font-bold text-slate-900">Placar Parcial</h2>
+        <p class="text-sm text-slate-400 mt-1">{playerCount} jogadores</p>
+      </div>
 
       {#if leaderboard.length > 0}
-        <table class="ranking-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Jogador</th>
-              <th>Pontos</th>
-              <th>Corretas</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each leaderboard as entry (entry.rank)}
-              <tr class:highlight={entry.rank === 1}>
-                <td class="rank">{entry.rank}</td>
-                <td>{entry.nickname}</td>
-                <td class="score">{entry.score}</td>
-                <td>{entry.correctCount}</td>
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-slate-100">
+                <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide w-12">#</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Jogador</th>
+                <th class="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Pontos</th>
+                <th class="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide w-16">Certas</th>
               </tr>
-            {/each}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {#each leaderboard as entry (entry.rank)}
+                <tr class="border-b border-slate-50 last:border-0
+                  {entry.rank === 1 ? 'bg-amber-50' : ''}">
+                  <td class="px-5 py-3">
+                    <span class="text-sm font-bold text-slate-400">{entry.rank}</span>
+                  </td>
+                  <td class="px-5 py-3">
+                    <span class="text-sm font-medium text-slate-800">{entry.nickname}</span>
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <span class="text-sm font-bold text-slate-900 tabular-nums">{entry.score}</span>
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <span class="text-sm text-slate-500 tabular-nums">{entry.correctCount}</span>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
       {:else}
-        <p class="status-msg">Nenhum dado disponivel</p>
+        <p class="text-center text-sm text-slate-400 py-8">Nenhum dado disponível</p>
       {/if}
 
-      <div class="actions">
-        <button class="btn danger" onclick={handleEndSession}>
-          Encerrar Sessao
-        </button>
-      </div>
+      <button onclick={handleEndSession}
+        class="w-full py-3 rounded-lg bg-red-500 text-white text-sm font-bold
+          hover:bg-red-600 active:bg-red-700 transition-colors shadow-sm">
+        Encerrar Sessão
+      </button>
     </div>
 
+  <!-- ── Phase: Ended ── -->
   {:else if phase === "ended"}
-    <div class="ended">
-      <p class="section-title">Sessao Encerrada</p>
-      <p class="player-count">{playerCount} jogadores participantes</p>
+    <div class="space-y-5 animate-slide-up">
+      <div class="text-center py-6">
+        <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center">
+          <svg class="w-7 h-7 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold text-slate-900">Sessão Encerrada</h2>
+        <p class="text-sm text-slate-400 mt-1">{playerCount} jogadores participaram</p>
+      </div>
 
       {#if leaderboard.length > 0}
-        <table class="ranking-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Jogador</th>
-              <th>Pontos</th>
-              <th>Corretas</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each leaderboard as entry (entry.rank)}
-              <tr class:highlight={entry.rank === 1}>
-                <td class="rank">{entry.rank}</td>
-                <td>{entry.nickname}</td>
-                <td class="score">{entry.score}</td>
-                <td>{entry.correctCount}</td>
+        <!-- Top 3 podium -->
+        <div class="flex items-end justify-center gap-3 mb-4">
+          {#each leaderboard.slice(0, 3) as entry, i}
+            {@const medals = ["🥇", "🥈", "🥉"]}
+            {@const heights = ["h-28", "h-20", "h-16"]}
+            {@const bgColors = ["bg-amber-50 border-amber-200", "bg-slate-50 border-slate-200", "bg-orange-50 border-orange-100"]}
+            <div class="flex flex-col items-center gap-2">
+              <span class="text-sm font-semibold text-slate-800 text-center max-w-[80px] truncate">{entry.nickname}</span>
+              <div class="w-20 {heights[i]} rounded-t-lg {bgColors[i]} border border-b-0 flex flex-col items-center justify-center">
+                <span class="text-2xl">{medals[i]}</span>
+                <span class="text-sm font-bold text-slate-700 tabular-nums">{entry.score}</span>
+              </div>
+            </div>
+          {/each}
+        </div>
+
+        <!-- Full rankings -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-slate-100">
+                <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide w-12">#</th>
+                <th class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Jogador</th>
+                <th class="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Pontos</th>
+                <th class="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide w-16">Certas</th>
               </tr>
-            {/each}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {#each leaderboard as entry (entry.rank)}
+                <tr class="border-b border-slate-50 last:border-0
+                  {entry.rank === 1 ? 'bg-amber-50' : ''}">
+                  <td class="px-5 py-3">
+                    <span class="text-sm font-bold text-slate-400">{entry.rank}</span>
+                  </td>
+                  <td class="px-5 py-3">
+                    <span class="text-sm font-medium text-slate-800">{entry.nickname}</span>
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <span class="text-sm font-bold text-slate-900 tabular-nums">{entry.score}</span>
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <span class="text-sm text-slate-500 tabular-nums">{entry.correctCount}</span>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
       {/if}
 
-      <div class="actions">
-        <button class="btn primary" onclick={handleBackToDashboard}>
-          Voltar ao Dashboard
-        </button>
-      </div>
+      <button onclick={handleBackToDashboard}
+        class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
+          hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm">
+        Voltar ao Dashboard
+      </button>
     </div>
   {/if}
 </div>
-
-<style>
-  .host-page {
-    max-width: 640px;
-    margin: 0 auto;
-    padding: 1rem;
-  }
-
-  .top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.5rem;
-  }
-
-  .top-bar h1 {
-    margin: 0;
-    font-size: 1.25rem;
-  }
-
-  .conn-status {
-    font-size: 0.8rem;
-    color: #e74c3c;
-    padding: 0.2rem 0.5rem;
-    border: 1px solid #e74c3c;
-    border-radius: 4px;
-  }
-
-  .conn-status.connected {
-    color: #27ae60;
-    border-color: #27ae60;
-  }
-
-  /* ── Alerts ── */
-
-  .alert {
-    padding: 0.6rem 0.8rem;
-    border-radius: 6px;
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.9rem;
-  }
-
-  .alert.error {
-    background: #fdedec;
-    border: 1px solid #e74c3c;
-    color: #e74c3c;
-  }
-
-  .dismiss {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    padding: 0 0.25rem;
-    color: inherit;
-  }
-
-  /* ── Centered (idle) ── */
-
-  .centered {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-  }
-
-  .spinner {
-    width: 32px;
-    height: 32px;
-    border: 3px solid #ddd;
-    border-top-color: #3498db;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin-top: 1rem;
-  }
-
-  @keyframes spin {
-    to { transform: rotate(360deg); }
-  }
-
-  /* ── Lobby ── */
-
-  .lobby {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
-
-  .pin-section {
-    text-align: center;
-    padding: 1.5rem;
-    background: #f0f8ff;
-    border: 2px dashed #3498db;
-    border-radius: 12px;
-  }
-
-  .pin-label {
-    font-size: 0.85rem;
-    color: #555;
-    margin: 0 0 0.5rem;
-  }
-
-  .pin-value {
-    font-size: 3rem;
-    font-weight: 700;
-    letter-spacing: 0.5rem;
-    margin: 0;
-    color: #2c3e50;
-  }
-
-  .pin-hint {
-    font-size: 0.8rem;
-    color: #888;
-    margin: 0.5rem 0 0;
-  }
-
-  .section-title {
-    font-weight: 600;
-    margin: 0 0 0.75rem;
-    font-size: 0.95rem;
-  }
-
-  .timer-config {
-    text-align: center;
-  }
-
-  .presets {
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    margin-bottom: 1rem;
-  }
-
-  .preset-btn {
-    padding: 0.5rem 1rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    background: #fff;
-    cursor: pointer;
-    font-size: 0.9rem;
-  }
-
-  .preset-btn.active {
-    border-color: #3498db;
-    background: #ebf5fb;
-    color: #3498db;
-    font-weight: 600;
-  }
-
-  .lobby-status {
-    text-align: center;
-  }
-
-  .player-count {
-    font-size: 1.1rem;
-    margin: 0.5rem 0;
-    color: #555;
-  }
-
-  .nicknames {
-    list-style: none;
-    padding: 0;
-    margin: 0.5rem 0 1.5rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
-  }
-
-  .nicknames li {
-    background: #eaf2f8;
-    padding: 0.3rem 0.7rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-  }
-
-  /* ── Playing ── */
-
-  .playing {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .question-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .question-counter {
-    font-size: 0.9rem;
-    color: #555;
-    margin: 0;
-  }
-
-  .timer-display {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #e67e22;
-    margin: 0;
-  }
-
-  .question-card {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    padding: 1.25rem;
-  }
-
-  .question-text {
-    font-size: 1.1rem;
-    margin: 0 0 1rem;
-    line-height: 1.5;
-  }
-
-  .alternatives {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .alternative {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.6rem 0.8rem;
-    border: 1px solid #eee;
-    border-radius: 6px;
-    background: #fafafa;
-  }
-
-  .alt-letter {
-    width: 28px;
-    height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #3498db;
-    color: #fff;
-    border-radius: 50%;
-    font-weight: 700;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-  }
-
-  .alt-text {
-    font-size: 0.95rem;
-  }
-
-  .progress-section {
-    text-align: center;
-  }
-
-  .progress-text {
-    font-size: 0.85rem;
-    color: #555;
-    margin: 0 0 0.4rem;
-  }
-
-  .progress-bar {
-    height: 8px;
-    background: #eee;
-    border-radius: 4px;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: #27ae60;
-    border-radius: 4px;
-    transition: width 0.3s ease;
-  }
-
-  /* ── Leaderboard / Ended ── */
-
-  .leaderboard,
-  .ended {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .ranking-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .ranking-table th {
-    text-align: left;
-    padding: 0.5rem 0.75rem;
-    border-bottom: 2px solid #ddd;
-    font-size: 0.85rem;
-    color: #555;
-  }
-
-  .ranking-table td {
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #eee;
-    font-size: 0.9rem;
-  }
-
-  .ranking-table tr.highlight {
-    background: #fef9e7;
-  }
-
-  .rank {
-    font-weight: 700;
-    color: #888;
-  }
-
-  .score {
-    font-weight: 600;
-    color: #2c3e50;
-  }
-
-  /* ── Shared ── */
-
-  .status-msg {
-    color: #888;
-    font-size: 0.9rem;
-    text-align: center;
-  }
-
-  .actions {
-    display: flex;
-    gap: 0.75rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 1rem;
-  }
-
-  .btn {
-    padding: 0.6rem 1.2rem;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 0.95rem;
-    cursor: pointer;
-    background: #fff;
-  }
-
-  .btn.primary {
-    background: #3498db;
-    color: #fff;
-    border-color: #3498db;
-  }
-
-  .btn.secondary {
-    background: #fff;
-    color: #3498db;
-    border-color: #3498db;
-  }
-
-  .btn.danger {
-    background: #e74c3c;
-    color: #fff;
-    border-color: #e74c3c;
-  }
-</style>

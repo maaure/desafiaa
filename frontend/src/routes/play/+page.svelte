@@ -5,20 +5,31 @@
   let pin = $state("");
   let nickname = $state("");
   let joined = $state(false);
+  let pinError = $state("");
+  let nickError = $state("");
 
   function handleSubmit(e: Event) {
     e.preventDefault();
+    pinError = "";
+    nickError = "";
 
-    const trimmedNick = nickname.trim();
-    if (pin.length !== 6 || trimmedNick.length < 2 || trimmedNick.length > 20) {
+    if (pin.length !== 6) {
+      pinError = "PIN deve ter 6 dígitos";
+      return;
+    }
+    if (nickname.trim().length < 2) {
+      nickError = "Mínimo 2 caracteres";
+      return;
+    }
+    if (nickname.trim().length > 20) {
+      nickError = "Máximo 20 caracteres";
       return;
     }
 
     joined = true;
-    playerSession.join(pin, trimmedNick);
+    playerSession.join(pin, nickname.trim());
   }
 
-  // Watch for successful join — navigate to game page
   $effect(() => {
     if (!joined) return;
     const p = $playerSession;
@@ -28,135 +39,114 @@
   });
 </script>
 
-<div class="join-screen">
-  <h1>N de Agua</h1>
-  <p class="subtitle">Digite o PIN e escolha seu apelido para entrar na partida</p>
+<div class="min-h-screen flex">
+  <div
+    class="hidden lg:flex lg:w-1/2 bg-linear-to-br from-slate-900 via-cyan-950 to-slate-900
+    items-center justify-center p-12 relative overflow-hidden"
+  >
+    <div
+      class="absolute inset-0 opacity-[0.03]"
+      style="background-image: radial-gradient(circle at 25% 30%, #06b6d4 1px, transparent 1px), radial-gradient(circle at 75% 70%, #06b6d4 1px, transparent 1px); background-size: 60px 60px;"
+    ></div>
+    <div class="relative text-center">
+      <div class="text-8xl mb-6">🌊</div>
+      <h1 class="text-4xl font-bold text-white tracking-tight mb-4">Desafia</h1>
+      <p class="text-lg text-cyan-200/70 max-w-sm leading-relaxed">
+        Participe de quizzes ao vivo.<br />Responda rápido, suba no ranking.
+      </p>
+    </div>
+  </div>
 
-  <form onsubmit={handleSubmit} class="join-form">
-    <label>
-      PIN da partida
-      <input
-        type="text"
-        bind:value={pin}
-        maxlength={6}
-        placeholder="000000"
-        class="pin-input"
-        disabled={joined}
-        required
-      />
-    </label>
+  <!-- Right form panel -->
+  <div class="flex-1 flex items-center justify-center p-6 sm:p-12">
+    <div class="w-full max-w-sm">
+      <!-- Mobile logo -->
+      <div class="lg:hidden text-center mb-8">
+        <h1 class="text-3xl font-bold text-slate-900">Desafia</h1>
+        <p class="text-sm text-slate-400 mt-1">Entre na partida</p>
+      </div>
 
-    <label>
-      Seu apelido
-      <input
-        type="text"
-        bind:value={nickname}
-        maxlength={20}
-        placeholder="Nickname"
-        class="nick-input"
-        disabled={joined}
-        required
-      />
-    </label>
+      <form onsubmit={handleSubmit} class="space-y-5">
+        <div>
+          <label
+            for="pin"
+            class="block text-sm font-semibold text-slate-700 mb-1.5"
+          >
+            PIN da partida
+          </label>
+          <input
+            id="pin"
+            type="text"
+            bind:value={pin}
+            maxlength={6}
+            placeholder="000000"
+            disabled={joined}
+            required
+            class="w-full px-4 py-3 rounded-xl border text-center text-2xl font-mono font-bold tracking-[0.3em]
+              placeholder:tracking-normal placeholder:text-lg placeholder:font-normal placeholder:text-slate-300
+              {pinError
+              ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
+              : 'border-slate-200 focus:border-cyan-400 focus:ring-cyan-100'}
+              focus:ring-2 outline-none transition-colors disabled:opacity-50"
+          />
+          {#if pinError}
+            <p class="mt-1.5 text-xs text-red-500 font-medium">{pinError}</p>
+          {/if}
+        </div>
 
-    <button
-      type="submit"
-      disabled={pin.length !== 6 || nickname.trim().length < 2 || joined}
-    >
-      {joined ? "Entrando..." : "Entrar na partida"}
-    </button>
-  </form>
+        <div>
+          <label
+            for="nickname"
+            class="block text-sm font-semibold text-slate-700 mb-1.5"
+          >
+            Seu apelido
+          </label>
+          <input
+            id="nickname"
+            type="text"
+            bind:value={nickname}
+            maxlength={20}
+            placeholder="Como quer ser chamado"
+            disabled={joined}
+            required
+            class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base
+              placeholder:text-slate-300
+              {nickError
+              ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
+              : 'focus:border-cyan-400 focus:ring-cyan-100'}
+              focus:ring-2 outline-none transition-colors disabled:opacity-50"
+          />
+          {#if nickError}
+            <p class="mt-1.5 text-xs text-red-500 font-medium">{nickError}</p>
+          {/if}
+        </div>
 
-  {#if $playerSession.error}
-    <p class="error-msg">{$playerSession.error}</p>
-  {/if}
+        <button
+          type="submit"
+          disabled={pin.length !== 6 || nickname.trim().length < 2 || joined}
+          class="w-full py-3 rounded-xl bg-cyan-600 text-white text-base font-bold
+            hover:bg-cyan-700 active:bg-cyan-800 disabled:opacity-40 disabled:cursor-not-allowed
+            transition-colors shadow-sm"
+        >
+          {joined ? "Entrando..." : "Entrar na partida"}
+        </button>
+      </form>
+
+      {#if $playerSession.error}
+        <div
+          class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 animate-fade-in"
+        >
+          {$playerSession.error}
+        </div>
+      {/if}
+
+      <p class="mt-8 text-xs text-center text-slate-400">
+        É um host? <a
+          href="/login"
+          class="text-cyan-600 hover:text-cyan-700 font-medium"
+          >Acesse o painel</a
+        >
+      </p>
+    </div>
+  </div>
 </div>
-
-<style>
-  .join-screen {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-    text-align: center;
-  }
-
-  h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .subtitle {
-    color: #666;
-    margin-bottom: 2rem;
-  }
-
-  .join-form {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-    max-width: 320px;
-  }
-
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.875rem;
-    color: #444;
-    text-align: left;
-  }
-
-  input {
-    padding: 0.75rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1.125rem;
-    text-align: center;
-    transition: border-color 0.2s;
-  }
-
-  input:focus {
-    outline: none;
-    border-color: #4a90d9;
-    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
-  }
-
-  .pin-input {
-    font-family: monospace;
-    letter-spacing: 0.5em;
-  }
-
-  button {
-    padding: 0.875rem;
-    background: #4a90d9;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  button:hover:not(:disabled) {
-    background: #357abd;
-  }
-
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .error-msg {
-    margin-top: 1rem;
-    padding: 0.75rem 1rem;
-    background: #fef2f2;
-    color: #dc2626;
-    border-radius: 8px;
-    font-size: 0.875rem;
-  }
-</style>
