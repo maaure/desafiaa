@@ -1,0 +1,1 @@
+ALTER TABLE "player_answers" ALTER COLUMN "selected_answer" SET DATA TYPE varchar(255);

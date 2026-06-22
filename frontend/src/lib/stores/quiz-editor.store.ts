@@ -127,13 +127,73 @@ function createQuizEditorStore() {
       }
       isSaving.set(true);
       try {
-        if (current.id) {
-          // Salva quiz existente + sync questions/alternatives via endpoints
-          await quizzesApi.update(current.id, { title: current.title, description: current.description });
+        let quizId = current.id;
+
+        // Step 1: Create or update quiz metadata
+        if (quizId) {
+          await quizzesApi.update(quizId, { title: current.title, description: current.description });
         } else {
           const created = await quizzesApi.create({ title: current.title, description: current.description ?? undefined });
-          current.id = created.id;
+          quizId = created.id;
         }
+
+        // Step 2: Sync questions and alternatives
+        const qIdToRealId = new Map<string, string>();
+        const updatedQuestions = [];
+
+        for (const qn of current.questions) {
+          let questionId = qn.id;
+
+          const isNewQuestion = questionId.startsWith("temp_");
+          const questionPayload = {
+            text: qn.text,
+            questionType: qn.questionType,
+            basePoints: qn.basePoints,
+          };
+
+          if (isNewQuestion) {
+            const created = await quizzesApi.addQuestion(quizId, questionPayload);
+            questionId = created.id;
+            qIdToRealId.set(qn.id, questionId);
+          } else {
+            await quizzesApi.updateQuestion(questionId, questionPayload);
+          }
+
+          // Sync alternatives
+          const updatedAlternatives = [];
+          for (const alt of qn.alternatives) {
+            let altId = alt.id;
+            const isNewAlt = alt.id.startsWith("a_") || alt.id.startsWith("ta_") || alt.id.startsWith("tb_");
+
+            if (isNewAlt) {
+              const created = await quizzesApi.addAlternative(questionId, {
+                text: alt.text,
+                isCorrect: alt.isCorrect,
+              });
+              altId = created.id;
+            } else {
+              await quizzesApi.updateAlternative(altId, {
+                text: alt.text,
+                isCorrect: alt.isCorrect,
+              });
+              // If marked correct, ensure consistency via the /correct endpoint
+              if (alt.isCorrect) {
+                await quizzesApi.markCorrect(altId);
+              }
+            }
+
+            updatedAlternatives.push({ ...alt, id: altId });
+          }
+
+          updatedQuestions.push({ ...qn, id: questionId, alternatives: updatedAlternatives });
+        }
+
+        // Step 3: Update store with real IDs from server
+        quiz.update((q) => {
+          if (!q) return q;
+          return { ...q, id: quizId, questions: updatedQuestions };
+        });
+
         errors.set({});
         return true;
       } catch (e: any) {

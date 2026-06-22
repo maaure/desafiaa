@@ -44,15 +44,14 @@ export function registerHostGateway(io: Namespace) {
     socket.on("host:session:start", async ({ timeLimitSeconds }: { timeLimitSeconds: number }) => {
       if (!currentPin) return;
       const limit = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
-      await redis.set(keys.sessionStatus(currentPin), "lobby");
       await redis.hset(keys.sessionConfig(currentPin), "time_limit_seconds", String(limit));
 
-      // Atualiza PG
+      // Atualiza PG (only timeLimitSeconds; status is already "lobby")
       const sessionId = await redis.get(keys.pinLookup(currentPin));
       if (sessionId) {
         await db
           .update(schema.gameSessions)
-          .set({ status: "lobby", timeLimitSeconds: limit, startedAt: new Date() })
+          .set({ timeLimitSeconds: limit })
           .where(eq(schema.gameSessions.id, sessionId));
       }
       socket.emit("session:started", { pin: currentPin, timeLimitSeconds: limit });
@@ -63,10 +62,12 @@ export function registerHostGateway(io: Namespace) {
       const config = await redis.hgetall(keys.sessionConfig(currentPin));
       const nextIndex = parseInt(config.current_question_index ?? "0", 10) + 1;
 
-      // Busca a pergunta
+      // Busca a pergunta por offset (ordem estável durante a sessão)
       const quizId = config.quiz_id;
       const question = await db.query.questions.findFirst({
-        where: and(eq(schema.questions.quizId, quizId), eq(schema.questions.sortOrder, nextIndex - 1)),
+        where: eq(schema.questions.quizId, quizId),
+        orderBy: [asc(schema.questions.sortOrder)],
+        offset: nextIndex - 1,
         with: { alternatives: { orderBy: asc(schema.alternatives.sortOrder) } },
       });
 
@@ -79,6 +80,15 @@ export function registerHostGateway(io: Namespace) {
       await redis.hset(keys.sessionConfig(currentPin), "current_question_index", String(nextIndex));
       await redis.set(keys.questionRevealed(currentPin, nextIndex), Date.now().toString(), "EX", 300);
       await redis.set(keys.sessionStatus(currentPin), "playing");
+
+      // Atualiza PG com status e startedAt (reflete o momento em que a partida realmente inicia)
+      const sessionId = await redis.get(keys.pinLookup(currentPin));
+      if (sessionId) {
+        await db
+          .update(schema.gameSessions)
+          .set({ status: "playing", startedAt: new Date() })
+          .where(eq(schema.gameSessions.id, sessionId));
+      }
 
       // Broadcast para room (Host + Players)
       io.to(`session:${currentPin}`).emit("game:question:show", {

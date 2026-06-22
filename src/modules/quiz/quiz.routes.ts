@@ -21,6 +21,24 @@ const alternativeSchema = z.object({
 
 const reorderSchema = z.object({ sortOrder: z.number().int().min(0) });
 
+async function assertQuizOwnership(db: any, userId: string, questionId: string): Promise<void> {
+  const question = await db.query.questions.findFirst({
+    where: eq(schema.questions.id, questionId),
+    with: { quiz: true },
+  });
+  if (!question) throw new NotFoundError("Pergunta");
+  if (question.quiz.authorId !== userId) throw new NotFoundError("Pergunta");
+}
+
+async function assertQuizOwnershipByAlt(db: any, userId: string, alternativeId: string): Promise<void> {
+  const alt = await db.query.alternatives.findFirst({
+    where: eq(schema.alternatives.id, alternativeId),
+    with: { question: { with: { quiz: true } } },
+  });
+  if (!alt) throw new NotFoundError("Alternativa");
+  if (alt.question.quiz.authorId !== userId) throw new NotFoundError("Alternativa");
+}
+
 export async function quizRoutes(app: FastifyInstance) {
   // Todas as rotas requerem autenticação
   app.addHook("onRequest", authenticate);
@@ -79,6 +97,7 @@ export async function quizRoutes(app: FastifyInstance) {
   });
 
   app.put<{ Params: { id: string } }>("/api/questions/:id", async (request) => {
+    await assertQuizOwnership(db, (request as any).userId, request.params.id);
     const input = questionSchema.partial().parse(request.body);
     const [updated] = await db
       .update(schema.questions)
@@ -90,11 +109,13 @@ export async function quizRoutes(app: FastifyInstance) {
   });
 
   app.delete<{ Params: { id: string } }>("/api/questions/:id", async (request, reply) => {
+    await assertQuizOwnership(db, (request as any).userId, request.params.id);
     await db.delete(schema.questions).where(eq(schema.questions.id, request.params.id));
     return reply.status(204).send();
   });
 
   app.put<{ Params: { id: string } }>("/api/questions/:id/order", async (request) => {
+    await assertQuizOwnership(db, (request as any).userId, request.params.id);
     const { sortOrder } = reorderSchema.parse(request.body);
     const [updated] = await db
       .update(schema.questions)
@@ -107,6 +128,7 @@ export async function quizRoutes(app: FastifyInstance) {
 
   // === ALTERNATIVES ===
   app.post<{ Params: { id: string } }>("/api/questions/:id/alternatives", async (request, reply) => {
+    await assertQuizOwnership(db, (request as any).userId, request.params.id);
     const question = await db.query.questions.findFirst({
       where: eq(schema.questions.id, request.params.id),
       with: { alternatives: true },
@@ -138,6 +160,7 @@ export async function quizRoutes(app: FastifyInstance) {
   });
 
   app.put<{ Params: { id: string } }>("/api/alternatives/:id", async (request) => {
+    await assertQuizOwnershipByAlt(db, (request as any).userId, request.params.id);
     const input = alternativeSchema.partial().parse(request.body);
     const [updated] = await db
       .update(schema.alternatives)
@@ -149,11 +172,13 @@ export async function quizRoutes(app: FastifyInstance) {
   });
 
   app.delete<{ Params: { id: string } }>("/api/alternatives/:id", async (request, reply) => {
+    await assertQuizOwnershipByAlt(db, (request as any).userId, request.params.id);
     await db.delete(schema.alternatives).where(eq(schema.alternatives.id, request.params.id));
     return reply.status(204).send();
   });
 
   app.put<{ Params: { id: string } }>("/api/alternatives/:id/correct", async (request) => {
+    await assertQuizOwnershipByAlt(db, (request as any).userId, request.params.id);
     const alt = await db.query.alternatives.findFirst({
       where: eq(schema.alternatives.id, request.params.id),
     });

@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
+  import { hostSession } from "$lib/stores/host-session.store";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import type { QuizListItem } from "$lib/types/quiz";
 
@@ -28,7 +29,7 @@
   }
 
   function handleStartSession(id: string) {
-    goto(`/session/new?quizId=${id}`);
+    hostSession.createAndNavigate(id);
   }
 </script>
 

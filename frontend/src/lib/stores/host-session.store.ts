@@ -1,4 +1,5 @@
 import { writable, derived } from "svelte/store";
+import { goto } from "$app/navigation";
 import type { Socket } from "socket.io-client";
 import { createHostSocket } from "$lib/game/socket-host";
 import type { LeaderboardEntry } from "$lib/types/session";
@@ -172,6 +173,17 @@ function createHostSessionStore() {
     }
   }
 
+  function createAndNavigate(quizId: string) {
+    connect();
+    const unsub = state.subscribe((s) => {
+      if (s.sessionId && s.pin) {
+        unsub();
+        goto(`/session/${s.sessionId}/host`);
+      }
+    });
+    createSession(quizId);
+  }
+
   function startSession(timeLimitSeconds: number) {
     if (!socket?.connected) return;
     const clamped = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
@@ -212,6 +224,7 @@ function createHostSessionStore() {
     connect,
     disconnect,
     createSession,
+    createAndNavigate,
     startSession,
     nextQuestion,
     showLeaderboard,

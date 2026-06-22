@@ -70,7 +70,7 @@ export const playerAnswers = pgTable("player_answers", {
   sessionId: uuid("session_id").references(() => gameSessions.id, { onDelete: "cascade" }).notNull(),
   questionId: uuid("question_id").references(() => questions.id).notNull(),
   playerNickname: varchar("player_nickname", { length: 50 }).notNull(),
-  selectedAnswer: varchar("selected_answer", { length: 1 }).notNull(),
+  selectedAnswer: varchar("selected_answer", { length: 255 }).notNull(),
   isCorrect: boolean("is_correct").notNull(),
   responseMs: integer("response_ms").notNull(),
   pointsEarned: integer("points_earned").default(0).notNull(),
