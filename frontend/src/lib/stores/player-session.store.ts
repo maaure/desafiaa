@@ -37,6 +37,7 @@ interface PlayerSessionState {
   hasAnswered: boolean;
   lastResult: AnswerResult | null;
   correctAnswer: string | null;
+  countdown: number;
   leaderboard: LeaderboardEntry[];
   error: string | null;
   isConnected: boolean;
@@ -82,6 +83,7 @@ const initialState: PlayerSessionState = {
   hasAnswered: false,
   lastResult: null,
   correctAnswer: null,
+  countdown: 0,
   leaderboard: [],
   error: null,
   isConnected: false,
@@ -95,6 +97,29 @@ function createPlayerSessionStore() {
 
   function tryRestoreSession(): { pin: string; nickname: string } | null {
     return loadSession();
+  }
+
+  // --- Countdown timer ---
+
+  let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
+  function startCountdown(seconds: number) {
+    stopCountdown();
+    state.update((s) => ({ ...s, countdown: seconds }));
+    countdownTimer = setInterval(() => {
+      state.update((s) => {
+        const next = s.countdown - 1;
+        if (next <= 0) stopCountdown();
+        return { ...s, countdown: Math.max(0, next) };
+      });
+    }, 1000);
+  }
+
+  function stopCountdown() {
+    if (countdownTimer) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
   }
 
   // --- Socket lifecycle ---
@@ -153,6 +178,7 @@ function createPlayerSessionStore() {
           lastResult: null,
           correctAnswer: null,
         }));
+        startCountdown(payload.timeLimit);
       },
     );
 
@@ -222,6 +248,7 @@ function createPlayerSessionStore() {
   }
 
   function disconnect() {
+    stopCountdown();
     if (socket) {
       socket.removeAllListeners();
       socket.disconnect();
@@ -263,9 +290,10 @@ function createPlayerSessionStore() {
     }
   }
 
-  function reconnect() {
+  function reconnect(expectedPin?: string) {
     const saved = tryRestoreSession();
     if (!saved) return;
+    if (expectedPin && saved.pin !== expectedPin) return;
 
     state.update((s) => ({
       ...s,
@@ -314,6 +342,7 @@ function createPlayerSessionStore() {
     hasAnswered: derived(state, ($s) => $s.hasAnswered),
     lastResult: derived(state, ($s) => $s.lastResult),
     correctAnswer: derived(state, ($s) => $s.correctAnswer),
+    countdown: derived(state, ($s) => $s.countdown),
     leaderboard: derived(state, ($s) => $s.leaderboard),
     error: derived(state, ($s) => $s.error),
     isConnected: derived(state, ($s) => $s.isConnected),

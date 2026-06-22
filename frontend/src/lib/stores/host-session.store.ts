@@ -1,5 +1,4 @@
 import { writable, derived } from "svelte/store";
-import { goto } from "$app/navigation";
 import type { Socket } from "socket.io-client";
 import { createHostSocket } from "$lib/game/socket-host";
 import type { LeaderboardEntry } from "$lib/types/session";
@@ -16,6 +15,7 @@ interface HostSessionState {
   phase: HostPhase;
   pin: string | null;
   sessionId: string | null;
+  quizId: string | null;
   playerCount: number;
   nicknames: string[];
   currentQuestion: { index: number; total: number } | null;
@@ -25,6 +25,7 @@ interface HostSessionState {
   leaderboard: LeaderboardEntry[];
   error: string | null;
   isConnected: boolean;
+  questionsExhausted: boolean;
 }
 
 function createHostSessionStore() {
@@ -32,6 +33,7 @@ function createHostSessionStore() {
     phase: "idle",
     pin: null,
     sessionId: null,
+    quizId: null,
     playerCount: 0,
     nicknames: [],
     currentQuestion: null,
@@ -41,6 +43,7 @@ function createHostSessionStore() {
     leaderboard: [],
     error: null,
     isConnected: false,
+    questionsExhausted: false,
   });
 
   let socket: Socket | null = null;
@@ -130,6 +133,18 @@ function createHostSessionStore() {
     );
 
     socket.on(
+      "host:questions:exhausted",
+      (payload: { rankings: LeaderboardEntry[] }) => {
+        state.update((s) => ({
+          ...s,
+          phase: "leaderboard",
+          leaderboard: payload.rankings,
+          questionsExhausted: true,
+        }));
+      },
+    );
+
+    socket.on(
       "game:leaderboard:show",
       (payload: { rankings: LeaderboardEntry[] }) => {
         state.update((s) => ({
@@ -166,22 +181,31 @@ function createHostSessionStore() {
   }
 
   function createSession(quizId: string) {
+    // Persist quizId for page-refresh survival
+    localStorage.setItem("currentQuizId", quizId);
+
+    // Reset state before starting a new session
+    state.update((s) => ({
+      ...s,
+      phase: "idle" as HostPhase,
+      pin: null,
+      sessionId: null,
+      quizId,
+      error: null,
+      playerCount: 0,
+      nicknames: [],
+      currentQuestion: null,
+      currentQuestionData: null,
+      progress: { answered: 0, total: 0 },
+      leaderboard: [],
+      questionsExhausted: false,
+    }));
+
     if (socket?.connected) {
       socket.emit("host:session:create", { quizId });
     } else {
       pendingQuizId = quizId;
     }
-  }
-
-  function createAndNavigate(quizId: string) {
-    connect();
-    const unsub = state.subscribe((s) => {
-      if (s.sessionId && s.pin) {
-        unsub();
-        goto(`/session/${s.sessionId}/host`);
-      }
-    });
-    createSession(quizId);
   }
 
   function startSession(timeLimitSeconds: number) {
@@ -211,6 +235,7 @@ function createHostSessionStore() {
     phase: derived(state, ($s) => $s.phase),
     pin: derived(state, ($s) => $s.pin),
     sessionId: derived(state, ($s) => $s.sessionId),
+    quizId: derived(state, ($s) => $s.quizId),
     playerCount: derived(state, ($s) => $s.playerCount),
     nicknames: derived(state, ($s) => $s.nicknames),
     currentQuestion: derived(state, ($s) => $s.currentQuestion),
@@ -220,11 +245,11 @@ function createHostSessionStore() {
     leaderboard: derived(state, ($s) => $s.leaderboard),
     error: derived(state, ($s) => $s.error),
     isConnected: derived(state, ($s) => $s.isConnected),
+    questionsExhausted: derived(state, ($s) => $s.questionsExhausted),
 
     connect,
     disconnect,
     createSession,
-    createAndNavigate,
     startSession,
     nextQuestion,
     showLeaderboard,

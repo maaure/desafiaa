@@ -34,11 +34,15 @@ export function registerHostGateway(io: Namespace) {
       }
 
       // Reutiliza sessionService ou faz inline (KISS: inline é mais simples aqui)
-      const { sessionService } = await import("../session/session.service.js");
-      const session = await sessionService.create(quizId, socket.data.userId);
-      currentPin = session.pin;
-      socket.join(`session:${session.pin}`);
-      socket.emit("session:created", { pin: session.pin, sessionId: session.id });
+      try {
+        const { sessionService } = await import("../session/session.service.js");
+        const session = await sessionService.create(quizId, socket.data.userId);
+        currentPin = session.pin;
+        socket.join(`session:${session.pin}`);
+        socket.emit("session:created", { pin: session.pin, sessionId: session.id });
+      } catch (e: any) {
+        socket.emit("error", { message: e.message ?? "Erro ao criar sessão" });
+      }
     });
 
     socket.on("host:session:start", async ({ timeLimitSeconds }: { timeLimitSeconds: number }) => {
@@ -72,7 +76,9 @@ export function registerHostGateway(io: Namespace) {
       });
 
       if (!question) {
-        socket.emit("error", { message: "Sem mais perguntas" });
+        // Todas as perguntas respondidas — gera ranking final e notifica host
+        const rankings = await leaderboardService.getTop(currentPin);
+        socket.emit("host:questions:exhausted", { rankings });
         return;
       }
 
@@ -91,7 +97,7 @@ export function registerHostGateway(io: Namespace) {
       }
 
       // Broadcast para room (Host + Players)
-      io.to(`session:${currentPin}`).emit("game:question:show", {
+      io.server.of('/play').to(`session:${currentPin}`).emit("game:question:show", {
         questionIndex: nextIndex,
         text: question.text,
         timeLimit: parseInt(config.time_limit_seconds ?? "30", 10),
@@ -115,7 +121,7 @@ export function registerHostGateway(io: Namespace) {
         if (status !== "playing") return;
 
         const correctAlt = question.alternatives.find((a) => a.isCorrect);
-        io.to(`session:${currentPin}`).emit("game:question:timeout", {
+        io.server.of('/play').to(`session:${currentPin}`).emit("game:question:timeout", {
           correctAnswer: correctAlt?.text ?? "?",
         });
       }, timeLimitMs);
@@ -124,7 +130,7 @@ export function registerHostGateway(io: Namespace) {
     socket.on("host:leaderboard:show", async () => {
       if (!currentPin) return;
       const rankings = await leaderboardService.getTop(currentPin);
-      io.to(`session:${currentPin}`).emit("game:leaderboard:show", { rankings });
+      io.server.of('/play').to(`session:${currentPin}`).emit("game:leaderboard:show", { rankings });
     });
 
     socket.on("host:session:end", async () => {
@@ -208,7 +214,7 @@ export function registerHostGateway(io: Namespace) {
         .set({ status: "finished", finishedAt: new Date(), playerCount: rankings.length })
         .where(eq(schema.gameSessions.id, sessionId));
 
-      io.to(`session:${currentPin}`).emit("game:ended", {
+      io.server.of('/play').to(`session:${currentPin}`).emit("game:ended", {
         finalRankings: rankings,
         totalPlayers: rankings.length,
       });

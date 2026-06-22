@@ -1,31 +1,72 @@
 import { api } from "./client";
 
 export const quizzesApi = {
-  list: (page = 1) => api.fetch<any>(`/api/quizzes?page=${page}`),
-  getById: (id: string) => api.fetch<any>(`/api/quizzes/${id}`),
+  list: (page = 1) =>
+    api.get<{ data?: unknown[]; total?: number; page?: number; limit?: number }>(`/api/quizzes?page=${page}`),
+
+  getById: (id: string) =>
+    api.get<{
+      id: string;
+      title: string;
+      description: string | null;
+      isPublished: boolean;
+      createdAt: string;
+      questions: Array<{
+        id: string;
+        text: string;
+        questionType: "multiple_choice" | "true_false";
+        basePoints: number;
+        sortOrder: number;
+        alternatives: Array<{
+          id: string;
+          text: string;
+          isCorrect: boolean;
+          sortOrder: number;
+        }>;
+      }>;
+    }>(`/api/quizzes/${id}`),
+
   create: (body: { title: string; description?: string }) =>
-    api.fetch<any>("/api/quizzes", { method: "POST", body: JSON.stringify(body) }),
-  update: (id: string, body: any) =>
-    api.fetch<any>(`/api/quizzes/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-  remove: (id: string) => api.fetch<void>(`/api/quizzes/${id}`, { method: "DELETE" }),
+    api.post<{ id: string; title: string }>("/api/quizzes", body),
+
+  update: (id: string, body: { title?: string; description?: string | null; isPublished?: boolean }) =>
+    api.put<{ id: string; title: string; isPublished: boolean }>(`/api/quizzes/${id}`, body),
+
+  remove: (id: string) =>
+    api.delete<void>(`/api/quizzes/${id}`),
 
   // Questions
-  addQuestion: (quizId: string, body: any) =>
-    api.fetch<any>(`/api/quizzes/${quizId}/questions`, { method: "POST", body: JSON.stringify(body) }),
-  updateQuestion: (id: string, body: any) =>
-    api.fetch<any>(`/api/questions/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  addQuestion: (
+    quizId: string,
+    body: { text: string; questionType: "multiple_choice" | "true_false"; basePoints?: number },
+  ) =>
+    api.post<{ id: string; text: string; sortOrder: number }>(
+      `/api/quizzes/${quizId}/questions`,
+      body,
+    ),
+
+  updateQuestion: (id: string, body: { text?: string; basePoints?: number }) =>
+    api.put<{ id: string }>(`/api/questions/${id}`, body),
+
   deleteQuestion: (id: string) =>
-    api.fetch<void>(`/api/questions/${id}`, { method: "DELETE" }),
+    api.delete<void>(`/api/questions/${id}`),
+
   reorderQuestion: (id: string, sortOrder: number) =>
-    api.fetch<any>(`/api/questions/${id}/order`, { method: "PUT", body: JSON.stringify({ sortOrder }) }),
+    api.put<{ id: string; sortOrder: number }>(`/api/questions/${id}/order`, { sortOrder }),
 
   // Alternatives
-  addAlternative: (questionId: string, body: any) =>
-    api.fetch<any>(`/api/questions/${questionId}/alternatives`, { method: "POST", body: JSON.stringify(body) }),
-  updateAlternative: (id: string, body: any) =>
-    api.fetch<any>(`/api/alternatives/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+  addAlternative: (questionId: string, body: { text: string; isCorrect?: boolean }) =>
+    api.post<{ id: string; text: string; sortOrder: number; isCorrect: boolean }>(
+      `/api/questions/${questionId}/alternatives`,
+      body,
+    ),
+
+  updateAlternative: (id: string, body: { text?: string; isCorrect?: boolean }) =>
+    api.put<{ id: string; isCorrect: boolean }>(`/api/alternatives/${id}`, body),
+
   deleteAlternative: (id: string) =>
-    api.fetch<void>(`/api/alternatives/${id}`, { method: "DELETE" }),
+    api.delete<void>(`/api/alternatives/${id}`),
+
   markCorrect: (id: string) =>
-    api.fetch<any>(`/api/alternatives/${id}/correct`, { method: "PUT" }),
+    api.put<{ id: string; isCorrect: boolean }>(`/api/alternatives/${id}/correct`),
 };

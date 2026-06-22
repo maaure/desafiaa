@@ -46,6 +46,18 @@ function createQuizEditorStore() {
       quiz.set({ id: "", title, description: null, isPublished: false, createdAt: "", questions: [] });
     },
 
+    updateTitle(title: string) {
+      quiz.update((q) => (q ? { ...q, title } : q));
+    },
+
+    updateDescription(description: string | null) {
+      quiz.update((q) => (q ? { ...q, description } : q));
+    },
+
+    togglePublished() {
+      quiz.update((q) => (q ? { ...q, isPublished: !q.isPublished } : q));
+    },
+
     addQuestion(type: "multiple_choice" | "true_false") {
       quiz.update((q) => {
         if (!q) return q;
@@ -131,7 +143,7 @@ function createQuizEditorStore() {
 
         // Step 1: Create or update quiz metadata
         if (quizId) {
-          await quizzesApi.update(quizId, { title: current.title, description: current.description });
+          await quizzesApi.update(quizId, { title: current.title, description: current.description, isPublished: current.isPublished });
         } else {
           const created = await quizzesApi.create({ title: current.title, description: current.description ?? undefined });
           quizId = created.id;
@@ -139,7 +151,7 @@ function createQuizEditorStore() {
 
         // Step 2: Sync questions and alternatives
         const qIdToRealId = new Map<string, string>();
-        const updatedQuestions = [];
+        const updatedQuestions: typeof current.questions = [];
 
         for (const qn of current.questions) {
           let questionId = qn.id;
@@ -208,8 +220,8 @@ function createQuizEditorStore() {
       isLoadingList.set(true);
       listError.set(null);
       try {
-        const data = await quizzesApi.list();
-        const items: QuizListItem[] = data.quizzes ?? data ?? [];
+        const data: any = await quizzesApi.list();
+        const items: QuizListItem[] = data.data ?? [];
         quizList.set(items);
       } catch (e: any) {
         listError.set(e.message ?? "Erro ao carregar lista");

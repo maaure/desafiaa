@@ -9,13 +9,15 @@
   let quizzes = $state<QuizListItem[]>(get(quizEditor.quizList));
   let isLoading = $state(get(quizEditor.isLoadingList));
   let listError = $state<string | null>(get(quizEditor.listError));
+  let sessionError = $state<string | null>(null);
 
   onMount(() => {
     quizEditor.loadList();
     const unsub1 = quizEditor.quizList.subscribe((v) => quizzes = v);
     const unsub2 = quizEditor.isLoadingList.subscribe((v) => isLoading = v);
     const unsub3 = quizEditor.listError.subscribe((v) => listError = v);
-    return () => { unsub1(); unsub2(); unsub3(); };
+    const unsub4 = hostSession.error.subscribe((v) => sessionError = v);
+    return () => { unsub1(); unsub2(); unsub3(); unsub4(); };
   });
 
   $effect(() => {
@@ -24,6 +26,7 @@
   });
 
   function handleStartSession(id: string) {
+    hostSession.clearError();
     hostSession.connect();
     hostSession.createSession(id);
   }
@@ -65,6 +68,16 @@
   {:else if listError}
     <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
       {listError}
+    </div>
+
+  {:else if sessionError}
+    <div class="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 flex items-center justify-between">
+      <span>{sessionError}</span>
+      <button onclick={() => hostSession.clearError()} class="text-red-400 hover:text-red-600 ml-3" title="Fechar">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
 
   <!-- Empty -->
@@ -127,16 +140,29 @@
               </svg>
               Editar
             </a>
-            <button
-              onclick={() => handleStartSession(quiz.id)}
-              class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
-                text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm"
-            >
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-              </svg>
-              Iniciar
-            </button>
+            {#if quiz.isPublished}
+              <button
+                onclick={() => handleStartSession(quiz.id)}
+                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+                  text-xs font-semibold text-white bg-cyan-600 hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+                </svg>
+                Iniciar
+              </button>
+            {:else}
+              <span
+                class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg
+                  text-xs font-medium text-slate-400 bg-slate-50 cursor-not-allowed select-none"
+                title="Publique o quiz antes de iniciar uma sessão"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+                Não publicado
+              </span>
+            {/if}
             <button
               onclick={() => handleDelete(quiz.id)}
               class="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg

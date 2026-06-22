@@ -3,22 +3,17 @@ import type { UserResponse } from "../types/user";
 
 export const authApi = {
   register: (body: { name: string; email: string; password: string }) =>
-    api.fetch<{ user: UserResponse; accessToken: string }>("/api/auth/register", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    api.post<{ user: UserResponse; accessToken: string }>("/api/auth/register", body),
 
   login: (body: { email: string; password: string }) =>
-    api.fetch<{ user: UserResponse; accessToken: string }>("/api/auth/login", {
-      method: "POST",
-      body: JSON.stringify(body),
-    }),
+    api.post<{ user: UserResponse; accessToken: string }>("/api/auth/login", body),
 
   refresh: () =>
-    api.fetch<{ accessToken: string }>("/api/auth/refresh", { method: "POST" }),
+    api.post<{ accessToken: string }>("/api/auth/refresh"),
 
   me: () =>
-    api.fetch<{ user: UserResponse }>("/api/auth/me"),
+    api.get<{ user: UserResponse }>("/api/auth/me"),
 
-  logout: () => api.fetch<void>("/api/auth/logout", { method: "POST" }),
+  logout: () =>
+    api.post<void>("/api/auth/logout"),
 };

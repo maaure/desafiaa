@@ -93,7 +93,7 @@ export function registerPlayGateway(io: Namespace) {
           const p = await redis.hgetall(keys.sessionPlayer(pin, sid));
           nicknames.push(p.nickname ?? "?");
         }
-        io.to(`session:${pin}`).emit("player:lobby:update", {
+        io.server.of('/host').to(`session:${pin}`).emit("player:lobby:update", {
           playerCount: members.length,
           nicknames,
         });
@@ -177,7 +177,7 @@ export function registerPlayGateway(io: Namespace) {
         // Notifica Host sobre progresso
         const totalAnswered = await redis.hlen(keys.questionAnswers(pin, questionIndex));
         const totalPlayers = await redis.scard(keys.sessionPlayers(pin));
-        socket.to(`session:${pin}`).emit("host:answers:progress", {
+        socket.server.of('/host').to(`session:${pin}`).emit("host:answers:progress", {
           answered: totalAnswered,
           total: totalPlayers,
         });
