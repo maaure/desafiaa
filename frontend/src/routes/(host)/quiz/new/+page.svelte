@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ArrowLeft, ArrowRight } from "@lucide/svelte";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -24,13 +25,7 @@
     href={resolve("/dashboard")}
     class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-6"
   >
-    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-      />
-    </svg>
+    <ArrowLeft class="w-4 h-4" />
     Dashboard
   </a>
 
@@ -63,13 +58,7 @@
           transition-colors shadow-sm"
       >
         Criar e editar
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"
-          />
-        </svg>
+        <ArrowRight class="w-4 h-4" />
       </button>
       <a
         href={resolve("/dashboard")}

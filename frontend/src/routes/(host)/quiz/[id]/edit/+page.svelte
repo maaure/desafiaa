@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { ArrowLeft, CheckCircle, CircleHelp, Tag } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { page } from "$app/stores";
@@ -64,13 +65,7 @@
     href={resolve("/dashboard")}
     class="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-600 transition-colors mb-6"
   >
-    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"
-      />
-    </svg>
+    <ArrowLeft class="w-4 h-4" />
     Dashboard
   </a>
 
@@ -189,19 +184,9 @@
       <div
         class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 mb-6 flex items-center gap-2 animate-fade-in"
       >
-        <svg
+        <CheckCircle
           class="w-4 h-4 text-emerald-500 shrink-0"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-          stroke-width="2"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-          />
-        </svg>
+        />
         <span class="text-sm font-medium text-emerald-700">Questionário salvo com sucesso</span>
       </div>
     {/if}
@@ -220,19 +205,9 @@
         <div
           class="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center"
         >
-          <svg
+          <CircleHelp
             class="w-6 h-6 text-slate-300"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
-            />
-          </svg>
+          />
         </div>
         <p class="text-sm font-medium text-slate-500 mb-1">Nenhuma pergunta ainda</p>
         <p class="text-xs text-slate-400">Adicione perguntas usando os botões abaixo</p>
@@ -256,20 +231,9 @@
             text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 hover:border-cyan-300
             active:bg-slate-100 transition-colors"
         >
-          <svg
+          <Tag
             class="w-4 h-4 text-slate-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"
-            />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" />
-          </svg>
+          />
           Múltipla escolha
         </button>
         <button
@@ -278,19 +242,9 @@
             text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 hover:border-cyan-300
             active:bg-slate-100 transition-colors"
         >
-          <svg
+          <CheckCircle
             class="w-4 h-4 text-slate-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="1.5"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+          />
           Verdadeiro ou Falso
         </button>
       </div>
@@ -311,19 +265,9 @@
           ></div>
           Salvando...
         {:else}
-          <svg
+          <CheckCircle
             class="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            stroke-width="2"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+          />
           Salvar questionário
         {/if}
       </button>

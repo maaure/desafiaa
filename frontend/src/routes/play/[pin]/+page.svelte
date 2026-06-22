@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { CheckCircle, X } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
@@ -78,9 +79,7 @@
         onclick={() => playerSession.clearError()}
         class="text-red-400 hover:text-red-600 p-1"
       >
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <X class="w-4 h-4" />
       </button>
     </div>
   {/if}
@@ -295,19 +294,9 @@
           <div
             class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center"
           >
-            <svg
+            <CheckCircle
               class="w-7 h-7 text-emerald-500"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
+            />
           </div>
           <h2 class="text-xl font-bold text-slate-900">Partida encerrada!</h2>
         </div>
