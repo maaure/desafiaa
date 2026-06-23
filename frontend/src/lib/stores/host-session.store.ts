@@ -1,4 +1,4 @@
-import { writable, derived } from "svelte/store";
+import { writable, derived, get } from "svelte/store";
 import type { Socket } from "socket.io-client";
 import { createHostSocket } from "$lib/game/socket-host";
 import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
@@ -26,6 +26,7 @@ interface HostSessionState {
   error: string | null;
   isConnected: boolean;
   questionsExhausted: boolean;
+  countdown: number;
 }
 
 function createHostSessionStore() {
@@ -44,10 +45,36 @@ function createHostSessionStore() {
     error: null,
     isConnected: false,
     questionsExhausted: false,
+    countdown: 0,
   });
 
   let socket: Socket | null = null;
   let pendingQuizId: string | null = null;
+
+  // --- Countdown timer ---
+
+  let countdownTimer: ReturnType<typeof setInterval> | null = null;
+
+  function startCountdown(seconds: number) {
+    stopCountdown();
+    state.update((s) => ({ ...s, countdown: seconds }));
+    countdownTimer = setInterval(() => {
+      state.update((s) => {
+        const next = s.countdown - 1;
+        if (next <= 0) stopCountdown();
+        return { ...s, countdown: Math.max(0, next) };
+      });
+    }, 1000);
+  }
+
+  function stopCountdown() {
+    if (countdownTimer) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
+  }
+
+  // --- Socket lifecycle ---
 
   function connect() {
     const token = localStorage.getItem("accessToken");
@@ -92,32 +119,28 @@ function createHostSessionStore() {
     });
 
     socket.on(
-      "game:question:show",
+      "host:question:active",
       (payload: {
         questionIndex: number;
-        text: string;
-        timeLimit: number;
+        total: number;
+        questionText: string;
         alternatives: { id: string; text: string; sortOrder: number }[];
       }) => {
+        const timeLimit = get(state).timeLimitSeconds;
         state.update((s) => ({
           ...s,
+          phase: "playing",
+          currentQuestion: { index: payload.questionIndex, total: payload.total },
           currentQuestionData: {
-            text: payload.text,
-            timeLimit: payload.timeLimit,
-            alternatives: payload.alternatives,
+            text: payload.questionText,
+            timeLimit: s.timeLimitSeconds,
+            alternatives: payload.alternatives ?? [],
           },
+          progress: { answered: 0, total: 0 },
         }));
+        startCountdown(timeLimit);
       },
     );
-
-    socket.on("host:question:active", (payload: { questionIndex: number; total: number }) => {
-      state.update((s) => ({
-        ...s,
-        phase: "playing",
-        currentQuestion: { index: payload.questionIndex, total: payload.total },
-        progress: { answered: 0, total: 0 },
-      }));
-    });
 
     socket.on("host:answers:progress", (payload: { answered: number; total: number }) => {
       state.update((s) => ({
@@ -127,6 +150,7 @@ function createHostSessionStore() {
     });
 
     socket.on("host:questions:exhausted", (payload: { rankings: LeaderboardEntry[] }) => {
+      stopCountdown();
       state.update((s) => ({
         ...s,
         phase: "leaderboard",
@@ -136,6 +160,7 @@ function createHostSessionStore() {
     });
 
     socket.on("game:leaderboard:show", (payload: { rankings: LeaderboardEntry[] }) => {
+      stopCountdown();
       state.update((s) => ({
         ...s,
         phase: "leaderboard",
@@ -146,6 +171,7 @@ function createHostSessionStore() {
     socket.on(
       "game:ended",
       (payload: { finalRankings: LeaderboardEntry[]; totalPlayers: number }) => {
+        stopCountdown();
         state.update((s) => ({
           ...s,
           phase: "ended",
@@ -161,6 +187,7 @@ function createHostSessionStore() {
   }
 
   function disconnect() {
+    stopCountdown();
     if (socket) {
       socket.removeAllListeners();
       socket.disconnect();
@@ -187,6 +214,7 @@ function createHostSessionStore() {
       progress: { answered: 0, total: 0 },
       leaderboard: [],
       questionsExhausted: false,
+      countdown: 0,
     }));
 
     if (socket?.connected) {
@@ -236,6 +264,7 @@ function createHostSessionStore() {
       error: null,
       isConnected: false,
       questionsExhausted: false,
+      countdown: 0,
     });
   }
 
@@ -255,6 +284,7 @@ function createHostSessionStore() {
     error: derived(state, ($s) => $s.error),
     isConnected: derived(state, ($s) => $s.isConnected),
     questionsExhausted: derived(state, ($s) => $s.questionsExhausted),
+    countdown: derived(state, ($s) => $s.countdown),
 
     connect,
     disconnect,

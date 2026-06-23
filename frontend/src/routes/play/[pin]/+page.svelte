@@ -144,22 +144,20 @@
       <!-- ── Phase: Question ── -->
     {:else if phase === "question"}
       <div class="flex-1 flex flex-col">
-        <!-- Timer -->
-        <div class="text-center mb-4">
-          <span
-            class="inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold font-mono tabular-nums
-            {$playerSession.countdown <= 5
-              ? 'bg-red-50 text-red-500'
-              : 'bg-white border border-slate-200 text-slate-800'}"
-          >
-            {$playerSession.countdown}
-          </span>
-        </div>
-
-        <!-- Question text -->
         {#if $playerSession.currentQuestion}
-          <p class="text-lg font-semibold text-slate-800 text-center leading-relaxed mb-6">
-            {$playerSession.currentQuestion.text}
+          <!-- Timer (large, centered — pergunta está na tela do host) -->
+          <div class="text-center mb-2">
+            <span
+              class="inline-flex items-center justify-center w-24 h-24 rounded-full text-4xl font-bold font-mono tabular-nums
+              {$playerSession.countdown <= 5
+                ? 'bg-red-50 text-red-500'
+                : 'bg-white border-2 border-slate-200 text-slate-800'}"
+            >
+              {$playerSession.countdown}
+            </span>
+          </div>
+          <p class="text-center text-sm text-purple-500 font-medium mb-6">
+            Veja a pergunta na tela do apresentador
           </p>
 
           <!-- Alternatives -->
@@ -188,6 +186,18 @@
                 <span>{alt.text}</span>
               </button>
             {/each}
+          </div>
+        {:else}
+          <!-- Fallback: no question data yet, show timer only -->
+          <div class="text-center mb-4">
+            <span
+              class="inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold font-mono tabular-nums
+              {$playerSession.countdown <= 5
+                ? 'bg-red-50 text-red-500'
+                : 'bg-white border border-slate-200 text-slate-800'}"
+            >
+              {$playerSession.countdown}
+            </span>
           </div>
         {/if}
       </div>

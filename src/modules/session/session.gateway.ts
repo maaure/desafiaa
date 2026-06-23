@@ -119,13 +119,13 @@ export function registerHostGateway(io: Namespace) {
           .where(eq(schema.gameSessions.id, sessionId));
       }
 
-      // Broadcast para room (Host + Players)
+      // Broadcast para jogadores — apenas alternativas (sem o texto da pergunta)
       io.server
         .of("/play")
         .to(`session:${currentPin}`)
         .emit("game:question:show", {
           questionIndex: nextIndex,
-          text: question.text,
+          text: "",
           timeLimit: parseInt(config.time_limit_seconds ?? "30", 10),
           alternatives: question.alternatives.map((a) => ({
             id: a.id,
@@ -134,12 +134,19 @@ export function registerHostGateway(io: Namespace) {
           })),
         });
 
+      // Host sempre recebe o texto completo (para projeção / tela grande)
       socket.emit("host:question:active", {
         questionIndex: nextIndex,
         total: await db.$count(
           schema.questions,
           eq(schema.questions.quizId, quizId),
         ),
+        questionText: question.text,
+        alternatives: question.alternatives.map((a) => ({
+          id: a.id,
+          text: a.text,
+          sortOrder: a.sortOrder,
+        })),
       });
 
       // Timer de timeout automático
@@ -154,7 +161,7 @@ export function registerHostGateway(io: Namespace) {
           .of("/play")
           .to(`session:${currentPin}`)
           .emit("game:question:timeout", {
-            correctAnswer: correctAlt?.text ?? "?",
+            correctAnswer: "",
           });
       }, timeLimitMs);
     });

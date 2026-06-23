@@ -21,6 +21,7 @@
     alternatives: { id: string; text: string; sortOrder: number }[];
   } | null>(get(hostSession.currentQuestionData));
   let timeLimitSeconds = $state(get(hostSession.timeLimitSeconds));
+  let countdown = $state(get(hostSession.countdown));
   let progress = $state<{ answered: number; total: number }>(get(hostSession.progress));
   let leaderboard = $state<LeaderboardEntry[]>(get(hostSession.leaderboard));
   let error = $state<string | null>(get(hostSession.error));
@@ -50,6 +51,7 @@
       hostSession.currentQuestion.subscribe((v) => (currentQuestion = v)),
       hostSession.currentQuestionData.subscribe((v) => (currentQuestionData = v)),
       hostSession.timeLimitSeconds.subscribe((v) => (timeLimitSeconds = v)),
+      hostSession.countdown.subscribe((v) => (countdown = v)),
       hostSession.progress.subscribe((v) => (progress = v)),
       hostSession.leaderboard.subscribe((v) => (leaderboard = v)),
       hostSession.error.subscribe((v) => (error = v)),
@@ -91,6 +93,14 @@
   }
 
   const LETTERS = ["A", "B", "C", "D", "E", "F"];
+  const ALT_COLORS = [
+    "border-l-red-400",
+    "border-l-blue-400",
+    "border-l-emerald-400",
+    "border-l-purple-400",
+    "border-l-amber-400",
+    "border-l-teal-400",
+  ];
 </script>
 
 <div class="px-8 py-8 max-w-3xl">
@@ -187,6 +197,7 @@
               </button>
             {/each}
           </div>
+
           <button
             onclick={handleOpenRoom}
             class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
@@ -245,36 +256,41 @@
           de <span class="text-slate-700">{currentQuestion?.total ?? "?"}</span>
         </p>
         <div
-          class="flex items-center gap-2 px-4 py-2 rounded-lg font-mono tabular-nums
-          {timeLimitSeconds <= 5 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'}"
+          class="flex items-center gap-2 px-6 py-3 rounded-lg font-mono tabular-nums
+          {countdown <= 5 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'}"
         >
-          <span class="text-2xl font-bold">{timeLimitSeconds}</span>
-          <span class="text-sm">s</span>
+          <span class="text-4xl font-bold">{countdown}</span>
+          <span class="text-lg">s</span>
         </div>
       </div>
 
-      <!-- Question card -->
+      <!-- Question card — large, centered, optimized for projection -->
       {#if currentQuestionData}
-        <div class="bg-white rounded-xl border border-slate-200 p-6">
-          <p class="text-lg font-semibold text-slate-800 leading-relaxed mb-6">
+        <div class="bg-white rounded-2xl border-2 border-purple-200 shadow-lg p-10 text-center">
+          <p class="text-3xl font-bold text-slate-900 leading-relaxed max-w-2xl mx-auto">
             {currentQuestionData.text}
           </p>
 
-          <div class="space-y-2.5">
-            {#each currentQuestionData.alternatives as alt, i (alt.id)}
-              <div
-                class="flex items-center gap-3 p-4 rounded-lg border border-slate-100 bg-slate-50"
-              >
-                <span
-                  class="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700
-                  text-sm font-bold shrink-0"
+          {#if currentQuestionData.alternatives.length > 0}
+            <div
+              class="grid gap-4 mt-8 {currentQuestionData.alternatives.length === 2
+                ? 'grid-cols-2'
+                : 'grid-cols-1 max-w-lg mx-auto'}"
+            >
+              {#each currentQuestionData.alternatives as alt, i (alt.id)}
+                <div
+                  class="flex items-center gap-4 p-5 rounded-xl border-l-4 bg-slate-50 border border-slate-100 text-left {ALT_COLORS[i % ALT_COLORS.length]}"
                 >
-                  {LETTERS[i] ?? String(i + 1)}
-                </span>
-                <span class="text-sm font-medium text-slate-700">{alt.text}</span>
-              </div>
-            {/each}
-          </div>
+                  <span
+                    class="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-100 text-cyan-700 text-lg font-bold shrink-0"
+                  >
+                    {LETTERS[i] ?? String(i + 1)}
+                  </span>
+                  <span class="text-lg font-medium text-slate-800">{alt.text}</span>
+                </div>
+              {/each}
+            </div>
+          {/if}
         </div>
       {/if}
 
