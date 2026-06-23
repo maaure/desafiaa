@@ -3,7 +3,7 @@
 # ── Desenvolvimento ──────────────────────────────────────────────────
 
 dev:                         ## Sobe o ambiente de dev com hot reload
-	docker compose -f docker-compose.dev.yml up --build
+	docker compose -f docker-compose.dev.yml up --build -d
 
 dev-down:                    ## Para e remove os containers de dev
 	docker compose -f docker-compose.dev.yml down

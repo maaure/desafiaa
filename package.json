@@ -10,7 +10,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:seed": "tsx src/db/seed.ts"
   },
   "keywords": [],
   "author": "",
