@@ -3,6 +3,7 @@
 export interface Alternative {
   id: string;
   text: string;
+  imageUrl?: string | null;
   isCorrect: boolean;
   sortOrder: number;
 }
@@ -10,6 +11,7 @@ export interface Alternative {
 export interface Question {
   id: string;
   text: string;
+  imageUrl?: string | null;
   questionType: "multiple_choice" | "true_false";
   basePoints: number;
   sortOrder: number;

@@ -1,23 +1,11 @@
-import { eq, and, sql, desc, asc } from "drizzle-orm";
-import { db, schema } from "../../db";
 import { NotFoundError } from "../../shared/errors";
+import { reportRepo } from "./report.repository";
+import type { QuestionReport, SessionSummary, SessionReportFull } from "./report.types";
 
 export const reportService = {
   /** Relatório por quiz: taxa de acerto e tempo médio por pergunta */
-  async quizReport(quizId: string, userId: string) {
-    const quiz = await db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
-      with: {
-        questions: {
-          orderBy: asc(schema.questions.sortOrder),
-        },
-        sessions: {
-          with: {
-            answers: true,
-          },
-        },
-      },
-    });
+  async quizReport(quizId: string, userId: string): Promise<QuestionReport[]> {
+    const quiz = await reportRepo.getQuizWithSessions(quizId, userId);
     if (!quiz) throw new NotFoundError("Quiz");
 
     return quiz.questions.map((q) => {
@@ -41,17 +29,11 @@ export const reportService = {
   },
 
   /** Histórico de sessões de um quiz */
-  async quizSessions(quizId: string, userId: string) {
-    const quiz = await db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
-    });
+  async quizSessions(quizId: string, userId: string): Promise<SessionSummary[]> {
+    const quiz = await reportRepo.getQuizWithSessions(quizId, userId);
     if (!quiz) throw new NotFoundError("Quiz");
 
-    const sessions = await db.query.gameSessions.findMany({
-      where: eq(schema.gameSessions.quizId, quizId),
-      orderBy: desc(schema.gameSessions.createdAt),
-      with: { results: { orderBy: asc(schema.gameResults.rank), limit: 1 } },
-    });
+    const sessions = await reportRepo.getSessionCountByQuiz(quizId);
 
     return sessions.map((s) => ({
       id: s.id,
@@ -66,18 +48,8 @@ export const reportService = {
   },
 
   /** Relatório detalhado de uma sessão */
-  async sessionReport(sessionId: string, userId: string) {
-    const session = await db.query.gameSessions.findFirst({
-      where: eq(schema.gameSessions.id, sessionId),
-      with: {
-        answers: {
-          with: { question: true },
-        },
-        results: {
-          orderBy: asc(schema.gameResults.rank),
-        },
-      },
-    });
+  async sessionReport(sessionId: string, userId: string): Promise<SessionReportFull> {
+    const session = await reportRepo.getSessionWithDetails(sessionId);
     if (!session || session.hostId !== userId) throw new NotFoundError("Sessão");
 
     return {

@@ -55,7 +55,20 @@ interface UnwrappedApi {
   post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
   put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
   patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  upload<T = unknown>(url: string, formData: FormData): Promise<T>;
   interceptors: typeof instance.interceptors;
 }
+
+// Adiciona o método upload
+(instance as unknown as UnwrappedApi).upload = async <T>(url: string, formData: FormData): Promise<T> => {
+  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
+  const response = await instance.post<T>(url, formData, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "Content-Type": undefined as unknown as string, // deixa o browser definir o boundary
+    },
+  });
+  return response.data as T;
+};
 
 export const api = instance as unknown as UnwrappedApi;

@@ -28,6 +28,7 @@ export const questions = pgTable("questions", {
   id: uuid("id").defaultRandom().primaryKey(),
   quizId: uuid("quiz_id").references(() => quizzes.id, { onDelete: "cascade" }).notNull(),
   text: text("text").notNull(),
+  imageUrl: text("image_url"),
   questionType: varchar("question_type", { length: 20 }).notNull(),
   basePoints: integer("base_points").default(1000).notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
@@ -42,6 +43,7 @@ export const alternatives = pgTable("alternatives", {
   id: uuid("id").defaultRandom().primaryKey(),
   questionId: uuid("question_id").references(() => questions.id, { onDelete: "cascade" }).notNull(),
   text: text("text").notNull(),
+  imageUrl: text("image_url"),
   isCorrect: boolean("is_correct").default(false).notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
 }, (t) => [index("idx_alternatives_question").on(t.questionId)]);

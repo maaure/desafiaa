@@ -43,11 +43,15 @@ services:
       JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production-32-chars!!
       HOST: "0.0.0.0"
       PORT: "3000"
+      UPLOAD_DIR: /app/uploads
     volumes:
       # Hot reload: alterações em src/ disparam restart automático
       - ./src:/app/src
+      # Uploads persistem entre reinícios
+      - uploads-dev:/app/uploads
       # node_modules fica isolado dentro do container
       - /app/node_modules
 
 volumes:
   pgdata-dev:
+  uploads-dev:

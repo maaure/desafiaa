@@ -29,11 +29,13 @@
 ### Task 1: Scaffolding do Projeto Backend
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `src/config/env.ts`
 
 **Interfaces:**
+
 - Consumes: nada (primeira task)
 - Produces: `env` (objeto tipado por Zod com `DATABASE_URL`, `REDIS_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `PORT`, `HOST`)
 
@@ -132,12 +134,14 @@ git commit -m "chore: scaffolding do projeto backend com Fastify, TypeScript e Z
 ### Task 2: Schema Drizzle e Conexão PostgreSQL
 
 **Files:**
+
 - Create: `src/db/schema.ts`
 - Create: `src/db/index.ts`
 - Create: `drizzle.config.ts`
 - Create: `src/db/migrations/` (pasta vazia, migrations geradas)
 
 **Interfaces:**
+
 - Consumes: `env.DATABASE_URL` (de Task 1)
 - Produces: `db` (Drizzle client), tabelas exportadas: `users`, `quizzes`, `questions`, `alternatives`, `gameSessions`, `playerAnswers`, `gameResults`, relações
 
@@ -161,8 +165,18 @@ Copiar o schema completo do SDD (`docs/superpowers/specs/2026-06-20-quiz-platfor
 ```typescript
 // src/db/schema.ts
 import {
-  pgTable, uuid, varchar, text, boolean, integer,
-  timestamp, uniqueIndex, index, check, relations, sql,
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  boolean,
+  integer,
+  timestamp,
+  uniqueIndex,
+  index,
+  check,
+  relations,
+  sql,
 } from "drizzle-orm/pg-core";
 import { inArray } from "drizzle-orm";
 
@@ -171,87 +185,151 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 100 }).notNull(),
   email: varchar("email", { length: 255 }).unique().notNull(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 
-export const quizzes = pgTable("quizzes", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  authorId: uuid("author_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
-  title: varchar("title", { length: 200 }).notNull(),
-  description: text("description"),
-  isPublished: boolean("is_published").default(false).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [index("idx_quizzes_author").on(t.authorId)]);
+export const quizzes = pgTable(
+  "quizzes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    authorId: uuid("author_id")
+      .references(() => users.id, { onDelete: "cascade" })
+      .notNull(),
+    title: varchar("title", { length: 200 }).notNull(),
+    description: text("description"),
+    isPublished: boolean("is_published").default(false).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("idx_quizzes_author").on(t.authorId)],
+);
 
-export const questions = pgTable("questions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  quizId: uuid("quiz_id").references(() => quizzes.id, { onDelete: "cascade" }).notNull(),
-  text: text("text").notNull(),
-  questionType: varchar("question_type", { length: 20 }).notNull(),
-  basePoints: integer("base_points").default(1000).notNull(),
-  sortOrder: integer("sort_order").default(0).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [
-  index("idx_questions_quiz").on(t.quizId, t.sortOrder),
-  check("chk_question_type", inArray(t.questionType, ["multiple_choice", "true_false"])),
-  check("chk_base_points", sql`${t.basePoints} > 0`),
-]);
+export const questions = pgTable(
+  "questions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    quizId: uuid("quiz_id")
+      .references(() => quizzes.id, { onDelete: "cascade" })
+      .notNull(),
+    text: text("text").notNull(),
+    questionType: varchar("question_type", { length: 20 }).notNull(),
+    basePoints: integer("base_points").default(1000).notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("idx_questions_quiz").on(t.quizId, t.sortOrder),
+    check(
+      "chk_question_type",
+      inArray(t.questionType, ["multiple_choice", "true_false"]),
+    ),
+    check("chk_base_points", sql`${t.basePoints} > 0`),
+  ],
+);
 
-export const alternatives = pgTable("alternatives", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  questionId: uuid("question_id").references(() => questions.id, { onDelete: "cascade" }).notNull(),
-  text: text("text").notNull(),
-  isCorrect: boolean("is_correct").default(false).notNull(),
-  sortOrder: integer("sort_order").default(0).notNull(),
-}, (t) => [index("idx_alternatives_question").on(t.questionId)]);
+export const alternatives = pgTable(
+  "alternatives",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    questionId: uuid("question_id")
+      .references(() => questions.id, { onDelete: "cascade" })
+      .notNull(),
+    text: text("text").notNull(),
+    isCorrect: boolean("is_correct").default(false).notNull(),
+    sortOrder: integer("sort_order").default(0).notNull(),
+  },
+  (t) => [index("idx_alternatives_question").on(t.questionId)],
+);
 
-export const gameSessions = pgTable("game_sessions", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  quizId: uuid("quiz_id").references(() => quizzes.id).notNull(),
-  hostId: uuid("host_id").references(() => users.id).notNull(),
-  pin: varchar("pin", { length: 6 }).notNull(),
-  status: varchar("status", { length: 20 }).notNull(),
-  timeLimitSeconds: integer("time_limit_seconds").default(30).notNull(),
-  playerCount: integer("player_count").default(0).notNull(),
-  maxPlayers: integer("max_players").default(500).notNull(),
-  startedAt: timestamp("started_at", { withTimezone: true }),
-  finishedAt: timestamp("finished_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [
-  index("idx_sessions_quiz").on(t.quizId),
-  uniqueIndex("idx_active_pin").on(t.pin).where(sql`${t.status} != 'finished'`),
-  check("chk_session_status", inArray(t.status, ["lobby", "playing", "finished"])),
-  check("chk_time_limit", sql`${t.timeLimitSeconds} BETWEEN 5 AND 300`),
-]);
+export const gameSessions = pgTable(
+  "game_sessions",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    quizId: uuid("quiz_id")
+      .references(() => quizzes.id)
+      .notNull(),
+    hostId: uuid("host_id")
+      .references(() => users.id)
+      .notNull(),
+    pin: varchar("pin", { length: 6 }).notNull(),
+    status: varchar("status", { length: 20 }).notNull(),
+    timeLimitSeconds: integer("time_limit_seconds").default(30).notNull(),
+    playerCount: integer("player_count").default(0).notNull(),
+    maxPlayers: integer("max_players").default(500).notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("idx_sessions_quiz").on(t.quizId),
+    uniqueIndex("idx_active_pin")
+      .on(t.pin)
+      .where(sql`${t.status} != 'finished'`),
+    check(
+      "chk_session_status",
+      inArray(t.status, ["lobby", "playing", "finished"]),
+    ),
+    check("chk_time_limit", sql`${t.timeLimitSeconds} BETWEEN 5 AND 300`),
+  ],
+);
 
-export const playerAnswers = pgTable("player_answers", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  sessionId: uuid("session_id").references(() => gameSessions.id, { onDelete: "cascade" }).notNull(),
-  questionId: uuid("question_id").references(() => questions.id).notNull(),
-  playerNickname: varchar("player_nickname", { length: 50 }).notNull(),
-  selectedAnswer: varchar("selected_answer", { length: 1 }).notNull(),
-  isCorrect: boolean("is_correct").notNull(),
-  responseMs: integer("response_ms").notNull(),
-  pointsEarned: integer("points_earned").default(0).notNull(),
-  answeredAt: timestamp("answered_at", { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [
-  index("idx_answers_session").on(t.sessionId),
-  index("idx_answers_question").on(t.questionId),
-]);
+export const playerAnswers = pgTable(
+  "player_answers",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sessionId: uuid("session_id")
+      .references(() => gameSessions.id, { onDelete: "cascade" })
+      .notNull(),
+    questionId: uuid("question_id")
+      .references(() => questions.id)
+      .notNull(),
+    playerNickname: varchar("player_nickname", { length: 50 }).notNull(),
+    selectedAnswer: varchar("selected_answer", { length: 1 }).notNull(),
+    isCorrect: boolean("is_correct").notNull(),
+    responseMs: integer("response_ms").notNull(),
+    pointsEarned: integer("points_earned").default(0).notNull(),
+    answeredAt: timestamp("answered_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("idx_answers_session").on(t.sessionId),
+    index("idx_answers_question").on(t.questionId),
+  ],
+);
 
-export const gameResults = pgTable("game_results", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  sessionId: uuid("session_id").references(() => gameSessions.id, { onDelete: "cascade" }).notNull(),
-  playerNickname: varchar("player_nickname", { length: 50 }).notNull(),
-  totalScore: integer("total_score").default(0).notNull(),
-  correctCount: integer("correct_count").default(0).notNull(),
-  totalCount: integer("total_count").default(0).notNull(),
-  avgResponseMs: integer("avg_response_ms").default(0).notNull(),
-  rank: integer("rank").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-}, (t) => [index("idx_results_session").on(t.sessionId, t.rank)]);
+export const gameResults = pgTable(
+  "game_results",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    sessionId: uuid("session_id")
+      .references(() => gameSessions.id, { onDelete: "cascade" })
+      .notNull(),
+    playerNickname: varchar("player_nickname", { length: 50 }).notNull(),
+    totalScore: integer("total_score").default(0).notNull(),
+    correctCount: integer("correct_count").default(0).notNull(),
+    totalCount: integer("total_count").default(0).notNull(),
+    avgResponseMs: integer("avg_response_ms").default(0).notNull(),
+    rank: integer("rank").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("idx_results_session").on(t.sessionId, t.rank)],
+);
 
 // Relações
 export const quizzesRelations = relations(quizzes, ({ one, many }) => ({
@@ -266,23 +344,41 @@ export const questionsRelations = relations(questions, ({ one, many }) => ({
 }));
 
 export const alternativesRelations = relations(alternatives, ({ one }) => ({
-  question: one(questions, { fields: [alternatives.questionId], references: [questions.id] }),
+  question: one(questions, {
+    fields: [alternatives.questionId],
+    references: [questions.id],
+  }),
 }));
 
-export const gameSessionsRelations = relations(gameSessions, ({ one, many }) => ({
-  quiz: one(quizzes, { fields: [gameSessions.quizId], references: [quizzes.id] }),
-  host: one(users, { fields: [gameSessions.hostId], references: [users.id] }),
-  answers: many(playerAnswers),
-  results: many(gameResults),
-}));
+export const gameSessionsRelations = relations(
+  gameSessions,
+  ({ one, many }) => ({
+    quiz: one(quizzes, {
+      fields: [gameSessions.quizId],
+      references: [quizzes.id],
+    }),
+    host: one(users, { fields: [gameSessions.hostId], references: [users.id] }),
+    answers: many(playerAnswers),
+    results: many(gameResults),
+  }),
+);
 
 export const playerAnswersRelations = relations(playerAnswers, ({ one }) => ({
-  session: one(gameSessions, { fields: [playerAnswers.sessionId], references: [gameSessions.id] }),
-  question: one(questions, { fields: [playerAnswers.questionId], references: [questions.id] }),
+  session: one(gameSessions, {
+    fields: [playerAnswers.sessionId],
+    references: [gameSessions.id],
+  }),
+  question: one(questions, {
+    fields: [playerAnswers.questionId],
+    references: [questions.id],
+  }),
 }));
 
 export const gameResultsRelations = relations(gameResults, ({ one }) => ({
-  session: one(gameSessions, { fields: [gameResults.sessionId], references: [gameSessions.id] }),
+  session: one(gameSessions, {
+    fields: [gameResults.sessionId],
+    references: [gameSessions.id],
+  }),
 }));
 ```
 
@@ -323,10 +419,12 @@ git commit -m "feat: schema Drizzle com 7 tabelas, índices e relações"
 ### Task 3: Cliente Redis e Fábrica de Chaves
 
 **Files:**
+
 - Create: `src/redis/client.ts`
 - Create: `src/redis/keys.ts`
 
 **Interfaces:**
+
 - Consumes: `env.REDIS_URL` (de Task 1)
 - Produces: `redis` (ioredis client), `keys` (objeto com funções que geram chaves Redis tipadas)
 
@@ -388,10 +486,12 @@ git commit -m "feat: cliente Redis e fábrica de chaves tipadas"
 ### Task 4: Utilitários Compartilhados — Erros e Paginação
 
 **Files:**
+
 - Create: `src/shared/errors.ts`
 - Create: `src/shared/pagination.ts`
 
 **Interfaces:**
+
 - Consumes: nada
 - Produces: `AppError`, `NotFoundError`, `UnauthorizedError` (classes de erro); `paginate` (função auxiliar)
 
@@ -444,7 +544,13 @@ export function paginate<T>(
 ): PaginatedResult<T> {
   const page = Math.max(1, params.page ?? 1);
   const limit = Math.min(100, Math.max(1, params.limit ?? 20));
-  return { data: items, total, page, limit, totalPages: Math.ceil(total / limit) };
+  return {
+    data: items,
+    total,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+  };
 }
 ```
 
@@ -462,10 +568,12 @@ git commit -m "feat: classes de erro AppError/NotFoundError/UnauthorizedError e 
 ### Task 5: Módulo de Autenticação — Service e Schemas
 
 **Files:**
+
 - Create: `src/modules/auth/auth.schema.ts`
 - Create: `src/modules/auth/auth.service.ts`
 
 **Interfaces:**
+
 - Consumes: `db`, `schema` (de Task 2), `env.JWT_SECRET`, `env.JWT_REFRESH_SECRET`, `AppError`, `UnauthorizedError` (Task 4)
 - Produces: `authService.register()`, `authService.login()`, `authService.refresh()`, `authService.logout()`
 
@@ -517,7 +625,9 @@ function signAccess(userId: string): string {
 }
 
 function signRefresh(userId: string): string {
-  return jwt.sign({ sub: userId }, env.JWT_REFRESH_SECRET, { expiresIn: REFRESH_TTL });
+  return jwt.sign({ sub: userId }, env.JWT_REFRESH_SECRET, {
+    expiresIn: REFRESH_TTL,
+  });
 }
 
 function toUserResponse(user: typeof schema.users.$inferSelect): UserResponse {
@@ -534,7 +644,8 @@ export const authService = {
     const existing = await db.query.users.findFirst({
       where: eq(schema.users.email, input.email),
     });
-    if (existing) throw new AppError("Email já cadastrado", 409, "EMAIL_EXISTS");
+    if (existing)
+      throw new AppError("Email já cadastrado", 409, "EMAIL_EXISTS");
 
     const passwordHash = await bcrypt.hash(input.password, BCRYPT_ROUNDS);
     const [user] = await db
@@ -565,7 +676,9 @@ export const authService = {
 
   async refresh(refreshToken: string) {
     try {
-      const payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as { sub: string };
+      const payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET) as {
+        sub: string;
+      };
       const user = await db.query.users.findFirst({
         where: eq(schema.users.id, payload.sub),
       });
@@ -630,11 +743,13 @@ git commit -m "feat: auth service com register, login e refresh JWT"
 ### Task 6: Rotas de Autenticação
 
 **Files:**
+
 - Create: `src/modules/auth/auth.routes.ts`
 - Create: `src/middleware/auth.ts`
 - Create: `src/middleware/error-handler.ts`
 
 **Interfaces:**
+
 - Consumes: `authService` (Task 5), `FastifyInstance`, `AppError` (Task 4)
 - Produces: rotas `POST /api/auth/register`, `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`; middleware `authenticate`; `errorHandler`
 
@@ -651,7 +766,9 @@ export async function authenticate(
 ) {
   const header = request.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
-    return reply.status(401).send({ error: "UNAUTHORIZED", message: "Não autenticado" });
+    return reply
+      .status(401)
+      .send({ error: "UNAUTHORIZED", message: "Não autenticado" });
   }
 
   try {
@@ -659,7 +776,9 @@ export async function authenticate(
     const payload = jwt.verify(token, env.JWT_SECRET) as { sub: string };
     (request as any).userId = payload.sub;
   } catch {
-    return reply.status(401).send({ error: "UNAUTHORIZED", message: "Token inválido" });
+    return reply
+      .status(401)
+      .send({ error: "UNAUTHORIZED", message: "Token inválido" });
   }
 }
 ```
@@ -703,7 +822,8 @@ import { registerSchema, loginSchema } from "./auth.schema";
 export async function authRoutes(app: FastifyInstance) {
   app.post("/api/auth/register", async (request, reply) => {
     const input = registerSchema.parse(request.body);
-    const { user, accessToken, refreshToken } = await authService.register(input);
+    const { user, accessToken, refreshToken } =
+      await authService.register(input);
 
     reply.setCookie("refreshToken", refreshToken, {
       httpOnly: true,
@@ -733,7 +853,10 @@ export async function authRoutes(app: FastifyInstance) {
 
   app.post("/api/auth/refresh", async (request, reply) => {
     const token = request.cookies.refreshToken;
-    if (!token) return reply.status(401).send({ error: "UNAUTHORIZED", message: "Sem refresh token" });
+    if (!token)
+      return reply
+        .status(401)
+        .send({ error: "UNAUTHORIZED", message: "Sem refresh token" });
 
     const { accessToken, refreshToken } = await authService.refresh(token);
 
@@ -769,10 +892,12 @@ git commit -m "feat: rotas de autenticação + middlewares auth e error-handler"
 ### Task 7: Quiz Service
 
 **Files:**
+
 - Create: `src/modules/quiz/quiz.schema.ts`
 - Create: `src/modules/quiz/quiz.service.ts`
 
 **Interfaces:**
+
 - Consumes: `db`, `schema` (Task 2), `AppError`, `NotFoundError` (Task 4)
 - Produces: `quizService.create()`, `quizService.list()`, `quizService.getById()`, `quizService.update()`, `quizService.remove()`
 
@@ -807,19 +932,23 @@ export const quizFullSchema = z.object({
   description: z.string().nullable(),
   isPublished: z.boolean(),
   createdAt: z.string(),
-  questions: z.array(z.object({
-    id: z.string().uuid(),
-    text: z.string(),
-    questionType: z.enum(["multiple_choice", "true_false"]),
-    basePoints: z.number().int(),
-    sortOrder: z.number().int(),
-    alternatives: z.array(z.object({
+  questions: z.array(
+    z.object({
       id: z.string().uuid(),
       text: z.string(),
-      isCorrect: z.boolean(),
+      questionType: z.enum(["multiple_choice", "true_false"]),
+      basePoints: z.number().int(),
       sortOrder: z.number().int(),
-    })),
-  })),
+      alternatives: z.array(
+        z.object({
+          id: z.string().uuid(),
+          text: z.string(),
+          isCorrect: z.boolean(),
+          sortOrder: z.number().int(),
+        }),
+      ),
+    }),
+  ),
 });
 
 export type CreateQuizInput = z.infer<typeof createQuizSchema>;
@@ -862,7 +991,10 @@ export const quizService = {
 
   async getById(quizId: string, userId: string) {
     const quiz = await db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
+      where: and(
+        eq(schema.quizzes.id, quizId),
+        eq(schema.quizzes.authorId, userId),
+      ),
       with: {
         questions: {
           orderBy: asc(schema.questions.sortOrder),
@@ -899,14 +1031,21 @@ export const quizService = {
   async create(input: CreateQuizInput, userId: string) {
     const [quiz] = await db
       .insert(schema.quizzes)
-      .values({ title: input.title, description: input.description ?? null, authorId: userId })
+      .values({
+        title: input.title,
+        description: input.description ?? null,
+        authorId: userId,
+      })
       .returning();
     return { id: quiz.id, title: quiz.title };
   },
 
   async update(quizId: string, userId: string, input: UpdateQuizInput) {
     const quiz = await db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
+      where: and(
+        eq(schema.quizzes.id, quizId),
+        eq(schema.quizzes.authorId, userId),
+      ),
     });
     if (!quiz) throw new NotFoundError("Quiz");
 
@@ -915,12 +1054,19 @@ export const quizService = {
       .set({ ...input, updatedAt: new Date() })
       .where(eq(schema.quizzes.id, quizId))
       .returning();
-    return { id: updated.id, title: updated.title, isPublished: updated.isPublished };
+    return {
+      id: updated.id,
+      title: updated.title,
+      isPublished: updated.isPublished,
+    };
   },
 
   async remove(quizId: string, userId: string) {
     const quiz = await db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
+      where: and(
+        eq(schema.quizzes.id, quizId),
+        eq(schema.quizzes.authorId, userId),
+      ),
     });
     if (!quiz) throw new NotFoundError("Quiz");
     await db.delete(schema.quizzes).where(eq(schema.quizzes.id, quizId));
@@ -940,9 +1086,11 @@ git commit -m "feat: quiz service com CRUD completo (list, getById, create, upda
 ### Task 8: Question e Alternative Services
 
 **Files:**
+
 - Create: `src/modules/quiz/quiz.routes.ts` (rotas de quiz, questions e alternatives)
 
 **Interfaces:**
+
 - Consumes: `quizService` (Task 7), `db`, `schema` (Task 2)
 - Produces: rotas completas de quiz (5 endpoints), questions (4 endpoints), alternatives (4 endpoints)
 
@@ -981,7 +1129,11 @@ export async function quizRoutes(app: FastifyInstance) {
   // === QUIZZES ===
   app.get("/api/quizzes", async (request) => {
     const { page, limit } = request.query as any;
-    return quizService.list((request as any).userId, Number(page) || 1, Number(limit) || 20);
+    return quizService.list(
+      (request as any).userId,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
   });
 
   app.get<{ Params: { id: string } }>("/api/quizzes/:id", async (request) => {
@@ -996,40 +1148,53 @@ export async function quizRoutes(app: FastifyInstance) {
 
   app.put<{ Params: { id: string } }>("/api/quizzes/:id", async (request) => {
     const input = updateQuizSchema.parse(request.body);
-    return quizService.update(request.params.id, (request as any).userId, input);
+    return quizService.update(
+      request.params.id,
+      (request as any).userId,
+      input,
+    );
   });
 
-  app.delete<{ Params: { id: string } }>("/api/quizzes/:id", async (request, reply) => {
-    await quizService.remove(request.params.id, (request as any).userId);
-    return reply.status(204).send();
-  });
+  app.delete<{ Params: { id: string } }>(
+    "/api/quizzes/:id",
+    async (request, reply) => {
+      await quizService.remove(request.params.id, (request as any).userId);
+      return reply.status(204).send();
+    },
+  );
 
   // === QUESTIONS ===
-  app.post<{ Params: { id: string } }>("/api/quizzes/:id/questions", async (request, reply) => {
-    const quiz = await db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, request.params.id), eq(schema.quizzes.authorId, (request as any).userId)),
-    });
-    if (!quiz) throw new NotFoundError("Quiz");
+  app.post<{ Params: { id: string } }>(
+    "/api/quizzes/:id/questions",
+    async (request, reply) => {
+      const quiz = await db.query.quizzes.findFirst({
+        where: and(
+          eq(schema.quizzes.id, request.params.id),
+          eq(schema.quizzes.authorId, (request as any).userId),
+        ),
+      });
+      if (!quiz) throw new NotFoundError("Quiz");
 
-    const input = questionSchema.parse(request.body);
-    const maxOrder = await db.query.questions.findFirst({
-      where: eq(schema.questions.quizId, request.params.id),
-      orderBy: (q, { desc }) => [desc(q.sortOrder)],
-    });
+      const input = questionSchema.parse(request.body);
+      const maxOrder = await db.query.questions.findFirst({
+        where: eq(schema.questions.quizId, request.params.id),
+        orderBy: (q, { desc }) => [desc(q.sortOrder)],
+      });
 
-    const [question] = await db
-      .insert(schema.questions)
-      .values({
-        quizId: request.params.id,
-        text: input.text,
-        questionType: input.questionType,
-        basePoints: input.basePoints,
-        sortOrder: (maxOrder?.sortOrder ?? -1) + 1,
-      })
-      .returning();
+      const [question] = await db
+        .insert(schema.questions)
+        .values({
+          quizId: request.params.id,
+          text: input.text,
+          questionType: input.questionType,
+          basePoints: input.basePoints,
+          sortOrder: (maxOrder?.sortOrder ?? -1) + 1,
+        })
+        .returning();
 
-    return reply.status(201).send(question);
-  });
+      return reply.status(201).send(question);
+    },
+  );
 
   app.put<{ Params: { id: string } }>("/api/questions/:id", async (request) => {
     const input = questionSchema.partial().parse(request.body);
@@ -1042,88 +1207,113 @@ export async function quizRoutes(app: FastifyInstance) {
     return updated;
   });
 
-  app.delete<{ Params: { id: string } }>("/api/questions/:id", async (request, reply) => {
-    await db.delete(schema.questions).where(eq(schema.questions.id, request.params.id));
-    return reply.status(204).send();
-  });
+  app.delete<{ Params: { id: string } }>(
+    "/api/questions/:id",
+    async (request, reply) => {
+      await db
+        .delete(schema.questions)
+        .where(eq(schema.questions.id, request.params.id));
+      return reply.status(204).send();
+    },
+  );
 
-  app.put<{ Params: { id: string } }>("/api/questions/:id/order", async (request) => {
-    const { sortOrder } = reorderSchema.parse(request.body);
-    const [updated] = await db
-      .update(schema.questions)
-      .set({ sortOrder })
-      .where(eq(schema.questions.id, request.params.id))
-      .returning();
-    if (!updated) throw new NotFoundError("Pergunta");
-    return updated;
-  });
+  app.put<{ Params: { id: string } }>(
+    "/api/questions/:id/order",
+    async (request) => {
+      const { sortOrder } = reorderSchema.parse(request.body);
+      const [updated] = await db
+        .update(schema.questions)
+        .set({ sortOrder })
+        .where(eq(schema.questions.id, request.params.id))
+        .returning();
+      if (!updated) throw new NotFoundError("Pergunta");
+      return updated;
+    },
+  );
 
   // === ALTERNATIVES ===
-  app.post<{ Params: { id: string } }>("/api/questions/:id/alternatives", async (request, reply) => {
-    const question = await db.query.questions.findFirst({
-      where: eq(schema.questions.id, request.params.id),
-      with: { alternatives: true },
-    });
-    if (!question) throw new NotFoundError("Pergunta");
+  app.post<{ Params: { id: string } }>(
+    "/api/questions/:id/alternatives",
+    async (request, reply) => {
+      const question = await db.query.questions.findFirst({
+        where: eq(schema.questions.id, request.params.id),
+        with: { alternatives: true },
+      });
+      if (!question) throw new NotFoundError("Pergunta");
 
-    const input = alternativeSchema.parse(request.body);
+      const input = alternativeSchema.parse(request.body);
 
-    // Se isCorrect, desmarca as outras
-    if (input.isCorrect) {
+      // Se isCorrect, desmarca as outras
+      if (input.isCorrect) {
+        await db
+          .update(schema.alternatives)
+          .set({ isCorrect: false })
+          .where(eq(schema.alternatives.questionId, request.params.id));
+      }
+
+      const maxOrder = question.alternatives.reduce(
+        (max, a) => Math.max(max, a.sortOrder),
+        -1,
+      );
+      const [alt] = await db
+        .insert(schema.alternatives)
+        .values({
+          questionId: request.params.id,
+          text: input.text,
+          isCorrect: input.isCorrect,
+          sortOrder: maxOrder + 1,
+        })
+        .returning();
+
+      return reply.status(201).send(alt);
+    },
+  );
+
+  app.put<{ Params: { id: string } }>(
+    "/api/alternatives/:id",
+    async (request) => {
+      const input = alternativeSchema.partial().parse(request.body);
+      const [updated] = await db
+        .update(schema.alternatives)
+        .set(input)
+        .where(eq(schema.alternatives.id, request.params.id))
+        .returning();
+      if (!updated) throw new NotFoundError("Alternativa");
+      return updated;
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>(
+    "/api/alternatives/:id",
+    async (request, reply) => {
+      await db
+        .delete(schema.alternatives)
+        .where(eq(schema.alternatives.id, request.params.id));
+      return reply.status(204).send();
+    },
+  );
+
+  app.put<{ Params: { id: string } }>(
+    "/api/alternatives/:id/correct",
+    async (request) => {
+      const alt = await db.query.alternatives.findFirst({
+        where: eq(schema.alternatives.id, request.params.id),
+      });
+      if (!alt) throw new NotFoundError("Alternativa");
+
+      // Desmarca todas e marca esta
       await db
         .update(schema.alternatives)
         .set({ isCorrect: false })
-        .where(eq(schema.alternatives.questionId, request.params.id));
-    }
-
-    const maxOrder = question.alternatives.reduce((max, a) => Math.max(max, a.sortOrder), -1);
-    const [alt] = await db
-      .insert(schema.alternatives)
-      .values({
-        questionId: request.params.id,
-        text: input.text,
-        isCorrect: input.isCorrect,
-        sortOrder: maxOrder + 1,
-      })
-      .returning();
-
-    return reply.status(201).send(alt);
-  });
-
-  app.put<{ Params: { id: string } }>("/api/alternatives/:id", async (request) => {
-    const input = alternativeSchema.partial().parse(request.body);
-    const [updated] = await db
-      .update(schema.alternatives)
-      .set(input)
-      .where(eq(schema.alternatives.id, request.params.id))
-      .returning();
-    if (!updated) throw new NotFoundError("Alternativa");
-    return updated;
-  });
-
-  app.delete<{ Params: { id: string } }>("/api/alternatives/:id", async (request, reply) => {
-    await db.delete(schema.alternatives).where(eq(schema.alternatives.id, request.params.id));
-    return reply.status(204).send();
-  });
-
-  app.put<{ Params: { id: string } }>("/api/alternatives/:id/correct", async (request) => {
-    const alt = await db.query.alternatives.findFirst({
-      where: eq(schema.alternatives.id, request.params.id),
-    });
-    if (!alt) throw new NotFoundError("Alternativa");
-
-    // Desmarca todas e marca esta
-    await db
-      .update(schema.alternatives)
-      .set({ isCorrect: false })
-      .where(eq(schema.alternatives.questionId, alt.questionId));
-    const [updated] = await db
-      .update(schema.alternatives)
-      .set({ isCorrect: true })
-      .where(eq(schema.alternatives.id, request.params.id))
-      .returning();
-    return updated;
-  });
+        .where(eq(schema.alternatives.questionId, alt.questionId));
+      const [updated] = await db
+        .update(schema.alternatives)
+        .set({ isCorrect: true })
+        .where(eq(schema.alternatives.id, request.params.id))
+        .returning();
+      return updated;
+    },
+  );
 }
 ```
 
@@ -1141,11 +1331,13 @@ git commit -m "feat: rotas completas de quizzes, questions e alternatives (13 en
 ### Task 9: Session Service e Rotas
 
 **Files:**
+
 - Create: `src/modules/session/session.schema.ts`
 - Create: `src/modules/session/session.service.ts`
 - Create: `src/modules/session/session.routes.ts`
 
 **Interfaces:**
+
 - Consumes: `db`, `schema` (Task 2), `redis`, `keys` (Task 3), `AppError`, `NotFoundError` (Task 4)
 - Produces: `sessionService.create()` (gera PIN, persiste no PG + Redis), `sessionService.getById()`, `sessionService.verifyPin()`, `sessionService.getResults()`
 
@@ -1239,7 +1431,8 @@ export const sessionService = {
       where: eq(schema.gameSessions.id, sessionId),
       with: { quiz: true },
     });
-    if (!session || session.hostId !== hostId) throw new NotFoundError("Sessão");
+    if (!session || session.hostId !== hostId)
+      throw new NotFoundError("Sessão");
     return session;
   },
 
@@ -1268,7 +1461,8 @@ export const sessionService = {
     const session = await db.query.gameSessions.findFirst({
       where: eq(schema.gameSessions.id, sessionId),
     });
-    if (!session || session.hostId !== hostId) throw new NotFoundError("Sessão");
+    if (!session || session.hostId !== hostId)
+      throw new NotFoundError("Sessão");
 
     // Busca do Postgres (resultados já persistidos)
     const results = await db.query.gameResults.findMany({
@@ -1291,24 +1485,45 @@ import { authenticate } from "../../middleware/auth";
 
 export async function sessionRoutes(app: FastifyInstance) {
   // Rotas autenticadas (Host)
-  app.post("/api/sessions", { onRequest: authenticate }, async (request, reply) => {
-    const { quizId } = createSessionSchema.parse(request.body);
-    const session = await sessionService.create(quizId, (request as any).userId);
-    return reply.status(201).send(session);
-  });
+  app.post(
+    "/api/sessions",
+    { onRequest: authenticate },
+    async (request, reply) => {
+      const { quizId } = createSessionSchema.parse(request.body);
+      const session = await sessionService.create(
+        quizId,
+        (request as any).userId,
+      );
+      return reply.status(201).send(session);
+    },
+  );
 
-  app.get<{ Params: { id: string } }>("/api/sessions/:id", { onRequest: authenticate }, async (request) => {
-    return sessionService.getById(request.params.id, (request as any).userId);
-  });
+  app.get<{ Params: { id: string } }>(
+    "/api/sessions/:id",
+    { onRequest: authenticate },
+    async (request) => {
+      return sessionService.getById(request.params.id, (request as any).userId);
+    },
+  );
 
-  app.get<{ Params: { id: string } }>("/api/sessions/:id/results", { onRequest: authenticate }, async (request) => {
-    return sessionService.getResults(request.params.id, (request as any).userId);
-  });
+  app.get<{ Params: { id: string } }>(
+    "/api/sessions/:id/results",
+    { onRequest: authenticate },
+    async (request) => {
+      return sessionService.getResults(
+        request.params.id,
+        (request as any).userId,
+      );
+    },
+  );
 
   // Rota anônima (Player)
-  app.get<{ Params: { pin: string } }>("/api/sessions/join/:pin", async (request) => {
-    return sessionService.verifyPin(request.params.pin);
-  });
+  app.get<{ Params: { pin: string } }>(
+    "/api/sessions/join/:pin",
+    async (request) => {
+      return sessionService.verifyPin(request.params.pin);
+    },
+  );
 }
 ```
 
@@ -1326,10 +1541,12 @@ git commit -m "feat: session service com criação, PIN, verificação e resulta
 ### Task 10: Scoring Engine e Leaderboard Service
 
 **Files:**
+
 - Create: `src/modules/gameplay/scoring.service.ts`
 - Create: `src/modules/gameplay/leaderboard.service.ts`
 
 **Interfaces:**
+
 - Consumes: `redis`, `keys` (Task 3)
 - Produces: `scoringService.calculate()` (score numérico), `leaderboardService.getRankings()` (array ordenado)
 
@@ -1379,7 +1596,10 @@ export const leaderboardService = {
   async getTop(pin: string, topN = 10): Promise<LeaderboardEntry[]> {
     // ZREVRANGE retorna do maior para o menor score
     const results = await redis.zrevrange(
-      keys.sessionScores(pin), 0, topN - 1, "WITHSCORES",
+      keys.sessionScores(pin),
+      0,
+      topN - 1,
+      "WITHSCORES",
     );
 
     const entries: LeaderboardEntry[] = [];
@@ -1405,7 +1625,10 @@ export const leaderboardService = {
 
   async getFullRankings(pin: string): Promise<LeaderboardEntry[]> {
     const results = await redis.zrevrange(
-      keys.sessionScores(pin), 0, -1, "WITHSCORES",
+      keys.sessionScores(pin),
+      0,
+      -1,
+      "WITHSCORES",
     );
 
     const entries: LeaderboardEntry[] = [];
@@ -1437,9 +1660,11 @@ git commit -m "feat: scoring engine e leaderboard service com Redis sorted sets"
 ### Task 11: Gameplay Gateway — Namespace /host
 
 **Files:**
+
 - Create: `src/modules/session/session.gateway.ts`
 
 **Interfaces:**
+
 - Consumes: `Server` (Socket.IO), `redis`, `keys` (Task 3), `db`, `schema` (Task 2), `scoringService`, `leaderboardService` (Task 10)
 - Produces: listeners para eventos `host:session:*`, `host:question:*`, `host:leaderboard:show`
 
@@ -1474,7 +1699,10 @@ export function registerHostGateway(io: Namespace) {
     socket.on("host:session:create", async ({ quizId }: { quizId: string }) => {
       // Valida que o quiz pertence ao host
       const quiz = await db.query.quizzes.findFirst({
-        where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, socket.data.userId)),
+        where: and(
+          eq(schema.quizzes.id, quizId),
+          eq(schema.quizzes.authorId, socket.data.userId),
+        ),
       });
       if (!quiz) {
         socket.emit("error", { message: "Quiz não encontrado" });
@@ -1486,25 +1714,42 @@ export function registerHostGateway(io: Namespace) {
       const session = await sessionService.create(quizId, socket.data.userId);
       currentPin = session.pin;
       socket.join(`session:${session.pin}`);
-      socket.emit("session:created", { pin: session.pin, sessionId: session.id });
+      socket.emit("session:created", {
+        pin: session.pin,
+        sessionId: session.id,
+      });
     });
 
-    socket.on("host:session:start", async ({ timeLimitSeconds }: { timeLimitSeconds: number }) => {
-      if (!currentPin) return;
-      const limit = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
-      await redis.set(keys.sessionStatus(currentPin), "lobby");
-      await redis.hset(keys.sessionConfig(currentPin), "time_limit_seconds", String(limit));
+    socket.on(
+      "host:session:start",
+      async ({ timeLimitSeconds }: { timeLimitSeconds: number }) => {
+        if (!currentPin) return;
+        const limit = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
+        await redis.set(keys.sessionStatus(currentPin), "lobby");
+        await redis.hset(
+          keys.sessionConfig(currentPin),
+          "time_limit_seconds",
+          String(limit),
+        );
 
-      // Atualiza PG
-      const sessionId = await redis.get(keys.pinLookup(currentPin));
-      if (sessionId) {
-        await db
-          .update(schema.gameSessions)
-          .set({ status: "lobby", timeLimitSeconds: limit, startedAt: new Date() })
-          .where(eq(schema.gameSessions.id, sessionId));
-      }
-      socket.emit("session:started", { pin: currentPin, timeLimitSeconds: limit });
-    });
+        // Atualiza PG
+        const sessionId = await redis.get(keys.pinLookup(currentPin));
+        if (sessionId) {
+          await db
+            .update(schema.gameSessions)
+            .set({
+              status: "lobby",
+              timeLimitSeconds: limit,
+              startedAt: new Date(),
+            })
+            .where(eq(schema.gameSessions.id, sessionId));
+        }
+        socket.emit("session:started", {
+          pin: currentPin,
+          timeLimitSeconds: limit,
+        });
+      },
+    );
 
     socket.on("host:question:next", async () => {
       if (!currentPin) return;
@@ -1514,7 +1759,10 @@ export function registerHostGateway(io: Namespace) {
       // Busca a pergunta
       const quizId = config.quiz_id;
       const question = await db.query.questions.findFirst({
-        where: and(eq(schema.questions.quizId, quizId), eq(schema.questions.sortOrder, nextIndex - 1)),
+        where: and(
+          eq(schema.questions.quizId, quizId),
+          eq(schema.questions.sortOrder, nextIndex - 1),
+        ),
         with: { alternatives: { orderBy: asc(schema.alternatives.sortOrder) } },
       });
 
@@ -1524,8 +1772,17 @@ export function registerHostGateway(io: Namespace) {
       }
 
       // Atualiza estado no Redis
-      await redis.hset(keys.sessionConfig(currentPin), "current_question_index", String(nextIndex));
-      await redis.set(keys.questionRevealed(currentPin, nextIndex), Date.now().toString(), "EX", 300);
+      await redis.hset(
+        keys.sessionConfig(currentPin),
+        "current_question_index",
+        String(nextIndex),
+      );
+      await redis.set(
+        keys.questionRevealed(currentPin, nextIndex),
+        Date.now().toString(),
+        "EX",
+        300,
+      );
       await redis.set(keys.sessionStatus(currentPin), "playing");
 
       // Broadcast para room (Host + Players)
@@ -1543,11 +1800,15 @@ export function registerHostGateway(io: Namespace) {
 
       socket.emit("host:question:active", {
         questionIndex: nextIndex,
-        total: await db.$count(schema.questions, eq(schema.questions.quizId, quizId)),
+        total: await db.$count(
+          schema.questions,
+          eq(schema.questions.quizId, quizId),
+        ),
       });
 
       // Timer de timeout automático
-      const timeLimitMs = parseInt(config.time_limit_seconds ?? "30", 10) * 1000;
+      const timeLimitMs =
+        parseInt(config.time_limit_seconds ?? "30", 10) * 1000;
       setTimeout(async () => {
         const status = await redis.get(keys.sessionStatus(currentPin!));
         if (status !== "playing") return;
@@ -1562,7 +1823,9 @@ export function registerHostGateway(io: Namespace) {
     socket.on("host:leaderboard:show", async () => {
       if (!currentPin) return;
       const rankings = await leaderboardService.getTop(currentPin);
-      io.to(`session:${currentPin}`).emit("game:leaderboard:show", { rankings });
+      io.to(`session:${currentPin}`).emit("game:leaderboard:show", {
+        rankings,
+      });
     });
 
     socket.on("host:session:end", async () => {
@@ -1577,7 +1840,9 @@ export function registerHostGateway(io: Namespace) {
       const totalQuestions = parseInt(config.current_question_index ?? "0", 10);
       const allAnswers = new Map<string, Record<string, string>>();
       for (let qi = 1; qi <= totalQuestions; qi++) {
-        const answers = await redis.hgetall(keys.questionAnswers(currentPin!, qi));
+        const answers = await redis.hgetall(
+          keys.questionAnswers(currentPin!, qi),
+        );
         if (Object.keys(answers).length > 0) {
           allAnswers.set(String(qi), answers);
         }
@@ -1587,7 +1852,9 @@ export function registerHostGateway(io: Namespace) {
 
       // Persiste respostas individuais no PostgreSQL
       for (const [qIdx, answerMap] of allAnswers) {
-        for (const [nickname, data] of Object.entries(answerMap as Record<string, string>)) {
+        for (const [nickname, data] of Object.entries(
+          answerMap as Record<string, string>,
+        )) {
           const parsed = JSON.parse(data);
           const question = await db.query.questions.findFirst({
             where: eq(schema.questions.quizId, quizId),
@@ -1606,7 +1873,9 @@ export function registerHostGateway(io: Namespace) {
             questionId: question.id,
             playerNickname: nickname,
             selectedAnswer: parsed.answer,
-            isCorrect: alt ? parsed.answer === alt.text || parsed.answer === alt.id : false,
+            isCorrect: alt
+              ? parsed.answer === alt.text || parsed.answer === alt.id
+              : false,
             responseMs: parsed.responseMs ?? 0,
             pointsEarned: parsed.points ?? 0,
           });
@@ -1623,10 +1892,16 @@ export function registerHostGateway(io: Namespace) {
           ),
         });
         const totalCount = playerAnswersList.length;
-        const correctCount = playerAnswersList.filter((a) => a.isCorrect).length;
-        const avgMs = totalCount > 0
-          ? Math.round(playerAnswersList.reduce((s, a) => s + a.responseMs, 0) / totalCount)
-          : 0;
+        const correctCount = playerAnswersList.filter(
+          (a) => a.isCorrect,
+        ).length;
+        const avgMs =
+          totalCount > 0
+            ? Math.round(
+                playerAnswersList.reduce((s, a) => s + a.responseMs, 0) /
+                  totalCount,
+              )
+            : 0;
 
         await db.insert(schema.gameResults).values({
           sessionId,
@@ -1641,7 +1916,11 @@ export function registerHostGateway(io: Namespace) {
 
       await db
         .update(schema.gameSessions)
-        .set({ status: "finished", finishedAt: new Date(), playerCount: rankings.length })
+        .set({
+          status: "finished",
+          finishedAt: new Date(),
+          playerCount: rankings.length,
+        })
         .where(eq(schema.gameSessions.id, sessionId));
 
       io.to(`session:${currentPin}`).emit("game:ended", {
@@ -1650,7 +1929,9 @@ export function registerHostGateway(io: Namespace) {
       });
 
       // Limpa Redis
-      const playerSockets = await redis.smembers(keys.sessionPlayers(currentPin));
+      const playerSockets = await redis.smembers(
+        keys.sessionPlayers(currentPin),
+      );
       const pipeline = redis.pipeline();
       pipeline.del(keys.sessionStatus(currentPin));
       pipeline.del(keys.sessionConfig(currentPin));
@@ -1681,9 +1962,11 @@ git commit -m "feat: gateway WebSocket do Host — criação, controle e encerra
 ### Task 12: Gameplay Gateway — Namespace /play
 
 **Files:**
+
 - Create: `src/modules/gameplay/gameplay.gateway.ts`
 
 **Interfaces:**
+
 - Consumes: `Namespace` (Socket.IO), `redis`, `keys` (Task 3), `scoringService` (Task 10), `db`, `schema` (Task 2)
 - Produces: listeners para `player:join`, `player:answer`, reconexão
 
@@ -1721,8 +2004,14 @@ export function registerPlayGateway(io: Namespace) {
 
     socket.on("player:join", async ({ nickname }: { nickname: string }) => {
       const normalizedNick = nickname.trim().toLowerCase();
-      if (!normalizedNick || normalizedNick.length < 2 || normalizedNick.length > 20) {
-        socket.emit("error", { message: "Apelido deve ter entre 2 e 20 caracteres" });
+      if (
+        !normalizedNick ||
+        normalizedNick.length < 2 ||
+        normalizedNick.length > 20
+      ) {
+        socket.emit("error", {
+          message: "Apelido deve ter entre 2 e 20 caracteres",
+        });
         return;
       }
 
@@ -1731,7 +2020,9 @@ export function registerPlayGateway(io: Namespace) {
       for (const sid of existing) {
         const player = await redis.hgetall(keys.sessionPlayer(pin, sid));
         if (player.nickname?.toLowerCase() === normalizedNick) {
-          socket.emit("error", { message: "Apelido já está em uso nesta partida" });
+          socket.emit("error", {
+            message: "Apelido já está em uso nesta partida",
+          });
           return;
         }
       }
@@ -1766,78 +2057,111 @@ export function registerPlayGateway(io: Namespace) {
       });
     });
 
-    socket.on("player:answer", async ({ questionIndex, answer }: {
-      questionIndex: number; answer: string;
-    }) => {
-      if (!socket.data.nickname) {
-        socket.emit("error", { message: "Entre na partida primeiro" });
-        return;
-      }
+    socket.on(
+      "player:answer",
+      async ({
+        questionIndex,
+        answer,
+      }: {
+        questionIndex: number;
+        answer: string;
+      }) => {
+        if (!socket.data.nickname) {
+          socket.emit("error", { message: "Entre na partida primeiro" });
+          return;
+        }
 
-      // Gate: uma resposta por pergunta
-      const alreadyAnswered = await redis.hexists(
-        keys.questionAnswers(pin, questionIndex), socket.data.nickname,
-      );
-      if (alreadyAnswered) {
-        socket.emit("error", { code: "ALREADY_ANSWERED" });
-        return;
-      }
+        // Gate: uma resposta por pergunta
+        const alreadyAnswered = await redis.hexists(
+          keys.questionAnswers(pin, questionIndex),
+          socket.data.nickname,
+        );
+        if (alreadyAnswered) {
+          socket.emit("error", { code: "ALREADY_ANSWERED" });
+          return;
+        }
 
-      // Busca a pergunta correta
-      const config = await redis.hgetall(keys.sessionConfig(pin));
-      const quizId = config.quiz_id;
-      const question = await db.query.questions.findFirst({
-        where: eq(schema.questions.quizId, quizId),
-        with: { alternatives: true },
-        orderBy: (q, { asc }) => [asc(q.sortOrder)],
-        offset: questionIndex - 1,
-      });
+        // Busca a pergunta correta
+        const config = await redis.hgetall(keys.sessionConfig(pin));
+        const quizId = config.quiz_id;
+        const question = await db.query.questions.findFirst({
+          where: eq(schema.questions.quizId, quizId),
+          with: { alternatives: true },
+          orderBy: (q, { asc }) => [asc(q.sortOrder)],
+          offset: questionIndex - 1,
+        });
 
-      if (!question) {
-        socket.emit("error", { message: "Pergunta não encontrada" });
-        return;
-      }
+        if (!question) {
+          socket.emit("error", { message: "Pergunta não encontrada" });
+          return;
+        }
 
-      const selectedAlt = question.alternatives.find((a) => a.text === answer || a.id === answer);
-      const isCorrect = selectedAlt?.isCorrect ?? false;
+        const selectedAlt = question.alternatives.find(
+          (a) => a.text === answer || a.id === answer,
+        );
+        const isCorrect = selectedAlt?.isCorrect ?? false;
 
-      // Calcula tempo de resposta
-      const revealedTs = await redis.get(keys.questionRevealed(pin, questionIndex));
-      const responseMs = revealedTs ? Date.now() - parseInt(revealedTs, 10) : 0;
+        // Calcula tempo de resposta
+        const revealedTs = await redis.get(
+          keys.questionRevealed(pin, questionIndex),
+        );
+        const responseMs = revealedTs
+          ? Date.now() - parseInt(revealedTs, 10)
+          : 0;
 
-      const timeLimit = parseInt(config.time_limit_seconds ?? "30", 10);
-      const points = scoringService.calculate({
-        basePoints: question.basePoints,
-        responseMs,
-        timeLimitSeconds: timeLimit,
-        isCorrect,
-      });
+        const timeLimit = parseInt(config.time_limit_seconds ?? "30", 10);
+        const points = scoringService.calculate({
+          basePoints: question.basePoints,
+          responseMs,
+          timeLimitSeconds: timeLimit,
+          isCorrect,
+        });
 
-      // Atualiza Redis
-      await redis.hset(keys.questionAnswers(pin, questionIndex), socket.data.nickname, JSON.stringify({
-        answer, responseMs, points,
-      }));
-      await redis.zincrby(keys.sessionScores(pin), points, socket.id);
-      const totalScore = await redis.zscore(keys.sessionScores(pin), socket.id);
-      await redis.hset(keys.sessionPlayer(pin, socket.id), "total_score", String(totalScore ?? 0));
-      if (isCorrect) {
-        await redis.hincrby(keys.sessionPlayer(pin, socket.id), "correct_count", 1);
-      }
+        // Atualiza Redis
+        await redis.hset(
+          keys.questionAnswers(pin, questionIndex),
+          socket.data.nickname,
+          JSON.stringify({
+            answer,
+            responseMs,
+            points,
+          }),
+        );
+        await redis.zincrby(keys.sessionScores(pin), points, socket.id);
+        const totalScore = await redis.zscore(
+          keys.sessionScores(pin),
+          socket.id,
+        );
+        await redis.hset(
+          keys.sessionPlayer(pin, socket.id),
+          "total_score",
+          String(totalScore ?? 0),
+        );
+        if (isCorrect) {
+          await redis.hincrby(
+            keys.sessionPlayer(pin, socket.id),
+            "correct_count",
+            1,
+          );
+        }
 
-      socket.emit("player:answer:ack", {
-        isCorrect,
-        pointsEarned: points,
-        totalScore: parseInt(totalScore ?? "0", 10),
-      });
+        socket.emit("player:answer:ack", {
+          isCorrect,
+          pointsEarned: points,
+          totalScore: parseInt(totalScore ?? "0", 10),
+        });
 
-      // Notifica Host sobre progresso
-      const totalAnswered = await redis.hlen(keys.questionAnswers(pin, questionIndex));
-      const totalPlayers = await redis.scard(keys.sessionPlayers(pin));
-      socket.to(`session:${pin}`).emit("host:answers:progress", {
-        answered: totalAnswered,
-        total: totalPlayers,
-      });
-    });
+        // Notifica Host sobre progresso
+        const totalAnswered = await redis.hlen(
+          keys.questionAnswers(pin, questionIndex),
+        );
+        const totalPlayers = await redis.scard(keys.sessionPlayers(pin));
+        socket.to(`session:${pin}`).emit("host:answers:progress", {
+          answered: totalAnswered,
+          total: totalPlayers,
+        });
+      },
+    );
 
     // Reconexão
     socket.on("disconnect", () => {
@@ -1862,10 +2186,12 @@ git commit -m "feat: gateway WebSocket do Player — join, answer e reconexão"
 ### Task 13: Report Service e Rotas
 
 **Files:**
+
 - Create: `src/modules/report/report.service.ts`
 - Create: `src/modules/report/report.routes.ts`
 
 **Interfaces:**
+
 - Consumes: `db`, `schema` (Task 2), `authenticate` (Task 6)
 - Produces: 3 rotas de relatório
 
@@ -1880,7 +2206,10 @@ export const reportService = {
   /** Relatório por quiz: taxa de acerto e tempo médio por pergunta */
   async quizReport(quizId: string, userId: string) {
     const quiz = await db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
+      where: and(
+        eq(schema.quizzes.id, quizId),
+        eq(schema.quizzes.authorId, userId),
+      ),
       with: {
         questions: {
           orderBy: asc(schema.questions.sortOrder),
@@ -1901,7 +2230,9 @@ export const reportService = {
       const total = answers.length;
       const correct = answers.filter((a) => a.isCorrect).length;
       const avgMs =
-        total > 0 ? Math.round(answers.reduce((s, a) => s + a.responseMs, 0) / total) : 0;
+        total > 0
+          ? Math.round(answers.reduce((s, a) => s + a.responseMs, 0) / total)
+          : 0;
 
       return {
         questionId: q.id,
@@ -1917,7 +2248,10 @@ export const reportService = {
   /** Histórico de sessões de um quiz */
   async quizSessions(quizId: string, userId: string) {
     const quiz = await db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
+      where: and(
+        eq(schema.quizzes.id, quizId),
+        eq(schema.quizzes.authorId, userId),
+      ),
     });
     if (!quiz) throw new NotFoundError("Quiz");
 
@@ -1952,7 +2286,8 @@ export const reportService = {
         },
       },
     });
-    if (!session || session.hostId !== userId) throw new NotFoundError("Sessão");
+    if (!session || session.hostId !== userId)
+      throw new NotFoundError("Sessão");
 
     return {
       session: {
@@ -1996,17 +2331,35 @@ import { authenticate } from "../../middleware/auth";
 export async function reportRoutes(app: FastifyInstance) {
   app.addHook("onRequest", authenticate);
 
-  app.get<{ Params: { id: string } }>("/api/quizzes/:id/report", async (request) => {
-    return reportService.quizReport(request.params.id, (request as any).userId);
-  });
+  app.get<{ Params: { id: string } }>(
+    "/api/quizzes/:id/report",
+    async (request) => {
+      return reportService.quizReport(
+        request.params.id,
+        (request as any).userId,
+      );
+    },
+  );
 
-  app.get<{ Params: { id: string } }>("/api/quizzes/:id/sessions", async (request) => {
-    return reportService.quizSessions(request.params.id, (request as any).userId);
-  });
+  app.get<{ Params: { id: string } }>(
+    "/api/quizzes/:id/sessions",
+    async (request) => {
+      return reportService.quizSessions(
+        request.params.id,
+        (request as any).userId,
+      );
+    },
+  );
 
-  app.get<{ Params: { id: string } }>("/api/sessions/:id/report", async (request) => {
-    return reportService.sessionReport(request.params.id, (request as any).userId);
-  });
+  app.get<{ Params: { id: string } }>(
+    "/api/sessions/:id/report",
+    async (request) => {
+      return reportService.sessionReport(
+        request.params.id,
+        (request as any).userId,
+      );
+    },
+  );
 }
 ```
 
@@ -2022,9 +2375,11 @@ git commit -m "feat: report service com 3 endpoints — quiz, sessões e sessão
 ### Task 14: Bootstrap do Servidor — Juntando Tudo
 
 **Files:**
+
 - Create: `src/server.ts`
 
 **Interfaces:**
+
 - Consumes: todos os módulos anteriores
 - Produces: servidor HTTP rodando (Fastify + Socket.IO)
 
@@ -2126,6 +2481,7 @@ git commit -m "feat: bootstrap do servidor — Fastify + Socket.IO + todos os m�
 ### Task 15: Scaffolding SvelteKit
 
 **Files:**
+
 - Criar projeto SvelteKit em `frontend/`
 
 - [ ] **Step 1: Criar projeto SvelteKit**
@@ -2161,11 +2517,13 @@ git commit -m "chore: scaffolding SvelteKit com estrutura MVVM"
 ### Task 16: Frontend — Tipos, API Client e Auth Store
 
 **Files:**
+
 - Create: `frontend/src/lib/types/quiz.ts`, `session.ts`, `events.ts`
 - Create: `frontend/src/lib/api/client.ts`, `auth.ts`
 - Create: `frontend/src/lib/stores/auth.store.ts`
 
 **Interfaces:**
+
 - Consumes: backend REST API (Task 6)
 - Produces: `auth` store (`login()`, `register()`, `logout()`, `user`, `isAuthenticated`, `error`, `loading`)
 
@@ -2199,7 +2557,11 @@ export const api = {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      throw new ApiError(res.status, body.error ?? "UNKNOWN", body.message ?? "Erro desconhecido");
+      throw new ApiError(
+        res.status,
+        body.error ?? "UNKNOWN",
+        body.message ?? "Erro desconhecido",
+      );
     }
 
     if (res.status === 204) return undefined as T;
@@ -2240,7 +2602,11 @@ import { writable, derived } from "svelte/store";
 import { authApi } from "$lib/api/auth";
 import { ApiError } from "$lib/api/client";
 
-interface User { id: string; name: string; email: string }
+interface User {
+  id: string;
+  name: string;
+  email: string;
+}
 
 function createAuthStore() {
   const user = writable<User | null>(null);
@@ -2258,7 +2624,11 @@ function createAuthStore() {
       return true;
     } catch (err) {
       if (err instanceof ApiError) {
-        error.set(err.code === "UNAUTHORIZED" ? "Email ou senha inválidos" : err.message);
+        error.set(
+          err.code === "UNAUTHORIZED"
+            ? "Email ou senha inválidos"
+            : err.message,
+        );
       }
       return false;
     } finally {
@@ -2266,7 +2636,11 @@ function createAuthStore() {
     }
   }
 
-  async function register(name: string, email: string, password: string): Promise<boolean> {
+  async function register(
+    name: string,
+    email: string,
+    password: string,
+  ): Promise<boolean> {
     error.set(null);
     loading.set(true);
     try {
@@ -2304,7 +2678,10 @@ function createAuthStore() {
     isAuthenticated,
     loading: { subscribe: loading.subscribe },
     error: { subscribe: error.subscribe },
-    login, register, logout, tryRefresh,
+    login,
+    register,
+    logout,
+    tryRefresh,
   };
 }
 
@@ -2323,6 +2700,7 @@ git commit -m "feat: frontend auth — api client, auth store e tipos base"
 ### Task 17: Frontend — Páginas de Login e Registro
 
 **Files:**
+
 - Create: `frontend/src/routes/(public)/login/+page.svelte`
 - Create: `frontend/src/routes/(public)/register/+page.svelte`
 - Create: `frontend/src/routes/(host)/+layout.svelte`
@@ -2431,6 +2809,7 @@ git commit -m "feat: páginas de login/registro e layout autenticado"
 ### Task 18: Quiz API, Store e Dashboard
 
 **Files:**
+
 - Create: `frontend/src/lib/api/quizzes.ts`
 - Create: `frontend/src/lib/stores/quiz-editor.store.ts`
 - Create: `frontend/src/routes/(host)/dashboard/+page.svelte`
@@ -2444,26 +2823,48 @@ export const quizzesApi = {
   list: (page = 1) => api.fetch<any>(`/api/quizzes?page=${page}`),
   getById: (id: string) => api.fetch<any>(`/api/quizzes/${id}`),
   create: (body: { title: string; description?: string }) =>
-    api.fetch<any>("/api/quizzes", { method: "POST", body: JSON.stringify(body) }),
+    api.fetch<any>("/api/quizzes", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   update: (id: string, body: any) =>
-    api.fetch<any>(`/api/quizzes/${id}`, { method: "PUT", body: JSON.stringify(body) }),
-  remove: (id: string) => api.fetch<void>(`/api/quizzes/${id}`, { method: "DELETE" }),
+    api.fetch<any>(`/api/quizzes/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  remove: (id: string) =>
+    api.fetch<void>(`/api/quizzes/${id}`, { method: "DELETE" }),
 
   // Questions
   addQuestion: (quizId: string, body: any) =>
-    api.fetch<any>(`/api/quizzes/${quizId}/questions`, { method: "POST", body: JSON.stringify(body) }),
+    api.fetch<any>(`/api/quizzes/${quizId}/questions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   updateQuestion: (id: string, body: any) =>
-    api.fetch<any>(`/api/questions/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+    api.fetch<any>(`/api/questions/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
   deleteQuestion: (id: string) =>
     api.fetch<void>(`/api/questions/${id}`, { method: "DELETE" }),
   reorderQuestion: (id: string, sortOrder: number) =>
-    api.fetch<any>(`/api/questions/${id}/order`, { method: "PUT", body: JSON.stringify({ sortOrder }) }),
+    api.fetch<any>(`/api/questions/${id}/order`, {
+      method: "PUT",
+      body: JSON.stringify({ sortOrder }),
+    }),
 
   // Alternatives
   addAlternative: (questionId: string, body: any) =>
-    api.fetch<any>(`/api/questions/${questionId}/alternatives`, { method: "POST", body: JSON.stringify(body) }),
+    api.fetch<any>(`/api/questions/${questionId}/alternatives`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
   updateAlternative: (id: string, body: any) =>
-    api.fetch<any>(`/api/alternatives/${id}`, { method: "PUT", body: JSON.stringify(body) }),
+    api.fetch<any>(`/api/alternatives/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
   deleteAlternative: (id: string) =>
     api.fetch<void>(`/api/alternatives/${id}`, { method: "DELETE" }),
   markCorrect: (id: string) =>
@@ -2484,9 +2885,8 @@ function createQuizEditorStore() {
   const isSaving = writable(false);
   const errors = writable<Record<string, string>>({});
 
-  const selectedQuestion = derived(
-    [quiz, selectedQuestionIdx],
-    ([$q, $i]) => ($i !== null && $q) ? $q.questions[$i] : null,
+  const selectedQuestion = derived([quiz, selectedQuestionIdx], ([$q, $i]) =>
+    $i !== null && $q ? $q.questions[$i] : null,
   );
 
   function validate(q: QuizFull): Record<string, string> {
@@ -2494,7 +2894,8 @@ function createQuizEditorStore() {
     if (q.questions.length < 2) e.questions = "Mínimo 2 perguntas";
     for (const qn of q.questions) {
       if (qn.alternatives.length < 2) e[`q_${qn.id}`] = "Mínimo 2 alternativas";
-      if (!qn.alternatives.some((a) => a.isCorrect)) e[`q_${qn.id}`] = "Defina a correta";
+      if (!qn.alternatives.some((a) => a.isCorrect))
+        e[`q_${qn.id}`] = "Defina a correta";
     }
     return e;
   }
@@ -2511,7 +2912,14 @@ function createQuizEditorStore() {
     },
 
     initNew(title: string) {
-      quiz.set({ id: "", title, description: null, isPublished: false, createdAt: "", questions: [] });
+      quiz.set({
+        id: "",
+        title,
+        description: null,
+        isPublished: false,
+        createdAt: "",
+        questions: [],
+      });
     },
 
     addQuestion(type: "multiple_choice" | "true_false") {
@@ -2523,17 +2931,32 @@ function createQuizEditorStore() {
           questionType: type,
           basePoints: 1000,
           sortOrder: q.questions.length,
-          alternatives: type === "true_false"
-            ? [{ id: `ta_${Date.now()}`, text: "Verdadeiro", isCorrect: false, sortOrder: 0 },
-               { id: `tb_${Date.now()}`, text: "Falso", isCorrect: false, sortOrder: 1 }]
-            : [],
+          alternatives:
+            type === "true_false"
+              ? [
+                  {
+                    id: `ta_${Date.now()}`,
+                    text: "Verdadeiro",
+                    isCorrect: false,
+                    sortOrder: 0,
+                  },
+                  {
+                    id: `tb_${Date.now()}`,
+                    text: "Falso",
+                    isCorrect: false,
+                    sortOrder: 1,
+                  },
+                ]
+              : [],
         };
         return { ...q, questions: [...q.questions, newQ] };
       });
     },
 
     removeQuestion(id: string) {
-      quiz.update((q) => q ? { ...q, questions: q.questions.filter((x) => x.id !== id) } : q);
+      quiz.update((q) =>
+        q ? { ...q, questions: q.questions.filter((x) => x.id !== id) } : q,
+      );
     },
 
     addAlternative(questionId: string) {
@@ -2543,7 +2966,18 @@ function createQuizEditorStore() {
           ...q,
           questions: q.questions.map((qn) =>
             qn.id === questionId
-              ? { ...qn, alternatives: [...qn.alternatives, { id: `a_${Date.now()}`, text: "", isCorrect: false, sortOrder: qn.alternatives.length }] }
+              ? {
+                  ...qn,
+                  alternatives: [
+                    ...qn.alternatives,
+                    {
+                      id: `a_${Date.now()}`,
+                      text: "",
+                      isCorrect: false,
+                      sortOrder: qn.alternatives.length,
+                    },
+                  ],
+                }
               : qn,
           ),
         };
@@ -2557,7 +2991,13 @@ function createQuizEditorStore() {
           ...q,
           questions: q.questions.map((qn) =>
             qn.id === questionId
-              ? { ...qn, alternatives: qn.alternatives.map((a) => ({ ...a, isCorrect: a.id === alternativeId })) }
+              ? {
+                  ...qn,
+                  alternatives: qn.alternatives.map((a) => ({
+                    ...a,
+                    isCorrect: a.id === alternativeId,
+                  })),
+                }
               : qn,
           ),
         };
@@ -2576,9 +3016,15 @@ function createQuizEditorStore() {
       try {
         if (current.id) {
           // Salva quiz existente + sync questions/alternatives via endpoints
-          await quizzesApi.update(current.id, { title: current.title, description: current.description });
+          await quizzesApi.update(current.id, {
+            title: current.title,
+            description: current.description,
+          });
         } else {
-          const created = await quizzesApi.create({ title: current.title, description: current.description ?? undefined });
+          const created = await quizzesApi.create({
+            title: current.title,
+            description: current.description ?? undefined,
+          });
           current.id = created.id;
         }
         errors.set({});
@@ -2613,6 +3059,7 @@ git commit -m "feat: frontend quiz — api, editor store e dashboard"
 ### Task 19: Frontend — Editor de Quiz
 
 **Files:**
+
 - Create: `frontend/src/routes/(host)/quiz/new/+page.svelte`
 - Create: `frontend/src/routes/(host)/quiz/[id]/edit/+page.svelte`
 - Create: `frontend/src/lib/components/quiz/QuestionEditor.svelte`
@@ -2721,12 +3168,14 @@ git commit -m "feat: editor de quiz com questions e alternatives drag-and-drop"
 ### Task 20: Frontend — Controle de Sessão do Host
 
 **Files:**
+
 - Create: `frontend/src/lib/api/sessions.ts`
 - Create: `frontend/src/lib/stores/host-session.store.ts`
 - Create: `frontend/src/lib/game/socket-host.ts`
 - Create: `frontend/src/routes/(host)/session/[id]/host/+page.svelte`
 
 **Interfaces:**
+
 - Consumes: Socket.IO `/host`, `sessionsApi`, backend Task 11
 - Produces: tela de controle do Host (PIN, lobby, pergunta ativa, leaderboard)
 
@@ -2763,6 +3212,7 @@ git commit -m "feat: controle de sessão do Host — PIN, lobby, perguntas, lead
 ### Task 21: Frontend — Experiência do Player
 
 **Files:**
+
 - Create: `frontend/src/lib/game/socket-player.ts`
 - Create: `frontend/src/lib/stores/player-session.store.ts`
 - Create: `frontend/src/routes/play/+page.svelte` (entrada PIN + nickname)
@@ -2770,6 +3220,7 @@ git commit -m "feat: controle de sessão do Host — PIN, lobby, perguntas, lead
 - Create: `frontend/src/lib/stores/leaderboard.store.ts`
 
 **Interfaces:**
+
 - Consumes: Socket.IO `/play`, backend Task 12
 - Produces: fluxo completo do Player (join → lobby → pergunta → feedback → leaderboard → pódio)
 
@@ -2808,6 +3259,7 @@ git commit -m "feat: experiência completa do Player — join, gameplay, feedbac
 ### Task 22: Nginx e Docker Compose
 
 **Files:**
+
 - Create: `nginx.conf`
 - Create: `Dockerfile`
 - Create: `docker-compose.yml`
@@ -2896,6 +3348,7 @@ git commit -m "chore: Nginx, Dockerfile e Docker Compose para deploy local"
 ### Task 23: Relatórios no Frontend (bônus)
 
 **Files:**
+
 - Create: `frontend/src/lib/api/reports.ts`
 - Create: `frontend/src/routes/(host)/quiz/[id]/report/+page.svelte`
 
@@ -2905,9 +3358,12 @@ git commit -m "chore: Nginx, Dockerfile e Docker Compose para deploy local"
 import { api } from "./client";
 
 export const reportsApi = {
-  quizReport: (quizId: string) => api.fetch<any>(`/api/quizzes/${quizId}/report`),
-  quizSessions: (quizId: string) => api.fetch<any>(`/api/quizzes/${quizId}/sessions`),
-  sessionReport: (sessionId: string) => api.fetch<any>(`/api/sessions/${sessionId}/report`),
+  quizReport: (quizId: string) =>
+    api.fetch<any>(`/api/quizzes/${quizId}/report`),
+  quizSessions: (quizId: string) =>
+    api.fetch<any>(`/api/quizzes/${quizId}/sessions`),
+  sessionReport: (sessionId: string) =>
+    api.fetch<any>(`/api/sessions/${sessionId}/report`),
 };
 ```
 
@@ -2940,4 +3396,3 @@ git commit -m "feat: página de relatório por quiz com métricas e histórico d
   }
 }
 ```
-

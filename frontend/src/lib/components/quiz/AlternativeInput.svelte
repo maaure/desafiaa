@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Image, X } from "@lucide/svelte";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import type { Alternative } from "$lib/api/quizzes/quizzes.types";
 
@@ -12,6 +13,8 @@
     letter: string;
   } = $props();
 
+  let uploading = $state(false);
+
   function handleTextInput(e: Event) {
     const value = (e.target as HTMLInputElement).value;
     quizEditor.updateAlternativeText(questionId, alt.id, value);
@@ -19,6 +22,24 @@
 
   function handleCorrect() {
     quizEditor.markCorrect(questionId, alt.id);
+  }
+
+  async function handleImageUpload(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    uploading = true;
+    try {
+      await quizEditor.updateAlternativeImage(questionId, alt.id, file);
+    } finally {
+      uploading = false;
+      input.value = "";
+    }
+  }
+
+  function handleRemoveImage() {
+    quizEditor.removeAlternativeImage(questionId, alt.id);
   }
 </script>
 
@@ -36,15 +57,50 @@
     {letter}
   </span>
 
-  <!-- Text input -->
-  <input
-    type="text"
-    value={alt.text}
-    placeholder="Texto da alternativa"
-    oninput={handleTextInput}
-    class="flex-1 px-3 py-1.5 rounded-md border-0 bg-transparent text-sm
-      placeholder:text-slate-300 focus:outline-none"
-  />
+  <div class="flex-1 space-y-1.5">
+    <!-- Text input -->
+    <input
+      type="text"
+      value={alt.text}
+      placeholder="Texto da alternativa"
+      oninput={handleTextInput}
+      class="w-full px-3 py-1.5 rounded-md border-0 bg-transparent text-sm
+        placeholder:text-slate-300 focus:outline-none"
+    />
+
+    <!-- Imagem da alternativa -->
+    {#if alt.imageUrl}
+      <div class="relative inline-block">
+        <img
+          src={alt.imageUrl}
+          alt="Imagem da alternativa"
+          class="max-h-24 rounded border border-slate-200 object-contain"
+        />
+        <button
+          onclick={handleRemoveImage}
+          class="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full
+            bg-red-500 text-white hover:bg-red-600 transition-colors"
+          title="Remover imagem"
+        >
+          <X class="w-2.5 h-2.5" />
+        </button>
+      </div>
+    {:else}
+      <label
+        class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
+          text-slate-300 hover:text-cyan-500 hover:bg-cyan-50 cursor-pointer transition-colors
+          {uploading ? 'opacity-50 pointer-events-none' : ''}"
+      >
+        {#if uploading}
+          <span class="w-3 h-3 border-2 border-slate-300 border-t-cyan-500 rounded-full animate-spin"></span>
+        {:else}
+          <Image class="w-3 h-3" />
+          Imagem
+        {/if}
+        <input type="file" accept="image/jpeg,image/png,image/webp" onchange={handleImageUpload} class="hidden" />
+      </label>
+    {/if}
+  </div>
 
   <!-- Correct toggle -->
   <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="Marcar como correta">

@@ -1,0 +1,21 @@
+// Tipos compartilhados de eventos WebSocket — re-exportados do módulo de API
+export type {
+  ErrorPayload,
+  PlayerJoinPayload,
+  PlayerJoinedPayload,
+  PlayerLobbyUpdatePayload,
+  PlayerAnswerPayload,
+  PlayerAnswerAckPayload,
+  HostSessionCreatePayload,
+  HostSessionStartPayload,
+  HostQuestionActivePayload,
+  HostAnswersProgressPayload,
+  SessionCreatedPayload,
+  SessionStartedPayload,
+  GameQuestionShowPayload,
+  GameQuestionTimeoutPayload,
+  GameLeaderboardShowPayload,
+  GameEndedPayload,
+  ServerToClientEvents,
+  ClientToServerEvents,
+} from "../api/sessions/sessions.events";

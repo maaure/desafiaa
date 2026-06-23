@@ -18,6 +18,5 @@ export const userResponseSchema = z.object({
   createdAt: z.string(),
 });
 
-export type RegisterInput = z.infer<typeof registerSchema>;
-export type LoginInput = z.infer<typeof loginSchema>;
-export type UserResponse = z.infer<typeof userResponseSchema>;
+// Tipos re-exportados de auth.types.ts
+export type { RegisterInput, LoginInput, UserResponse, AuthTokens } from "./auth.types";

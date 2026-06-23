@@ -16,12 +16,14 @@ export const quizRequests = {
       questions: Array<{
         id: string;
         text: string;
+        imageUrl?: string | null;
         questionType: "multiple_choice" | "true_false";
         basePoints: number;
         sortOrder: number;
         alternatives: Array<{
           id: string;
           text: string;
+          imageUrl?: string | null;
           isCorrect: boolean;
           sortOrder: number;
         }>;
@@ -38,17 +40,24 @@ export const quizRequests = {
 
   remove: (id: string) => api.delete<void>(`/api/quizzes/${id}`),
 
+  // Upload de imagem
+  uploadImage: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return api.upload<{ url: string }>("/api/upload", formData);
+  },
+
   // Questions
   addQuestion: (
     quizId: string,
-    body: { text: string; questionType: "multiple_choice" | "true_false"; basePoints?: number },
+    body: { text: string; imageUrl?: string | null; questionType: "multiple_choice" | "true_false"; basePoints?: number },
   ) =>
     api.post<{ id: string; text: string; sortOrder: number }>(
       `/api/quizzes/${quizId}/questions`,
       body,
     ),
 
-  updateQuestion: (id: string, body: { text?: string; basePoints?: number }) =>
+  updateQuestion: (id: string, body: { text?: string; imageUrl?: string | null; basePoints?: number }) =>
     api.put<{ id: string }>(`/api/questions/${id}`, body),
 
   deleteQuestion: (id: string) => api.delete<void>(`/api/questions/${id}`),
@@ -57,13 +66,13 @@ export const quizRequests = {
     api.put<{ id: string; sortOrder: number }>(`/api/questions/${id}/order`, { sortOrder }),
 
   // Alternatives
-  addAlternative: (questionId: string, body: { text: string; isCorrect?: boolean }) =>
+  addAlternative: (questionId: string, body: { text: string; imageUrl?: string | null; isCorrect?: boolean }) =>
     api.post<{ id: string; text: string; sortOrder: number; isCorrect: boolean }>(
       `/api/questions/${questionId}/alternatives`,
       body,
     ),
 
-  updateAlternative: (id: string, body: { text?: string; isCorrect?: boolean }) =>
+  updateAlternative: (id: string, body: { text?: string; imageUrl?: string | null; isCorrect?: boolean }) =>
     api.put<{ id: string; isCorrect: boolean }>(`/api/alternatives/${id}`, body),
 
   deleteAlternative: (id: string) => api.delete<void>(`/api/alternatives/${id}`),

@@ -136,6 +136,70 @@ function createQuizEditorStore() {
       });
     },
 
+    async updateQuestionImage(questionId: string, file: File) {
+      const { url } = await quizRequests.uploadImage(file);
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) =>
+            qn.id === questionId ? { ...qn, imageUrl: url } : qn,
+          ),
+        };
+      });
+    },
+
+    removeQuestionImage(questionId: string) {
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) =>
+            qn.id === questionId ? { ...qn, imageUrl: null } : qn,
+          ),
+        };
+      });
+    },
+
+    async updateAlternativeImage(questionId: string, altId: string, file: File) {
+      const { url } = await quizRequests.uploadImage(file);
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) =>
+            qn.id === questionId
+              ? {
+                  ...qn,
+                  alternatives: qn.alternatives.map((a) =>
+                    a.id === altId ? { ...a, imageUrl: url } : a,
+                  ),
+                }
+              : qn,
+          ),
+        };
+      });
+    },
+
+    removeAlternativeImage(questionId: string, altId: string) {
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) =>
+            qn.id === questionId
+              ? {
+                  ...qn,
+                  alternatives: qn.alternatives.map((a) =>
+                    a.id === altId ? { ...a, imageUrl: null } : a,
+                  ),
+                }
+              : qn,
+          ),
+        };
+      });
+    },
+
     markCorrect(questionId: string, alternativeId: string) {
       quiz.update((q) => {
         if (!q) return q;
@@ -191,10 +255,16 @@ function createQuizEditorStore() {
           let questionId = qn.id;
 
           const isNewQuestion = questionId.startsWith("temp_");
-          const questionPayload = {
+          const questionPayload: {
+            text: string;
+            questionType: "multiple_choice" | "true_false";
+            basePoints?: number;
+            imageUrl?: string | null;
+          } = {
             text: qn.text,
             questionType: qn.questionType,
             basePoints: qn.basePoints,
+            imageUrl: qn.imageUrl,
           };
 
           if (isNewQuestion) {
@@ -215,12 +285,14 @@ function createQuizEditorStore() {
             if (isNewAlt) {
               const created = await quizRequests.addAlternative(questionId, {
                 text: alt.text,
+                imageUrl: alt.imageUrl,
                 isCorrect: alt.isCorrect,
               });
               altId = created.id;
             } else {
               await quizRequests.updateAlternative(altId, {
                 text: alt.text,
+                imageUrl: alt.imageUrl,
                 isCorrect: alt.isCorrect,
               });
               // If marked correct, ensure consistency via the /correct endpoint

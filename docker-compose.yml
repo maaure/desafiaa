@@ -41,6 +41,9 @@ services:
       JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production-32-chars!!
       HOST: "0.0.0.0"
       PORT: "3000"
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
 
   nginx:
     image: nginx:alpine
@@ -53,3 +56,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:

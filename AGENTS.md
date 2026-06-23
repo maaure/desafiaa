@@ -56,8 +56,10 @@ A solução mais simples que funciona é a correta.
 Função pura > classe com método > classe abstrata > interface + implementação > DI container
 ```
 
-- Um módulo tem no máximo 4 arquivos (`routes`, `service`, `schema`, `gateway` opcional)
-- Service depende direto do Drizzle client e do Redis client — **não crie repositórios, interfaces ou DI containers** a menos que o problema explicitamente os exija
+- Um módulo tem no máximo 6 arquivos (`routes`, `service`, `repository`, `types`, `schema`, `gateway` opcional)
+- **Repository** é uma camada fina de acesso a dados: encapsula queries do Drizzle e operações do Redis. O service **não** chama Drizzle/Redis direto — chama o repository. Repository não contém lógica de negócio, apenas queries.
+- **Types** declara as interfaces e tipos TypeScript do módulo (entrada, saída, entidades). Fica em arquivo separado (`*.types.ts`) para evitar acúmulo de definições no service ou schema.
+- Service depende do repository e concentra a lógica de negócio. **Não crie interfaces, classes abstratas ou DI containers** — o service importa o repository diretamente como um objeto concreto.
 - Se uma função pura resolve, não crie uma classe
 - Se um `if` resolve, não crie uma strategy pattern
 - Não antecipe abstrações para cenários que não existem hoje (YAGNI)
@@ -141,11 +143,11 @@ src/
 │   ├── client.ts              # Conexão Redis (ioredis)
 │   └── keys.ts                # Fábrica de chaves Redis
 ├── modules/
-│   ├── auth/                  # auth.routes.ts, auth.service.ts, auth.schema.ts
-│   ├── quiz/                  # quiz.routes.ts, quiz.service.ts, quiz.schema.ts
-│   ├── session/               # session.routes.ts, session.service.ts, session.gateway.ts, session.schema.ts
+│   ├── auth/                  # auth.routes.ts, auth.service.ts, auth.repository.ts, auth.schema.ts, auth.types.ts
+│   ├── quiz/                  # quiz.routes.ts, quiz.service.ts, quiz.repository.ts, quiz.schema.ts, quiz.types.ts
+│   ├── session/               # session.routes.ts, session.service.ts, session.repository.ts, session.gateway.ts, session.schema.ts, session.types.ts
 │   ├── gameplay/              # gameplay.gateway.ts, scoring.service.ts, leaderboard.service.ts
-│   └── report/                # report.routes.ts, report.service.ts
+│   └── report/                # report.routes.ts, report.service.ts, report.repository.ts
 ├── middleware/
 │   ├── auth.ts                # JWT verify
 │   └── error-handler.ts       # Formata AppError, ZodError, erros 500
@@ -156,10 +158,12 @@ src/
 
 **Regras por camada no backend:**
 
-- **Routes:** apenas interface. Recebe request, valida com Zod schema, chama service, retorna response. **Zero lógica de negócio.**
-- **Service:** lógica de negócio pura. Chama Drizzle client e Redis client diretamente. **Não existem repositórios neste projeto.** KISS vence aqui.
+- **Routes:** apenas interface. Recebe request, valida com Zod schema, chama service, retorna response. **Zero lógica de negócio. Zero acesso a banco.**
+- **Service:** lógica de negócio pura. Chama o repository para acessar dados. **Não acessa Drizzle ou Redis diretamente.** Orquestra operações, aplica regras de negócio, decide o que persistir.
+- **Repository:** camada fina de acesso a dados. Encapsula queries Drizzle (`db.query.*`, `db.insert`, `db.update`, `db.delete`) e operações Redis. **Zero lógica de negócio** — apenas busca e persiste. Recebe parâmetros tipados, retorna entidades tipadas.
+- **Types:** interfaces e tipos TypeScript do módulo (entidades, inputs, outputs). Separado do schema Zod para evitar confusão entre tipo estático e validação runtime.
 - **Gateway:** lógica de WebSocket. Recebe eventos, valida, chama services, emite respostas. Um gateway por namespace (`/host`, `/play`).
-- **Schema (Zod):** define formato de entrada e saída. Usado pelas routes para validação.
+- **Schema (Zod):** define formato de entrada e saída para validação runtime. Usado pelas routes.
 - **Middleware:** funções transversais (auth, erro). Não contêm regras de negócio.
 
 ### Frontend (`src/`)
@@ -287,9 +291,9 @@ Estas ações são proibidas em qualquer circunstância:
 
 - Escrever SQL manual para criar ou alterar tabelas — use sempre o Drizzle
 - Fazer `fetch` ou `socket.emit` diretamente em um componente `.svelte`
-- Fazer `db.query()` ou equivalente em um arquivo de route ou middleware
+- Fazer `db.query()` ou equivalente em um arquivo de route, middleware, ou service
 - Importar um arquivo `.svelte` dentro de uma store
 - Enviar o gabarito (`isCorrect`) para o namespace `/play`
 - Deixar `try/catch` em componente — erro é responsabilidade da store
 - Criar classes abstratas, interfaces ou DI containers sem justificativa clara e aprovada
-- Criar um repositório genérico ou camada de abstração sobre o Drizzle
+- Criar um repositório genérico com métodos como `findAll`, `findById`, `create`, `update`, `delete` — cada repository deve ter métodos com nomes específicos ao domínio (`findByEmail`, `listByAuthor`, `getWithQuestions`)
