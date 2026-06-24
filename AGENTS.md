@@ -104,9 +104,9 @@ View (components/)  →  ViewModel (stores/)  →  Model (api/)
 
 **Regras imutáveis:**
 
-- **View (componente `.svelte`):** renderiza HTML, lê stores (`$store`), dispara ações da store. **Nunca** chama `fetch`, `socket.emit` ou qualquer API diretamente. **Nunca** contém `try/catch` — erro vem da store.
+- **View (componente `.svelte`):** renderiza HTML, lê stores (`$store`), dispara ações da store. **Nunca** chama `fetch`, `socket.emit` ou qualquer API diretamente. **Nunca** contém `try/catch` — erro vem da store. **Nunca** importa ou chama funções do model (`api/`) — use sempre queries, mutations ou ações da store.
 - **ViewModel (store):** detém estado (`writable`/`derived`), expõe ações (`login()`, `submitAnswer()`), contém TODO `try/catch` e TODO `socket.on(...)`. **Nunca** importa `.svelte`. **Nunca** manipula DOM.
-- **Model (`api/` e `game/`):** funções puras que chamam endpoints REST ou configuram sockets. Retornam dados tipados. **Nunca** importam stores ou componentes.
+- **Model (`api/` e `game/`):** funções puras que chamam endpoints REST ou configuram sockets. Retornam dados tipados. **Nunca** importam stores ou componentes. Toda chamada REST deve ser exposta via TanStack Query — `createQuery` para leitura, `createMutation` para escrita. Nenhuma página ou componente chama funções do model diretamente; o consumo é sempre via queries e mutations.
 
 **Exemplo correto de separação:**
 
@@ -290,7 +290,7 @@ Estas ações exigem que você peça confirmação antes de executar:
 Estas ações são proibidas em qualquer circunstância:
 
 - Escrever SQL manual para criar ou alterar tabelas — use sempre o Drizzle
-- Fazer `fetch` ou `socket.emit` diretamente em um componente `.svelte`
+- Fazer `fetch`, `socket.emit` ou qualquer chamada de API diretamente em um componente `.svelte` — use sempre queries, mutations ou ações da store
 - Fazer `db.query()` ou equivalente em um arquivo de route, middleware, ou service
 - Importar um arquivo `.svelte` dentro de uma store
 - Enviar o gabarito (`isCorrect`) para o namespace `/play`
