@@ -13,7 +13,7 @@
     "bg-red-500 hover:bg-red-600",
     "bg-blue-500 hover:bg-blue-600",
     "bg-emerald-500 hover:bg-emerald-600",
-    "bg-purple-500 hover:bg-purple-600",
+    "bg-violet-500 hover:bg-violet-600",
     "bg-amber-500 hover:bg-amber-600",
     "bg-teal-500 hover:bg-teal-600",
   ];
@@ -91,7 +91,7 @@
     {#if phase === "join"}
       <div class="flex-1 flex flex-col items-center justify-center text-center">
         <h2 class="text-xl font-bold text-slate-800 mb-2">Entrar na partida</h2>
-        <p class="text-2xl font-mono font-bold text-cyan-600 tracking-[0.3em] mb-6 tabular-nums">
+        <p class="text-2xl font-mono font-bold text-violet-600 tracking-[0.3em] mb-6 tabular-nums">
           {pin}
         </p>
 
@@ -103,14 +103,14 @@
             placeholder="Seu apelido"
             required
             class="w-full px-4 py-3 rounded-xl border border-slate-200 text-center text-base
-              placeholder:text-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100
+              placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100
               outline-none transition-colors"
           />
           <button
             type="submit"
             disabled={nickInput.trim().length < 2}
-            class="w-full py-3 rounded-xl bg-cyan-600 text-white text-base font-bold
-              hover:bg-cyan-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+            class="w-full py-3 rounded-xl bg-violet-600 text-white text-base font-bold
+              hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
             Entrar
           </button>
@@ -121,12 +121,12 @@
     {:else if phase === "lobby"}
       <div class="flex-1 flex flex-col items-center justify-center text-center">
         <div
-          class="w-12 h-12 mb-4 rounded-full border-2 border-slate-200 border-t-cyan-500 animate-spin-slow"
+          class="w-12 h-12 mb-4 rounded-full border-2 border-slate-200 border-t-violet-500 animate-spin-slow"
         ></div>
         <h2 class="text-lg font-semibold text-slate-800 mb-1">Aguardando o host</h2>
         <p class="text-sm text-slate-400 mb-8">A partida vai começar em breve</p>
 
-        <div class="text-sm font-medium text-cyan-600 mb-4">
+        <div class="text-sm font-medium text-violet-600 mb-4">
           {$playerSession.totalPlayers} jogador{($playerSession.totalPlayers ?? 0) !== 1
             ? "es"
             : ""} na sala
@@ -182,7 +182,7 @@
                 {$playerSession.countdown}
               </span>
             </div>
-            <p class="text-center text-sm text-purple-500 font-medium mb-6">
+            <p class="text-center text-sm text-violet-500 font-medium mb-6">
               Veja a pergunta na tela do apresentador
             </p>
           {/if}
@@ -324,13 +324,13 @@
             <div
               class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm
               {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
-                ? 'bg-cyan-50 border border-cyan-200'
+                ? 'bg-violet-50 border border-violet-200'
                 : 'bg-white border border-slate-100'}"
             >
               <span
                 class="w-8 text-center font-bold shrink-0
                 {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
-                  ? 'text-cyan-700'
+                  ? 'text-violet-700'
                   : 'text-slate-400'}"
               >
                 {#if i === 0}🥇
@@ -372,7 +372,7 @@
             <div
               class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm
               {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
-                ? 'bg-cyan-50 font-semibold'
+                ? 'bg-violet-50 font-semibold'
                 : 'bg-white'}"
             >
               <span class="w-6 text-center text-slate-400 text-xs tabular-nums">#{entry.rank}</span>
@@ -384,7 +384,7 @@
 
         {#if $leaderboardMyRank}
           <div
-            class="bg-cyan-50 border border-cyan-200 rounded-xl px-4 py-3 text-center text-sm font-medium text-cyan-700 mb-4"
+            class="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-center text-sm font-medium text-violet-700 mb-4"
           >
             Você terminou em <span class="font-bold">#{$leaderboardMyRank}</span>
             de {$playerSession.totalPlayers} jogadores com
@@ -394,8 +394,8 @@
 
         <button
           onclick={handleLeave}
-          class="w-full py-3 rounded-xl bg-cyan-600 text-white text-base font-bold
-            hover:bg-cyan-700 transition-colors shadow-sm"
+          class="w-full py-3 rounded-xl bg-violet-600 text-white text-base font-bold
+            hover:bg-violet-700 transition-colors shadow-sm"
         >
           Voltar ao início
         </button>

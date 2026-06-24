@@ -73,7 +73,7 @@
   {#if isLoading}
     <div class="flex items-center justify-center py-20">
       <div
-        class="w-8 h-8 border-2 border-slate-200 border-t-cyan-500 rounded-full animate-spin"
+        class="w-8 h-8 border-2 border-slate-200 border-t-violet-500 rounded-full animate-spin"
       ></div>
       <span class="ml-3 text-sm text-slate-400">Carregando...</span>
     </div>
@@ -108,7 +108,7 @@
             oninput={(e) => quizEditor.updateTitle((e.target as HTMLInputElement).value)}
             placeholder="Título do quiz"
             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm
-              placeholder:text-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100
+              placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100
               transition-colors outline-none"
           />
         </div>
@@ -128,7 +128,7 @@
             placeholder="Descreva o objetivo ou tema do questionário"
             rows="2"
             class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm resize-y
-              placeholder:text-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100
+              placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100
               transition-colors outline-none"></textarea>
         </div>
 
@@ -184,9 +184,7 @@
       <div
         class="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 mb-6 flex items-center gap-2 animate-fade-in"
       >
-        <CheckCircle
-          class="w-4 h-4 text-emerald-500 shrink-0"
-        />
+        <CheckCircle class="w-4 h-4 text-emerald-500 shrink-0" />
         <span class="text-sm font-medium text-emerald-700">Questionário salvo com sucesso</span>
       </div>
     {/if}
@@ -205,9 +203,7 @@
         <div
           class="w-12 h-12 mx-auto mb-3 rounded-full bg-slate-100 flex items-center justify-center"
         >
-          <CircleHelp
-            class="w-6 h-6 text-slate-300"
-          />
+          <CircleHelp class="w-6 h-6 text-slate-300" />
         </div>
         <p class="text-sm font-medium text-slate-500 mb-1">Nenhuma pergunta ainda</p>
         <p class="text-xs text-slate-400">Adicione perguntas usando os botões abaixo</p>
@@ -228,23 +224,19 @@
         <button
           onclick={() => handleAddQuestion("multiple_choice")}
           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200
-            text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 hover:border-cyan-300
+            text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 hover:border-violet-300
             active:bg-slate-100 transition-colors"
         >
-          <Tag
-            class="w-4 h-4 text-slate-400"
-          />
+          <Tag class="w-4 h-4 text-slate-400" />
           Múltipla escolha
         </button>
         <button
           onclick={() => handleAddQuestion("true_false")}
           class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200
-            text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 hover:border-cyan-300
+            text-sm font-medium text-slate-700 bg-white hover:bg-slate-50 hover:border-violet-300
             active:bg-slate-100 transition-colors"
         >
-          <CheckCircle
-            class="w-4 h-4 text-slate-400"
-          />
+          <CheckCircle class="w-4 h-4 text-slate-400" />
           Verdadeiro ou Falso
         </button>
       </div>
@@ -265,9 +257,7 @@
           ></div>
           Salvando...
         {:else}
-          <CheckCircle
-            class="w-4 h-4"
-          />
+          <CheckCircle class="w-4 h-4" />
           Salvar questionário
         {/if}
       </button>

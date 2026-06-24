@@ -76,7 +76,7 @@
     <p class="mt-6 text-center text-sm text-slate-400">
       Não tem conta? <a
         href={resolve("/register")}
-        class="text-cyan-600 hover:text-cyan-700 font-medium">Criar conta</a
+        class="text-violet-600 hover:text-violet-700 font-medium">Criar conta</a
       >
     </p>
 

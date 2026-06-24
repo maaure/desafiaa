@@ -42,17 +42,17 @@
 
 <div class="min-h-screen flex">
   <div
-    class="hidden lg:flex lg:w-1/2 bg-linear-to-br from-slate-900 via-cyan-950 to-slate-900
+    class="hidden lg:flex lg:w-1/2 bg-linear-to-br from-slate-900 via-violet-950 to-slate-900
     items-center justify-center p-12 relative overflow-hidden"
   >
     <div
       class="absolute inset-0 opacity-[0.03]"
-      style="background-image: radial-gradient(circle at 25% 30%, #06b6d4 1px, transparent 1px), radial-gradient(circle at 75% 70%, #06b6d4 1px, transparent 1px); background-size: 60px 60px;"
+      style="background-image: radial-gradient(circle at 25% 30%, #8b5cf6 1px, transparent 1px), radial-gradient(circle at 75% 70%, #8b5cf6 1px, transparent 1px); background-size: 60px 60px;"
     ></div>
     <div class="relative text-center">
       <div class="text-8xl mb-6">🌊</div>
       <h1 class="text-4xl font-bold text-white tracking-tight mb-4">Desafia</h1>
-      <p class="text-lg text-cyan-200/70 max-w-sm leading-relaxed">
+      <p class="text-lg text-violet-200/70 max-w-sm leading-relaxed">
         Participe de quizzes ao vivo.<br />Responda rápido, suba no ranking.
       </p>
     </div>
@@ -84,7 +84,7 @@
               placeholder:tracking-normal placeholder:text-lg placeholder:font-normal placeholder:text-slate-300
               {pinError
               ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
-              : 'border-slate-200 focus:border-cyan-400 focus:ring-cyan-100'}
+              : 'border-slate-200 focus:border-violet-400 focus:ring-violet-100'}
               focus:ring-2 outline-none transition-colors disabled:opacity-50"
           />
           {#if pinError}
@@ -108,7 +108,7 @@
               placeholder:text-slate-300
               {nickError
               ? 'border-red-300 focus:border-red-400 focus:ring-red-100'
-              : 'focus:border-cyan-400 focus:ring-cyan-100'}
+              : 'focus:border-violet-400 focus:ring-violet-100'}
               focus:ring-2 outline-none transition-colors disabled:opacity-50"
           />
           {#if nickError}
@@ -119,8 +119,8 @@
         <button
           type="submit"
           disabled={pin.length !== 6 || nickname.trim().length < 2 || joined}
-          class="w-full py-3 rounded-xl bg-cyan-600 text-white text-base font-bold
-            hover:bg-cyan-700 active:bg-cyan-800 disabled:opacity-40 disabled:cursor-not-allowed
+          class="w-full py-3 rounded-xl bg-violet-600 text-white text-base font-bold
+            hover:bg-violet-700 active:bg-violet-800 disabled:opacity-40 disabled:cursor-not-allowed
             transition-colors shadow-sm"
         >
           {joined ? "Entrando..." : "Entrar na partida"}
@@ -136,8 +136,9 @@
       {/if}
 
       <p class="mt-8 text-xs text-center text-slate-400">
-        É um host? <a href={resolve("/login")} class="text-cyan-600 hover:text-cyan-700 font-medium"
-          >Acesse o painel</a
+        É um host? <a
+          href={resolve("/login")}
+          class="text-violet-600 hover:text-violet-700 font-medium">Acesse o painel</a
         >
       </p>
     </div>

@@ -23,7 +23,7 @@
 
 {#if presentationMode}
   <!-- Presentation / projector view: big centered question -->
-  <div class="bg-white rounded-2xl border-2 border-purple-200 shadow-lg p-10 text-center">
+  <div class="bg-white rounded-2xl border-2 border-violet-200 shadow-lg p-10 text-center">
     {#if question.imageUrl}
       <img
         src={question.imageUrl}
@@ -52,7 +52,7 @@
             {/if}
             <div class="flex items-center gap-4 p-5">
               <span
-                class="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-100 text-cyan-700 text-lg font-bold shrink-0"
+                class="flex items-center justify-center w-10 h-10 rounded-full bg-violet-100 text-violet-700 text-lg font-bold shrink-0"
               >
                 {letters[i] ?? String(i + 1)}
               </span>
@@ -81,7 +81,7 @@
           {/if}
           <div class="flex items-center gap-3 p-4">
             <span
-              class="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold shrink-0"
+              class="flex items-center justify-center w-8 h-8 rounded-full bg-violet-100 text-violet-700 text-sm font-bold shrink-0"
             >
               {letters[i] ?? String(i + 1)}
             </span>

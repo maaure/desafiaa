@@ -49,7 +49,7 @@
   {#if loading}
     <div class="flex items-center justify-center py-20">
       <div
-        class="w-8 h-8 border-2 border-slate-200 border-t-cyan-500 rounded-full animate-spin"
+        class="w-8 h-8 border-2 border-slate-200 border-t-violet-500 rounded-full animate-spin"
       ></div>
       <span class="ml-3 text-sm text-slate-400">Carregando relatório...</span>
     </div>
@@ -66,9 +66,7 @@
       <div
         class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 flex items-center justify-center"
       >
-        <BarChart3
-          class="w-8 h-8 text-slate-300"
-        />
+        <BarChart3 class="w-8 h-8 text-slate-300" />
       </div>
       <h3 class="text-base font-semibold text-slate-700 mb-1">Nenhum dado disponível</h3>
       <p class="text-sm text-slate-400">Realize uma sessão para gerar relatórios</p>

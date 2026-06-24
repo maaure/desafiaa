@@ -89,11 +89,11 @@
       <div class="inline-flex flex-col gap-0.5">
         <label
           class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
-            text-slate-300 hover:text-cyan-500 hover:bg-cyan-50 cursor-pointer transition-colors
+            text-slate-300 hover:text-violet-500 hover:bg-violet-50 cursor-pointer transition-colors
             {uploadImage.isPending ? 'opacity-50 pointer-events-none' : ''}"
         >
           {#if uploadImage.isPending}
-            <span class="w-3 h-3 border-2 border-slate-300 border-t-cyan-500 rounded-full animate-spin"></span>
+            <span class="w-3 h-3 border-2 border-slate-300 border-t-violet-500 rounded-full animate-spin"></span>
           {:else}
             <Image class="w-3 h-3" />
             Imagem

@@ -68,7 +68,7 @@
       placeholder="Digite a pergunta..."
       rows="2"
       class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm resize-y
-        placeholder:text-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100
+        placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100
         transition-colors outline-none"></textarea>
 
     <!-- Imagem da pergunta -->
@@ -92,13 +92,13 @@
       <div class="inline-flex flex-col gap-1">
         <label
           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
-            text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 border border-dashed border-slate-200
-            hover:border-cyan-300 cursor-pointer transition-colors
+            text-slate-400 hover:text-violet-600 hover:bg-violet-50 border border-dashed border-slate-200
+            hover:border-violet-300 cursor-pointer transition-colors
             {uploadImage.isPending ? 'opacity-50 pointer-events-none' : ''}"
         >
           {#if uploadImage.isPending}
             <span
-              class="w-3.5 h-3.5 border-2 border-slate-300 border-t-cyan-500 rounded-full animate-spin"
+              class="w-3.5 h-3.5 border-2 border-slate-300 border-t-violet-500 rounded-full animate-spin"
             ></span>
             Enviando...
           {:else}
@@ -130,7 +130,7 @@
       {#if question.alternatives.length < 4 && question.questionType === "multiple_choice"}
         <button
           onclick={handleAddAlternative}
-          class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-cyan-600 hover:text-cyan-700 transition-colors"
+          class="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700 transition-colors"
         >
           <Plus class="w-3.5 h-3.5" />
           Adicionar alternativa

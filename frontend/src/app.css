@@ -2,6 +2,19 @@
 
 /* ── Design tokens ── */
 @theme {
+  /* Brand palette — derived from landing page (+page.svelte) */
+  --color-brand-50: #f5f3ff;
+  --color-brand-100: #ede9fe;
+  --color-brand-200: #ddd6fe;
+  --color-brand-300: #c4b5fd;
+  --color-brand-400: #a78bfa;
+  --color-brand-500: #8b5cf6;
+  --color-brand-600: #7c3aed;
+  --color-brand-700: #6d28d9;
+  --color-brand-800: #5b21b6;
+  --color-brand-900: #4c1d95;
+  --color-brand-950: #2e1065;
+
   /* Typography */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
@@ -64,10 +77,10 @@
 @keyframes pulse-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(8, 145, 178, 0.3);
+    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.3);
   }
   50% {
-    box-shadow: 0 0 0 8px rgba(8, 145, 178, 0);
+    box-shadow: 0 0 0 8px rgba(124, 58, 237, 0);
   }
 }
 
@@ -84,7 +97,7 @@
 
   /* Focus ring — visible, accessible, not harsh */
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-cyan-500;
+    @apply outline-2 outline-offset-2 outline-violet-500;
   }
 
   /* Reduce motion */

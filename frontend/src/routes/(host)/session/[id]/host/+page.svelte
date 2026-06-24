@@ -106,7 +106,7 @@
     "border-l-red-400",
     "border-l-blue-400",
     "border-l-emerald-400",
-    "border-l-purple-400",
+    "border-l-violet-400",
     "border-l-amber-400",
     "border-l-teal-400",
   ];
@@ -166,7 +166,7 @@
   {#if phase === "idle"}
     <div class="flex flex-col items-center justify-center py-24">
       <div
-        class="w-10 h-10 border-2 border-slate-200 border-t-cyan-500 rounded-full animate-spin mb-4"
+        class="w-10 h-10 border-2 border-slate-200 border-t-violet-500 rounded-full animate-spin mb-4"
       ></div>
       <p class="text-sm font-medium text-slate-500">Criando sessão...</p>
     </div>
@@ -176,7 +176,7 @@
     <div class="space-y-6 animate-slide-up">
       <!-- PIN card -->
       {#if pin}
-        <div class="bg-white rounded-xl border-2 border-dashed border-cyan-200 p-8 text-center">
+        <div class="bg-white rounded-xl border-2 border-dashed border-violet-200 p-8 text-center">
           <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">
             PIN da Sessão
           </p>
@@ -199,7 +199,7 @@
                 onclick={() => (selectedTimeLimit = preset.value)}
                 class="flex-1 py-2.5 rounded-lg text-sm font-semibold border transition-colors
                   {selectedTimeLimit === preset.value
-                  ? 'border-cyan-300 bg-cyan-50 text-cyan-700'
+                  ? 'border-violet-300 bg-violet-50 text-violet-700'
                   : 'border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'}"
               >
                 {preset.label}
@@ -209,21 +209,21 @@
 
           <!-- Presentation Mode Toggle -->
           <div
-            class="flex items-center justify-between p-4 rounded-lg bg-purple-50 border border-purple-200 mb-4"
+            class="flex items-center justify-between p-4 rounded-lg bg-violet-50 border border-violet-200 mb-4"
           >
             <div class="flex items-center gap-3">
               <div
                 class="w-9 h-9 rounded-lg flex items-center justify-center"
-                class:bg-purple-100={!presentationMode}
-                class:bg-purple-600={presentationMode}
+                class:bg-violet-100={!presentationMode}
+                class:bg-violet-600={presentationMode}
               >
                 <Projector
-                  class={`w-5 h-5 ${presentationMode ? "text-white" : "text-purple-500"}`}
+                  class={`w-5 h-5 ${presentationMode ? "text-white" : "text-violet-500"}`}
                 />
               </div>
               <div>
-                <p class="text-sm font-semibold text-purple-900">Modo Apresentação</p>
-                <p class="text-xs text-purple-600">
+                <p class="text-sm font-semibold text-violet-900">Modo Apresentação</p>
+                <p class="text-xs text-violet-600">
                   Pergunta só na tela do host. Jogadores veem apenas alternativas.
                 </p>
               </div>
@@ -231,7 +231,7 @@
             <button
               onclick={handleTogglePresentationMode}
               class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0
-                {presentationMode ? 'bg-purple-600' : 'bg-slate-300'}"
+                {presentationMode ? 'bg-violet-600' : 'bg-slate-300'}"
               role="switch"
               aria-checked={presentationMode}
               aria-label="presentation mode"
@@ -245,8 +245,8 @@
 
           <button
             onclick={handleOpenRoom}
-            class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
-              hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm"
+            class="w-full py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
+              hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
           >
             Abrir Sala
           </button>
@@ -258,7 +258,7 @@
           <h2 class="text-lg font-semibold text-slate-800 mb-1">Sala aberta</h2>
           <p class="text-sm text-slate-400 mb-4">Aguardando jogadores...</p>
 
-          <div class="text-3xl font-bold text-cyan-600 mb-2 tabular-nums">
+          <div class="text-3xl font-bold text-violet-600 mb-2 tabular-nums">
             {playerCount}
           </div>
           <p class="text-xs text-slate-400 mb-6">
@@ -281,8 +281,8 @@
           {#if playerCount > 0}
             <button
               onclick={handleNextQuestion}
-              class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
-                hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm"
+              class="w-full py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
+                hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
             >
               Iniciar Primeira Pergunta
             </button>
@@ -303,7 +303,7 @@
           </p>
           {#if presentationMode}
             <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold"
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 text-xs font-semibold"
             >
               <Projector class="w-3 h-3" />
               Apresentação
@@ -351,8 +351,8 @@
       <div class="flex gap-3">
         <button
           onclick={handleNextQuestion}
-          class="flex-1 py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
-            hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm"
+          class="flex-1 py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
+            hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
         >
           Próxima Pergunta
         </button>
@@ -406,8 +406,8 @@
       {:else}
         <button
           onclick={handleNextQuestion}
-          class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
-            hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm"
+          class="w-full py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
+            hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
         >
           Próxima Pergunta
         </button>
@@ -443,8 +443,8 @@
 
       <button
         onclick={handleBackToDashboard}
-        class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
-          hover:bg-cyan-700 active:bg-cyan-800 transition-colors shadow-sm"
+        class="w-full py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
+          hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
       >
         Voltar ao Dashboard
       </button>

@@ -41,7 +41,7 @@
       placeholder="Ex: Revisão de História — Brasil Colonial"
       autofocus
       class="w-full px-4 py-2.5 rounded-lg border border-slate-200 text-sm text-slate-900
-        placeholder:text-slate-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-100
+        placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100
         transition-colors outline-none"
     />
 
@@ -53,8 +53,8 @@
       <button
         type="submit"
         disabled={!title.trim()}
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-cyan-600 text-white text-sm font-semibold
-          hover:bg-cyan-700 active:bg-cyan-800 disabled:opacity-40 disabled:cursor-not-allowed
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-600 text-white text-sm font-semibold
+          hover:bg-violet-700 active:bg-violet-800 disabled:opacity-40 disabled:cursor-not-allowed
           transition-colors shadow-sm"
       >
         Criar e editar

@@ -102,7 +102,7 @@
     <p class="mt-6 text-center text-sm text-slate-400">
       Já tem conta? <a
         href={resolve("/login")}
-        class="text-cyan-600 hover:text-cyan-700 font-medium">Entrar</a
+        class="text-violet-600 hover:text-violet-700 font-medium">Entrar</a
       >
     </p>
   </div>
