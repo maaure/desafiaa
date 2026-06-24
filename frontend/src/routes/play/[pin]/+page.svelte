@@ -6,6 +6,7 @@
   import { resolve } from "$app/paths";
   import { playerSession } from "$lib/stores/player-session.store";
   import { leaderboardMyRank, leaderboardMyScore } from "$lib/stores/leaderboard.store";
+  import Podium from "$lib/components/ui/Podium.svelte";
 
   const LABELS = ["A", "B", "C", "D", "E", "F"];
   const BUTTON_COLORS = [
@@ -205,13 +206,14 @@
                   : ''}"
               >
                 {#if alt.imageUrl}
-                  <img
-                    src={alt.imageUrl}
-                    alt=""
-                    class="w-full max-h-40 rounded-lg object-cover"
-                  />
+                  <img src={alt.imageUrl} alt="" class="w-full max-h-40 rounded-lg object-cover" />
                 {/if}
-                <span class="flex items-center gap-3 {($playerSession.currentQuestion?.alternatives?.length ?? 0) === 2 ? 'flex-col' : ''}">
+                <span
+                  class="flex items-center gap-3 {($playerSession.currentQuestion?.alternatives
+                    ?.length ?? 0) === 2
+                    ? 'flex-col'
+                    : ''}"
+                >
                   <span
                     class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-sm font-bold shrink-0"
                   >
@@ -242,7 +244,9 @@
       <div class="flex-1 flex flex-col items-center justify-center text-center">
         {#if $playerSession.lastResult}
           {#if $playerSession.timedOut}
-            <div class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 bg-amber-100 text-amber-500">
+            <div
+              class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 bg-amber-100 text-amber-500"
+            >
               ⏰
             </div>
             <h2 class="text-2xl font-bold mb-3 text-amber-600">Tempo esgotado!</h2>
@@ -359,30 +363,7 @@
 
         <!-- Podium top 3 -->
         {#if $playerSession.leaderboard.length > 0}
-          <div class="flex items-end justify-center gap-3 mb-6">
-            {#each $playerSession.leaderboard.slice(0, 3) as entry, i (entry.rank)}
-              {@const medals = ["🥇", "🥈", "🥉"]}
-              {@const heights = ["h-24", "h-16", "h-14"]}
-              {@const podiumBg = [
-                "bg-amber-50 border-amber-200",
-                "bg-slate-50 border-slate-200",
-                "bg-orange-50 border-orange-100",
-              ]}
-              <div class="flex flex-col items-center gap-2">
-                <span class="text-xs font-semibold text-slate-700 text-center max-w-[72px] truncate"
-                  >{entry.nickname}</span
-                >
-                <div
-                  class="w-18 {heights[i]} rounded-t-lg {podiumBg[
-                    i
-                  ]} border border-b-0 flex flex-col items-center justify-center"
-                >
-                  <span class="text-xl">{medals[i]}</span>
-                  <span class="text-xs font-bold text-slate-600 tabular-nums">{entry.score}</span>
-                </div>
-              </div>
-            {/each}
-          </div>
+          <Podium entries={$playerSession.leaderboard} compact />
         {/if}
 
         <!-- Full rankings -->

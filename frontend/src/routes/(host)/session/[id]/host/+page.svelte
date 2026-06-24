@@ -6,6 +6,9 @@
   import { resolve } from "$app/paths";
   import { hostSession, type HostPhase } from "$lib/stores/host-session.store";
   import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
+  import Podium from "$lib/components/ui/Podium.svelte";
+  import RankingsTable from "$lib/components/ui/RankingsTable.svelte";
+  import QuestionCard from "$lib/components/host/QuestionCard.svelte";
 
   let phase = $state<HostPhase>(get(hostSession.phase));
   let pin = $state<string | null>(get(hostSession.pin));
@@ -318,91 +321,12 @@
 
       <!-- Question card -->
       {#if currentQuestionData}
-        {#if presentationMode}
-          <!-- Presentation / projector view: big centered question -->
-          <div class="bg-white rounded-2xl border-2 border-purple-200 shadow-lg p-10 text-center">
-            {#if currentQuestionData.imageUrl}
-              <img
-                src={currentQuestionData.imageUrl}
-                alt=""
-                class="max-h-64 w-auto mx-auto rounded-xl mb-6 object-contain"
-              />
-            {/if}
-            <p class="text-3xl font-bold text-slate-900 leading-relaxed max-w-2xl mx-auto">
-              {currentQuestionData.text}
-            </p>
-
-            {#if currentQuestionData.alternatives.length > 0}
-              <div
-                class="grid gap-4 mt-8 {currentQuestionData.alternatives.length === 2
-                  ? 'grid-cols-2'
-                  : 'grid-cols-1 max-w-lg mx-auto'}"
-              >
-                {#each currentQuestionData.alternatives as alt, i (alt.id)}
-                  <div
-                    class="rounded-xl border-l-4 bg-slate-50 border border-slate-100 text-left overflow-hidden {ALT_COLORS[
-                      i % ALT_COLORS.length
-                    ]}"
-                  >
-                    {#if alt.imageUrl}
-                      <img
-                        src={alt.imageUrl}
-                        alt=""
-                        class="w-full max-h-48 object-cover"
-                      />
-                    {/if}
-                    <div class="flex items-center gap-4 p-5">
-                      <span
-                        class="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-100 text-cyan-700 text-lg font-bold shrink-0"
-                      >
-                        {LETTERS[i] ?? String(i + 1)}
-                      </span>
-                      <span class="text-lg font-medium text-slate-800 flex-1">{alt.text}</span>
-                    </div>
-                  </div>
-                {/each}
-              </div>
-            {/if}
-          </div>
-        {:else}
-          <!-- Default compact view: host and players both see question -->
-          <div class="bg-white rounded-xl border border-slate-200 p-6">
-            {#if currentQuestionData.imageUrl}
-              <img
-                src={currentQuestionData.imageUrl}
-                alt=""
-                class="max-h-48 w-auto rounded-xl mb-4 object-contain"
-              />
-            {/if}
-            <p class="text-lg font-semibold text-slate-800 leading-relaxed mb-6">
-              {currentQuestionData.text}
-            </p>
-
-            <div class="space-y-2.5">
-              {#each currentQuestionData.alternatives as alt, i (alt.id)}
-                <div
-                  class="rounded-lg border border-slate-100 bg-slate-50 overflow-hidden"
-                >
-                  {#if alt.imageUrl}
-                    <img
-                      src={alt.imageUrl}
-                      alt=""
-                      class="w-full max-h-36 object-cover"
-                    />
-                  {/if}
-                  <div class="flex items-center gap-3 p-4">
-                    <span
-                      class="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold shrink-0"
-                    >
-                      {LETTERS[i] ?? String(i + 1)}
-                    </span>
-                    <span class="text-sm font-medium text-slate-700 flex-1">{alt.text}</span>
-                  </div>
-                </div>
-              {/each}
-            </div>
-          </div>
-        {/if}
+        <QuestionCard
+          question={currentQuestionData}
+          {presentationMode}
+          letters={LETTERS}
+          altColors={ALT_COLORS}
+        />
       {/if}
 
       <!-- Progress -->
@@ -462,79 +386,10 @@
       </div>
 
       {#if leaderboard.length > 0}
-        <!-- Top 3 podium for final -->
         {#if questionsExhausted}
-          <div class="flex items-end justify-center gap-3 mb-4">
-            {#each leaderboard.slice(0, 3) as entry, i (entry.rank)}
-              {@const medals = ["🥇", "🥈", "🥉"]}
-              {@const heights = ["h-28", "h-20", "h-16"]}
-              {@const bgColors = [
-                "bg-amber-50 border-amber-200",
-                "bg-slate-50 border-slate-200",
-                "bg-orange-50 border-orange-100",
-              ]}
-              <div class="flex flex-col items-center gap-2">
-                <span class="text-sm font-semibold text-slate-800 text-center max-w-[80px] truncate"
-                  >{entry.nickname}</span
-                >
-                <div
-                  class="w-20 {heights[i]} rounded-t-lg {bgColors[
-                    i
-                  ]} border border-b-0 flex flex-col items-center justify-center"
-                >
-                  <span class="text-2xl">{medals[i]}</span>
-                  <span class="text-sm font-bold text-slate-700 tabular-nums">{entry.score}</span>
-                </div>
-              </div>
-            {/each}
-          </div>
+          <Podium entries={leaderboard} />
         {/if}
-
-        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-slate-100">
-                <th
-                  class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide w-12"
-                  >#</th
-                >
-                <th
-                  class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide"
-                  >Jogador</th
-                >
-                <th
-                  class="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide"
-                  >Pontos</th
-                >
-                <th
-                  class="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide w-16"
-                  >Certas</th
-                >
-              </tr>
-            </thead>
-            <tbody>
-              {#each leaderboard as entry (entry.rank)}
-                <tr
-                  class="border-b border-slate-50 last:border-0
-                  {entry.rank === 1 ? 'bg-amber-50' : ''}"
-                >
-                  <td class="px-5 py-3">
-                    <span class="text-sm font-bold text-slate-400">{entry.rank}</span>
-                  </td>
-                  <td class="px-5 py-3">
-                    <span class="text-sm font-medium text-slate-800">{entry.nickname}</span>
-                  </td>
-                  <td class="px-5 py-3 text-right">
-                    <span class="text-sm font-bold text-slate-900 tabular-nums">{entry.score}</span>
-                  </td>
-                  <td class="px-5 py-3 text-right">
-                    <span class="text-sm text-slate-500 tabular-nums">{entry.correctCount}</span>
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
+        <RankingsTable entries={leaderboard} />
       {:else}
         <p class="text-center text-sm text-slate-400 py-8">Nenhum dado disponível</p>
       {/if}
@@ -581,78 +436,8 @@
       </div>
 
       {#if leaderboard.length > 0}
-        <!-- Top 3 podium -->
-        <div class="flex items-end justify-center gap-3 mb-4">
-          {#each leaderboard.slice(0, 3) as entry, i (entry.rank)}
-            {@const medals = ["🥇", "🥈", "🥉"]}
-            {@const heights = ["h-28", "h-20", "h-16"]}
-            {@const bgColors = [
-              "bg-amber-50 border-amber-200",
-              "bg-slate-50 border-slate-200",
-              "bg-orange-50 border-orange-100",
-            ]}
-            <div class="flex flex-col items-center gap-2">
-              <span class="text-sm font-semibold text-slate-800 text-center max-w-[80px] truncate"
-                >{entry.nickname}</span
-              >
-              <div
-                class="w-20 {heights[i]} rounded-t-lg {bgColors[
-                  i
-                ]} border border-b-0 flex flex-col items-center justify-center"
-              >
-                <span class="text-2xl">{medals[i]}</span>
-                <span class="text-sm font-bold text-slate-700 tabular-nums">{entry.score}</span>
-              </div>
-            </div>
-          {/each}
-        </div>
-
-        <!-- Full rankings -->
-        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b border-slate-100">
-                <th
-                  class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide w-12"
-                  >#</th
-                >
-                <th
-                  class="text-left px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide"
-                  >Jogador</th
-                >
-                <th
-                  class="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide"
-                  >Pontos</th
-                >
-                <th
-                  class="text-right px-5 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide w-16"
-                  >Certas</th
-                >
-              </tr>
-            </thead>
-            <tbody>
-              {#each leaderboard as entry (entry.rank)}
-                <tr
-                  class="border-b border-slate-50 last:border-0
-                  {entry.rank === 1 ? 'bg-amber-50' : ''}"
-                >
-                  <td class="px-5 py-3">
-                    <span class="text-sm font-bold text-slate-400">{entry.rank}</span>
-                  </td>
-                  <td class="px-5 py-3">
-                    <span class="text-sm font-medium text-slate-800">{entry.nickname}</span>
-                  </td>
-                  <td class="px-5 py-3 text-right">
-                    <span class="text-sm font-bold text-slate-900 tabular-nums">{entry.score}</span>
-                  </td>
-                  <td class="px-5 py-3 text-right">
-                    <span class="text-sm text-slate-500 tabular-nums">{entry.correctCount}</span>
-                  </td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
+        <Podium entries={leaderboard} />
+        <RankingsTable entries={leaderboard} />
       {/if}
 
       <button
