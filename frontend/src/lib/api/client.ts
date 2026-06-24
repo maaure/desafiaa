@@ -61,14 +61,11 @@ interface UnwrappedApi {
 
 // Adiciona o método upload
 (instance as unknown as UnwrappedApi).upload = async <T>(url: string, formData: FormData): Promise<T> => {
-  const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  const response = await instance.post<T>(url, formData, {
+  return instance.post<T>(url, formData, {
     headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": undefined as unknown as string, // deixa o browser definir o boundary
     },
-  });
-  return response.data as T;
+  }) as Promise<T>;
 };
 
 export const api = instance as unknown as UnwrappedApi;

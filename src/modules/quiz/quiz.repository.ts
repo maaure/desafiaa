@@ -25,7 +25,10 @@ export const quizRepo = {
 
   async getWithQuestions(quizId: string, userId: string) {
     return db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
+      where: and(
+        eq(schema.quizzes.id, quizId),
+        eq(schema.quizzes.authorId, userId),
+      ),
       with: {
         questions: {
           orderBy: asc(schema.questions.sortOrder),
@@ -39,11 +42,18 @@ export const quizRepo = {
 
   async getOwnedBy(quizId: string, userId: string) {
     return db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
+      where: and(
+        eq(schema.quizzes.id, quizId),
+        eq(schema.quizzes.authorId, userId),
+      ),
     });
   },
 
-  async insertOne(data: { title: string; description: string | null; authorId: string }) {
+  async insertOne(data: {
+    title: string;
+    description: string | null;
+    authorId: string;
+  }) {
     const [quiz] = await db.insert(schema.quizzes).values(data).returning();
     return quiz;
   },
@@ -83,8 +93,12 @@ export const quizRepo = {
     questionType: string;
     basePoints: number;
     sortOrder: number;
+    imageUrl?: string | null;
   }) {
-    const [question] = await db.insert(schema.questions).values(data).returning();
+    const [question] = await db
+      .insert(schema.questions)
+      .values(data)
+      .returning();
     return question;
   },
 
@@ -98,7 +112,9 @@ export const quizRepo = {
   },
 
   async deleteQuestion(questionId: string) {
-    await db.delete(schema.questions).where(eq(schema.questions.id, questionId));
+    await db
+      .delete(schema.questions)
+      .where(eq(schema.questions.id, questionId));
   },
 
   // ── Alternatives ──────────────────────────────────────────────
@@ -129,6 +145,7 @@ export const quizRepo = {
     text: string;
     isCorrect: boolean;
     sortOrder: number;
+    imageUrl?: string | null;
   }) {
     const [alt] = await db.insert(schema.alternatives).values(data).returning();
     return alt;
@@ -144,7 +161,9 @@ export const quizRepo = {
   },
 
   async deleteAlternative(alternativeId: string) {
-    await db.delete(schema.alternatives).where(eq(schema.alternatives.id, alternativeId));
+    await db
+      .delete(schema.alternatives)
+      .where(eq(schema.alternatives.id, alternativeId));
   },
 
   async getAlternativeById(alternativeId: string) {

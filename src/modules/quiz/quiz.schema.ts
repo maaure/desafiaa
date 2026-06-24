@@ -29,12 +29,14 @@ export const quizFullSchema = z.object({
   questions: z.array(z.object({
     id: z.string().uuid(),
     text: z.string(),
+    imageUrl: z.string().nullable().optional(),
     questionType: z.enum(["multiple_choice", "true_false"]),
     basePoints: z.number().int(),
     sortOrder: z.number().int(),
     alternatives: z.array(z.object({
       id: z.string().uuid(),
       text: z.string(),
+      imageUrl: z.string().nullable().optional(),
       isCorrect: z.boolean(),
       sortOrder: z.number().int(),
     })),

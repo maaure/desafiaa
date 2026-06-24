@@ -71,12 +71,14 @@ export const quizService = {
       questions: quiz.questions.map((q) => ({
         id: q.id,
         text: q.text,
+        imageUrl: q.imageUrl ?? null,
         questionType: q.questionType as "multiple_choice" | "true_false",
         basePoints: q.basePoints,
         sortOrder: q.sortOrder,
         alternatives: q.alternatives.map((a) => ({
           id: a.id,
           text: a.text,
+          imageUrl: a.imageUrl ?? null,
           isCorrect: a.isCorrect,
           sortOrder: a.sortOrder,
         })),
@@ -128,6 +130,7 @@ export const quizService = {
       questionType: input.questionType,
       basePoints: input.basePoints,
       sortOrder: (maxOrder?.sortOrder ?? -1) + 1,
+      imageUrl: input.imageUrl ?? null,
     });
 
     return question as QuestionEntity;
@@ -184,6 +187,7 @@ export const quizService = {
       text: input.text,
       isCorrect: input.isCorrect,
       sortOrder: maxOrder + 1,
+      imageUrl: input.imageUrl ?? null,
     });
 
     return alt as AlternativeEntity;
