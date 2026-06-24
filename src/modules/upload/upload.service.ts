@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import path from "node:path";
+import { writeFile, mkdir } from "node:fs/promises";
 import type { MultipartFile } from "@fastify/multipart";
 import { AppError } from "../../shared/errors";
 import { uploadRepo } from "./upload.repository";
@@ -26,30 +27,25 @@ export const uploadService = {
       );
     }
 
-    // Valida tamanho lendo o buffer
-    const chunks: Buffer[] = [];
-    for await (const chunk of file.file) {
-      chunks.push(chunk);
-      const totalSize = chunks.reduce((s, c) => s + c.length, 0);
-      if (totalSize > MAX_SIZE_BYTES) {
-        throw new AppError(
-          `Arquivo muito grande. Máximo: ${MAX_SIZE_MB}MB.`,
-          400,
-          "FILE_TOO_LARGE",
-        );
-      }
+    // Usa toBuffer() da API v10 para ler o arquivo em memória
+    const buffer = await file.toBuffer();
+
+    // Valida tamanho
+    if (buffer.length > MAX_SIZE_BYTES) {
+      throw new AppError(
+        `Arquivo muito grande. Máximo: ${MAX_SIZE_MB}MB.`,
+        400,
+        "FILE_TOO_LARGE",
+      );
     }
 
     // Gera nome único e salva
     const ext = EXTENSIONS[file.mimetype] ?? ".bin";
     const filename = `${randomUUID()}${ext}`;
 
-    // Como lemos o buffer para validar tamanho, escrevemos direto
-    const { writeFile, mkdir } = await import("node:fs/promises");
     const UPLOAD_DIR = uploadRepo.UPLOAD_DIR;
     await mkdir(UPLOAD_DIR, { recursive: true });
 
-    const buffer = Buffer.concat(chunks);
     const filepath = path.join(UPLOAD_DIR, filename);
     await writeFile(filepath, buffer);
 

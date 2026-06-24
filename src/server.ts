@@ -19,7 +19,7 @@ import { registerHostGateway } from "./modules/session/session.gateway";
 import { registerPlayGateway } from "./modules/gameplay/gameplay.gateway";
 
 async function main() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, bodyLimit: 10 * 1024 * 1024 }); // 10MB para uploads
 
   // Plugins
   await app.register(cors, { origin: true, credentials: true });
