@@ -7,8 +7,9 @@ export type HostPhase = "idle" | "lobby" | "playing" | "leaderboard" | "ended";
 
 interface QuestionData {
   text: string;
+  imageUrl: string | null;
   timeLimit: number;
-  alternatives: { id: string; text: string; sortOrder: number }[];
+  alternatives: { id: string; text: string; imageUrl: string | null; sortOrder: number }[];
 }
 
 interface HostSessionState {
@@ -26,6 +27,7 @@ interface HostSessionState {
   error: string | null;
   isConnected: boolean;
   questionsExhausted: boolean;
+  presentationMode: boolean;
   countdown: number;
 }
 
@@ -45,6 +47,7 @@ function createHostSessionStore() {
     error: null,
     isConnected: false,
     questionsExhausted: false,
+    presentationMode: false,
     countdown: 0,
   });
 
@@ -124,7 +127,8 @@ function createHostSessionStore() {
         questionIndex: number;
         total: number;
         questionText: string;
-        alternatives: { id: string; text: string; sortOrder: number }[];
+        questionImageUrl: string | null;
+        alternatives: { id: string; text: string; imageUrl: string | null; sortOrder: number }[];
       }) => {
         const timeLimit = get(state).timeLimitSeconds;
         state.update((s) => ({
@@ -133,6 +137,7 @@ function createHostSessionStore() {
           currentQuestion: { index: payload.questionIndex, total: payload.total },
           currentQuestionData: {
             text: payload.questionText,
+            imageUrl: payload.questionImageUrl ?? null,
             timeLimit: s.timeLimitSeconds,
             alternatives: payload.alternatives ?? [],
           },
@@ -214,6 +219,7 @@ function createHostSessionStore() {
       progress: { answered: 0, total: 0 },
       leaderboard: [],
       questionsExhausted: false,
+      presentationMode: false,
       countdown: 0,
     }));
 
@@ -228,6 +234,11 @@ function createHostSessionStore() {
     if (!socket?.connected) return;
     const clamped = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
     socket.emit("host:session:start", { timeLimitSeconds: clamped });
+  }
+
+  function setPresentationMode(enabled: boolean) {
+    state.update((s) => ({ ...s, presentationMode: enabled }));
+    socket?.emit("host:session:presentation-mode", { enabled });
   }
 
   function nextQuestion() {
@@ -264,6 +275,7 @@ function createHostSessionStore() {
       error: null,
       isConnected: false,
       questionsExhausted: false,
+      presentationMode: false,
       countdown: 0,
     });
   }
@@ -284,12 +296,14 @@ function createHostSessionStore() {
     error: derived(state, ($s) => $s.error),
     isConnected: derived(state, ($s) => $s.isConnected),
     questionsExhausted: derived(state, ($s) => $s.questionsExhausted),
+    presentationMode: derived(state, ($s) => $s.presentationMode),
     countdown: derived(state, ($s) => $s.countdown),
 
     connect,
     disconnect,
     createSession,
     startSession,
+    setPresentationMode,
     nextQuestion,
     showLeaderboard,
     endSession,

@@ -145,20 +145,46 @@
     {:else if phase === "question"}
       <div class="flex-1 flex flex-col">
         {#if $playerSession.currentQuestion}
-          <!-- Timer (large, centered — pergunta está na tela do host) -->
-          <div class="text-center mb-2">
-            <span
-              class="inline-flex items-center justify-center w-24 h-24 rounded-full text-4xl font-bold font-mono tabular-nums
-              {$playerSession.countdown <= 5
-                ? 'bg-red-50 text-red-500'
-                : 'bg-white border-2 border-slate-200 text-slate-800'}"
-            >
-              {$playerSession.countdown}
-            </span>
-          </div>
-          <p class="text-center text-sm text-purple-500 font-medium mb-6">
-            Veja a pergunta na tela do apresentador
-          </p>
+          {#if $playerSession.currentQuestion.text}
+            <!-- Normal mode: question text visible to player -->
+            {#if $playerSession.currentQuestion.imageUrl}
+              <img
+                src={$playerSession.currentQuestion.imageUrl}
+                alt=""
+                class="max-h-48 w-auto mx-auto rounded-xl mb-4 object-contain"
+              />
+            {/if}
+            <p class="text-lg font-semibold text-slate-800 text-center leading-relaxed mb-4">
+              {$playerSession.currentQuestion.text}
+            </p>
+
+            <!-- Timer (normal size) -->
+            <div class="text-center mb-4">
+              <span
+                class="inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold font-mono tabular-nums
+                {$playerSession.countdown <= 5
+                  ? 'bg-red-50 text-red-500'
+                  : 'bg-white border border-slate-200 text-slate-800'}"
+              >
+                {$playerSession.countdown}
+              </span>
+            </div>
+          {:else}
+            <!-- Presentation mode: no question text — larger timer + hint -->
+            <div class="text-center mb-2">
+              <span
+                class="inline-flex items-center justify-center w-24 h-24 rounded-full text-4xl font-bold font-mono tabular-nums
+                {$playerSession.countdown <= 5
+                  ? 'bg-red-50 text-red-500'
+                  : 'bg-white border-2 border-slate-200 text-slate-800'}"
+              >
+                {$playerSession.countdown}
+              </span>
+            </div>
+            <p class="text-center text-sm text-purple-500 font-medium mb-6">
+              Veja a pergunta na tela do apresentador
+            </p>
+          {/if}
 
           <!-- Alternatives -->
           <div
@@ -171,19 +197,28 @@
               <button
                 onclick={() => handleAnswer(i, alt.text)}
                 disabled={$playerSession.hasAnswered}
-                class="flex items-center gap-3 p-4 rounded-xl text-white text-left font-semibold text-sm
+                class="flex flex-col gap-3 p-4 rounded-xl text-white text-left font-semibold text-sm
                   transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
                   active:scale-[0.98] shadow-sm {BUTTON_COLORS[i % BUTTON_COLORS.length]}
                   {($playerSession.currentQuestion?.alternatives?.length ?? 0) === 2
-                  ? 'flex-1 flex-col justify-center text-center gap-2 py-8'
+                  ? 'flex-1 justify-center text-center py-8'
                   : ''}"
               >
-                <span
-                  class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-sm font-bold shrink-0"
-                >
-                  {getLetter(i)}
+                {#if alt.imageUrl}
+                  <img
+                    src={alt.imageUrl}
+                    alt=""
+                    class="w-full max-h-40 rounded-lg object-cover"
+                  />
+                {/if}
+                <span class="flex items-center gap-3 {($playerSession.currentQuestion?.alternatives?.length ?? 0) === 2 ? 'flex-col' : ''}">
+                  <span
+                    class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-sm font-bold shrink-0"
+                  >
+                    {getLetter(i)}
+                  </span>
+                  <span class="flex-1">{alt.text}</span>
                 </span>
-                <span>{alt.text}</span>
               </button>
             {/each}
           </div>
@@ -304,9 +339,7 @@
           <div
             class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center"
           >
-            <CheckCircle
-              class="w-7 h-7 text-emerald-500"
-            />
+            <CheckCircle class="w-7 h-7 text-emerald-500" />
           </div>
           <h2 class="text-xl font-bold text-slate-900">Partida encerrada!</h2>
         </div>

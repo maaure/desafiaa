@@ -9,8 +9,9 @@ export type PlayerPhase = "join" | "lobby" | "question" | "feedback" | "leaderbo
 interface QuestionData {
   questionIndex: number;
   text: string;
+  imageUrl: string | null;
   timeLimit: number;
-  alternatives: { id: string; text: string; sortOrder: number }[];
+  alternatives: { id: string; text: string; imageUrl: string | null; sortOrder: number }[];
 }
 
 interface AnswerResult {
@@ -156,8 +157,9 @@ function createPlayerSessionStore() {
       (payload: {
         questionIndex: number;
         text: string;
+        imageUrl: string | null;
         timeLimit: number;
-        alternatives: { id: string; text: string; sortOrder: number }[];
+        alternatives: { id: string; text: string; imageUrl: string | null; sortOrder: number }[];
       }) => {
         state.update((s) => ({
           ...s,
@@ -165,6 +167,7 @@ function createPlayerSessionStore() {
           currentQuestion: {
             questionIndex: payload.questionIndex,
             text: payload.text,
+            imageUrl: payload.imageUrl ?? null,
             timeLimit: payload.timeLimit,
             alternatives: payload.alternatives,
           },

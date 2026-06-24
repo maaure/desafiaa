@@ -75,10 +75,23 @@ export function registerHostGateway(io: Namespace) {
       },
     );
 
+    socket.on(
+      "host:session:presentation-mode",
+      async ({ enabled }: { enabled: boolean }) => {
+        if (!currentPin) return;
+        await redis.hset(
+          keys.sessionConfig(currentPin),
+          "presentation_mode",
+          enabled ? "1" : "0",
+        );
+      },
+    );
+
     socket.on("host:question:next", async () => {
       if (!currentPin) return;
       const config = await redis.hgetall(keys.sessionConfig(currentPin));
       const nextIndex = parseInt(config.current_question_index ?? "0", 10) + 1;
+      const presentationMode = config.presentation_mode === "1";
 
       // Busca a pergunta por offset (ordem estável durante a sessão)
       const quizId = config.quiz_id;
@@ -119,17 +132,20 @@ export function registerHostGateway(io: Namespace) {
           .where(eq(schema.gameSessions.id, sessionId));
       }
 
-      // Broadcast para jogadores — apenas alternativas (sem o texto da pergunta)
+      // Broadcast para jogadores
+      // Em modo apresentação, omite o texto da pergunta — jogadores veem só alternativas
       io.server
         .of("/play")
         .to(`session:${currentPin}`)
         .emit("game:question:show", {
           questionIndex: nextIndex,
-          text: "",
+          text: presentationMode ? "" : question.text,
+          imageUrl: question.imageUrl ?? null,
           timeLimit: parseInt(config.time_limit_seconds ?? "30", 10),
           alternatives: question.alternatives.map((a) => ({
             id: a.id,
             text: a.text,
+            imageUrl: a.imageUrl ?? null,
             sortOrder: a.sortOrder,
           })),
         });
@@ -142,9 +158,11 @@ export function registerHostGateway(io: Namespace) {
           eq(schema.questions.quizId, quizId),
         ),
         questionText: question.text,
+        questionImageUrl: question.imageUrl ?? null,
         alternatives: question.alternatives.map((a) => ({
           id: a.id,
           text: a.text,
+          imageUrl: a.imageUrl ?? null,
           sortOrder: a.sortOrder,
         })),
       });
@@ -161,7 +179,9 @@ export function registerHostGateway(io: Namespace) {
           .of("/play")
           .to(`session:${currentPin}`)
           .emit("game:question:timeout", {
-            correctAnswer: "",
+            correctAnswer: presentationMode
+              ? ""
+              : correctAlt?.text ?? "?",
           });
       }, timeLimitMs);
     });

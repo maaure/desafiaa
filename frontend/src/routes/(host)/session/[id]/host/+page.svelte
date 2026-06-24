@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowLeft, CheckCircle, Trophy, X } from "@lucide/svelte";
+  import { ArrowLeft, CheckCircle, Projector, Trophy, X } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
@@ -17,8 +17,9 @@
   );
   let currentQuestionData = $state<{
     text: string;
+    imageUrl: string | null;
     timeLimit: number;
-    alternatives: { id: string; text: string; sortOrder: number }[];
+    alternatives: { id: string; text: string; imageUrl: string | null; sortOrder: number }[];
   } | null>(get(hostSession.currentQuestionData));
   let timeLimitSeconds = $state(get(hostSession.timeLimitSeconds));
   let countdown = $state(get(hostSession.countdown));
@@ -26,6 +27,7 @@
   let leaderboard = $state<LeaderboardEntry[]>(get(hostSession.leaderboard));
   let error = $state<string | null>(get(hostSession.error));
   let questionsExhausted = $state(get(hostSession.questionsExhausted));
+  let presentationMode = $state(get(hostSession.presentationMode));
 
   let selectedTimeLimit = $state(30);
   let sessionStarted = $state(false);
@@ -56,6 +58,7 @@
       hostSession.leaderboard.subscribe((v) => (leaderboard = v)),
       hostSession.error.subscribe((v) => (error = v)),
       hostSession.questionsExhausted.subscribe((v) => (questionsExhausted = v)),
+      hostSession.presentationMode.subscribe((v) => (presentationMode = v)),
     ];
 
     hostSession.connect();
@@ -74,6 +77,9 @@
   function handleOpenRoom() {
     hostSession.startSession(selectedTimeLimit);
     sessionStarted = true;
+  }
+  function handleTogglePresentationMode() {
+    hostSession.setPresentationMode(!presentationMode);
   }
   function handleNextQuestion() {
     hostSession.nextQuestion();
@@ -198,6 +204,41 @@
             {/each}
           </div>
 
+          <!-- Presentation Mode Toggle -->
+          <div
+            class="flex items-center justify-between p-4 rounded-lg bg-purple-50 border border-purple-200 mb-4"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-lg flex items-center justify-center"
+                class:bg-purple-100={!presentationMode}
+                class:bg-purple-600={presentationMode}
+              >
+                <Projector
+                  class={`w-5 h-5 ${presentationMode ? "text-white" : "text-purple-500"}`}
+                />
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-purple-900">Modo Apresentação</p>
+                <p class="text-xs text-purple-600">
+                  Pergunta só na tela do host. Jogadores veem apenas alternativas.
+                </p>
+              </div>
+            </div>
+            <button
+              onclick={handleTogglePresentationMode}
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0
+                {presentationMode ? 'bg-purple-600' : 'bg-slate-300'}"
+              role="switch"
+              aria-checked={presentationMode}
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                  {presentationMode ? 'translate-x-6' : 'translate-x-1'}"
+              ></span>
+            </button>
+          </div>
+
           <button
             onclick={handleOpenRoom}
             class="w-full py-3 rounded-lg bg-cyan-600 text-white text-sm font-bold
@@ -251,47 +292,117 @@
     <div class="space-y-5 animate-slide-up">
       <!-- Question header -->
       <div class="flex items-center justify-between">
-        <p class="text-sm font-medium text-slate-500">
-          Pergunta <span class="text-slate-900 font-bold">{currentQuestion?.index ?? "?"}</span>
-          de <span class="text-slate-700">{currentQuestion?.total ?? "?"}</span>
-        </p>
+        <div class="flex items-center gap-3">
+          <p class="text-sm font-medium text-slate-500">
+            Pergunta <span class="text-slate-900 font-bold">{currentQuestion?.index ?? "?"}</span>
+            de <span class="text-slate-700">{currentQuestion?.total ?? "?"}</span>
+          </p>
+          {#if presentationMode}
+            <span
+              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold"
+            >
+              <Projector class="w-3 h-3" />
+              Apresentação
+            </span>
+          {/if}
+        </div>
         <div
-          class="flex items-center gap-2 px-6 py-3 rounded-lg font-mono tabular-nums
+          class="flex items-center gap-2 rounded-lg font-mono tabular-nums
+          {presentationMode ? 'px-6 py-3' : 'px-4 py-2'}
           {countdown <= 5 ? 'bg-red-50 text-red-600' : 'bg-slate-100 text-slate-700'}"
         >
-          <span class="text-4xl font-bold">{countdown}</span>
-          <span class="text-lg">s</span>
+          <span class="font-bold {presentationMode ? 'text-4xl' : 'text-2xl'}">{countdown}</span>
+          <span class={presentationMode ? "text-lg" : "text-sm"}>s</span>
         </div>
       </div>
 
-      <!-- Question card — large, centered, optimized for projection -->
+      <!-- Question card -->
       {#if currentQuestionData}
-        <div class="bg-white rounded-2xl border-2 border-purple-200 shadow-lg p-10 text-center">
-          <p class="text-3xl font-bold text-slate-900 leading-relaxed max-w-2xl mx-auto">
-            {currentQuestionData.text}
-          </p>
+        {#if presentationMode}
+          <!-- Presentation / projector view: big centered question -->
+          <div class="bg-white rounded-2xl border-2 border-purple-200 shadow-lg p-10 text-center">
+            {#if currentQuestionData.imageUrl}
+              <img
+                src={currentQuestionData.imageUrl}
+                alt=""
+                class="max-h-64 w-auto mx-auto rounded-xl mb-6 object-contain"
+              />
+            {/if}
+            <p class="text-3xl font-bold text-slate-900 leading-relaxed max-w-2xl mx-auto">
+              {currentQuestionData.text}
+            </p>
 
-          {#if currentQuestionData.alternatives.length > 0}
-            <div
-              class="grid gap-4 mt-8 {currentQuestionData.alternatives.length === 2
-                ? 'grid-cols-2'
-                : 'grid-cols-1 max-w-lg mx-auto'}"
-            >
+            {#if currentQuestionData.alternatives.length > 0}
+              <div
+                class="grid gap-4 mt-8 {currentQuestionData.alternatives.length === 2
+                  ? 'grid-cols-2'
+                  : 'grid-cols-1 max-w-lg mx-auto'}"
+              >
+                {#each currentQuestionData.alternatives as alt, i (alt.id)}
+                  <div
+                    class="rounded-xl border-l-4 bg-slate-50 border border-slate-100 text-left overflow-hidden {ALT_COLORS[
+                      i % ALT_COLORS.length
+                    ]}"
+                  >
+                    {#if alt.imageUrl}
+                      <img
+                        src={alt.imageUrl}
+                        alt=""
+                        class="w-full max-h-48 object-cover"
+                      />
+                    {/if}
+                    <div class="flex items-center gap-4 p-5">
+                      <span
+                        class="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-100 text-cyan-700 text-lg font-bold shrink-0"
+                      >
+                        {LETTERS[i] ?? String(i + 1)}
+                      </span>
+                      <span class="text-lg font-medium text-slate-800 flex-1">{alt.text}</span>
+                    </div>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </div>
+        {:else}
+          <!-- Default compact view: host and players both see question -->
+          <div class="bg-white rounded-xl border border-slate-200 p-6">
+            {#if currentQuestionData.imageUrl}
+              <img
+                src={currentQuestionData.imageUrl}
+                alt=""
+                class="max-h-48 w-auto rounded-xl mb-4 object-contain"
+              />
+            {/if}
+            <p class="text-lg font-semibold text-slate-800 leading-relaxed mb-6">
+              {currentQuestionData.text}
+            </p>
+
+            <div class="space-y-2.5">
               {#each currentQuestionData.alternatives as alt, i (alt.id)}
                 <div
-                  class="flex items-center gap-4 p-5 rounded-xl border-l-4 bg-slate-50 border border-slate-100 text-left {ALT_COLORS[i % ALT_COLORS.length]}"
+                  class="rounded-lg border border-slate-100 bg-slate-50 overflow-hidden"
                 >
-                  <span
-                    class="flex items-center justify-center w-10 h-10 rounded-full bg-cyan-100 text-cyan-700 text-lg font-bold shrink-0"
-                  >
-                    {LETTERS[i] ?? String(i + 1)}
-                  </span>
-                  <span class="text-lg font-medium text-slate-800">{alt.text}</span>
+                  {#if alt.imageUrl}
+                    <img
+                      src={alt.imageUrl}
+                      alt=""
+                      class="w-full max-h-36 object-cover"
+                    />
+                  {/if}
+                  <div class="flex items-center gap-3 p-4">
+                    <span
+                      class="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-100 text-cyan-700 text-sm font-bold shrink-0"
+                    >
+                      {LETTERS[i] ?? String(i + 1)}
+                    </span>
+                    <span class="text-sm font-medium text-slate-700 flex-1">{alt.text}</span>
+                  </div>
                 </div>
               {/each}
             </div>
-          {/if}
-        </div>
+          </div>
+        {/if}
       {/if}
 
       <!-- Progress -->
@@ -338,9 +449,7 @@
           <div
             class="w-14 h-14 mx-auto mb-3 rounded-full bg-amber-100 flex items-center justify-center"
           >
-            <Trophy
-              class="w-7 h-7 text-amber-500"
-            />
+            <Trophy class="w-7 h-7 text-amber-500" />
           </div>
           <h2 class="text-xl font-bold text-slate-900">Fim de Jogo</h2>
           <p class="text-sm text-slate-400 mt-1">
@@ -463,9 +572,7 @@
         <div
           class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center"
         >
-          <CheckCircle
-            class="w-7 h-7 text-emerald-500"
-          />
+          <CheckCircle class="w-7 h-7 text-emerald-500" />
         </div>
         <h2 class="text-xl font-bold text-slate-900">Sessão Encerrada</h2>
         <p class="text-sm text-slate-400 mt-1">
