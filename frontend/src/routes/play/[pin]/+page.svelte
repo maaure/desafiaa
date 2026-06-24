@@ -241,36 +241,49 @@
     {:else if phase === "feedback"}
       <div class="flex-1 flex flex-col items-center justify-center text-center">
         {#if $playerSession.lastResult}
-          <div
-            class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4
-            {$playerSession.lastResult.isCorrect
-              ? 'bg-emerald-100 text-emerald-600'
-              : 'bg-red-100 text-red-500'}"
-          >
-            {$playerSession.lastResult.isCorrect ? "✓" : "✗"}
-          </div>
-
-          <h2
-            class="text-2xl font-bold mb-3 {$playerSession.lastResult.isCorrect
-              ? 'text-emerald-700'
-              : 'text-red-600'}"
-          >
-            {$playerSession.lastResult.isCorrect ? "Correto!" : "Errado!"}
-          </h2>
-
-          <div class="text-center mb-6">
-            <p
-              class="text-lg font-bold {$playerSession.lastResult.isCorrect
-                ? 'text-emerald-600'
-                : 'text-slate-400'}"
+          {#if $playerSession.timedOut}
+            <div class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 bg-amber-100 text-amber-500">
+              ⏰
+            </div>
+            <h2 class="text-2xl font-bold mb-3 text-amber-600">Tempo esgotado!</h2>
+            <div class="text-center mb-6">
+              <p class="text-lg font-bold text-slate-400">0 pts</p>
+              <p class="text-sm text-slate-400 mt-1">
+                Total: {$playerSession.totalScore} pts
+              </p>
+            </div>
+          {:else}
+            <div
+              class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4
+              {$playerSession.lastResult.isCorrect
+                ? 'bg-emerald-100 text-emerald-600'
+                : 'bg-red-100 text-red-500'}"
             >
-              {#if $playerSession.lastResult.isCorrect}+{$playerSession.lastResult.pointsEarned} pts{:else}0
-                pts{/if}
-            </p>
-            <p class="text-sm text-slate-400 mt-1">
-              Total: {$playerSession.totalScore} pts
-            </p>
-          </div>
+              {$playerSession.lastResult.isCorrect ? "✓" : "✗"}
+            </div>
+
+            <h2
+              class="text-2xl font-bold mb-3 {$playerSession.lastResult.isCorrect
+                ? 'text-emerald-700'
+                : 'text-red-600'}"
+            >
+              {$playerSession.lastResult.isCorrect ? "Correto!" : "Errado!"}
+            </h2>
+
+            <div class="text-center mb-6">
+              <p
+                class="text-lg font-bold {$playerSession.lastResult.isCorrect
+                  ? 'text-emerald-600'
+                  : 'text-slate-400'}"
+              >
+                {#if $playerSession.lastResult.isCorrect}+{$playerSession.lastResult.pointsEarned} pts{:else}0
+                  pts{/if}
+              </p>
+              <p class="text-sm text-slate-400 mt-1">
+                Total: {$playerSession.totalScore} pts
+              </p>
+            </div>
+          {/if}
         {/if}
 
         {#if $playerSession.correctAnswer}

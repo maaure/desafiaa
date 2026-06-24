@@ -21,6 +21,7 @@ export function registerHostGateway(io: Namespace) {
 
   io.on("connection", (socket) => {
     let currentPin: string | null = null;
+    let questionTimeout: ReturnType<typeof setTimeout> | null = null;
 
     socket.on("host:session:create", async ({ quizId }: { quizId: string }) => {
       const quiz = await db.query.quizzes.findFirst({
@@ -167,10 +168,11 @@ export function registerHostGateway(io: Namespace) {
         })),
       });
 
-      // Timer de timeout automático
+      // Timer de timeout automático (cancela o anterior se existir)
+      if (questionTimeout) clearTimeout(questionTimeout);
       const timeLimitMs =
         parseInt(config.time_limit_seconds ?? "30", 10) * 1000;
-      setTimeout(async () => {
+      questionTimeout = setTimeout(async () => {
         const status = await redis.get(keys.sessionStatus(currentPin!));
         if (status !== "playing") return;
 
@@ -188,6 +190,7 @@ export function registerHostGateway(io: Namespace) {
 
     socket.on("host:leaderboard:show", async () => {
       if (!currentPin) return;
+      if (questionTimeout) { clearTimeout(questionTimeout); questionTimeout = null; }
       const rankings = await leaderboardService.getTop(currentPin);
       io.server
         .of("/play")
@@ -197,6 +200,7 @@ export function registerHostGateway(io: Namespace) {
 
     socket.on("host:session:end", async () => {
       if (!currentPin) return;
+      if (questionTimeout) { clearTimeout(questionTimeout); questionTimeout = null; }
       await redis.set(keys.sessionStatus(currentPin), "finished");
 
       const sessionId = await redis.get(keys.pinLookup(currentPin));
@@ -313,6 +317,7 @@ export function registerHostGateway(io: Namespace) {
     });
 
     socket.on("disconnect", () => {
+      if (questionTimeout) { clearTimeout(questionTimeout); questionTimeout = null; }
       // Host saiu — a sessão continua ativa para Players
     });
   });

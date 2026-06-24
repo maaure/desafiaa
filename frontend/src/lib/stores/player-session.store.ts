@@ -32,6 +32,7 @@ interface PlayerSessionState {
   hasAnswered: boolean;
   lastResult: AnswerResult | null;
   correctAnswer: string | null;
+  timedOut: boolean;
   countdown: number;
   leaderboard: LeaderboardEntry[];
   error: string | null;
@@ -78,6 +79,7 @@ const initialState: PlayerSessionState = {
   hasAnswered: false,
   lastResult: null,
   correctAnswer: null,
+  timedOut: false,
   countdown: 0,
   leaderboard: [],
   error: null,
@@ -174,6 +176,7 @@ function createPlayerSessionStore() {
           hasAnswered: false,
           lastResult: null,
           correctAnswer: null,
+          timedOut: false,
         }));
         startCountdown(payload.timeLimit);
       },
@@ -199,7 +202,12 @@ function createPlayerSessionStore() {
     socket.on("game:question:timeout", (payload: { correctAnswer: string }) => {
       state.update((s) => ({
         ...s,
+        phase: s.hasAnswered ? s.phase : "feedback",
         correctAnswer: payload.correctAnswer,
+        timedOut: !s.hasAnswered,
+        lastResult: s.hasAnswered
+          ? s.lastResult
+          : { isCorrect: false, pointsEarned: 0, totalScore: s.totalScore },
       }));
     });
 
