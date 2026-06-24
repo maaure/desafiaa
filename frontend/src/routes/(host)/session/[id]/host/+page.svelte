@@ -234,6 +234,7 @@
                 {presentationMode ? 'bg-purple-600' : 'bg-slate-300'}"
               role="switch"
               aria-checked={presentationMode}
+              aria-label="presentation mode"
             >
               <span
                 class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform
