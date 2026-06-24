@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Image, X } from "@lucide/svelte";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
+  import { useUploadImage } from "$lib/api/quizzes/quizzes.mutations";
   import type { Alternative } from "$lib/api/quizzes/quizzes.types";
 
   let {
@@ -13,7 +14,7 @@
     letter: string;
   } = $props();
 
-  let uploading = $state(false);
+  const uploadImage = useUploadImage();
 
   function handleTextInput(e: Event) {
     const value = (e.target as HTMLInputElement).value;
@@ -29,11 +30,10 @@
     const file = input.files?.[0];
     if (!file) return;
 
-    uploading = true;
     try {
-      await quizEditor.updateAlternativeImage(questionId, alt.id, file);
+      const { url } = await uploadImage.mutateAsync(file);
+      quizEditor.updateAlternativeImageUrl(questionId, alt.id, url);
     } finally {
-      uploading = false;
       input.value = "";
     }
   }
@@ -86,19 +86,24 @@
         </button>
       </div>
     {:else}
-      <label
-        class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
-          text-slate-300 hover:text-cyan-500 hover:bg-cyan-50 cursor-pointer transition-colors
-          {uploading ? 'opacity-50 pointer-events-none' : ''}"
-      >
-        {#if uploading}
-          <span class="w-3 h-3 border-2 border-slate-300 border-t-cyan-500 rounded-full animate-spin"></span>
-        {:else}
-          <Image class="w-3 h-3" />
-          Imagem
+      <div class="inline-flex flex-col gap-0.5">
+        <label
+          class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
+            text-slate-300 hover:text-cyan-500 hover:bg-cyan-50 cursor-pointer transition-colors
+            {uploadImage.isPending ? 'opacity-50 pointer-events-none' : ''}"
+        >
+          {#if uploadImage.isPending}
+            <span class="w-3 h-3 border-2 border-slate-300 border-t-cyan-500 rounded-full animate-spin"></span>
+          {:else}
+            <Image class="w-3 h-3" />
+            Imagem
+          {/if}
+          <input type="file" accept="image/jpeg,image/png,image/webp" onchange={handleImageUpload} class="hidden" />
+        </label>
+        {#if uploadImage.error}
+          <span class="text-xs text-red-500">{uploadImage.error.message}</span>
         {/if}
-        <input type="file" accept="image/jpeg,image/png,image/webp" onchange={handleImageUpload} class="hidden" />
-      </label>
+      </div>
     {/if}
   </div>
 

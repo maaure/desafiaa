@@ -149,6 +149,18 @@ function createQuizEditorStore() {
       });
     },
 
+    updateQuestionImageUrl(questionId: string, url: string) {
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) =>
+            qn.id === questionId ? { ...qn, imageUrl: url } : qn,
+          ),
+        };
+      });
+    },
+
     removeQuestionImage(questionId: string) {
       quiz.update((q) => {
         if (!q) return q;
@@ -163,6 +175,25 @@ function createQuizEditorStore() {
 
     async updateAlternativeImage(questionId: string, altId: string, file: File) {
       const { url } = await quizRequests.uploadImage(file);
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) =>
+            qn.id === questionId
+              ? {
+                  ...qn,
+                  alternatives: qn.alternatives.map((a) =>
+                    a.id === altId ? { ...a, imageUrl: url } : a,
+                  ),
+                }
+              : qn,
+          ),
+        };
+      });
+    },
+
+    updateAlternativeImageUrl(questionId: string, altId: string, url: string) {
       quiz.update((q) => {
         if (!q) return q;
         return {

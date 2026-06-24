@@ -134,3 +134,11 @@ export function useMarkCorrect() {
     },
   }));
 }
+
+// ── Upload mutation ─────────────────────────────────────────────────
+
+export function useUploadImage() {
+  return createMutation(() => ({
+    mutationFn: (file: File) => quizRequests.uploadImage(file),
+  }));
+}
