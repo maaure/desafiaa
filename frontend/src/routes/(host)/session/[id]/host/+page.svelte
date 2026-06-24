@@ -31,6 +31,7 @@
   let error = $state<string | null>(get(hostSession.error));
   let questionsExhausted = $state(get(hostSession.questionsExhausted));
   let presentationMode = $state(get(hostSession.presentationMode));
+  let isSubmitting = $state(get(hostSession.isSubmitting));
 
   let selectedTimeLimit = $state(30);
   let sessionStarted = $state(false);
@@ -62,6 +63,7 @@
       hostSession.error.subscribe((v) => (error = v)),
       hostSession.questionsExhausted.subscribe((v) => (questionsExhausted = v)),
       hostSession.presentationMode.subscribe((v) => (presentationMode = v)),
+      hostSession.isSubmitting.subscribe((v) => (isSubmitting = v)),
     ];
 
     hostSession.connect();
@@ -245,10 +247,11 @@
 
           <button
             onclick={handleOpenRoom}
+            disabled={isSubmitting}
             class="w-full py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
-              hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
+              hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm disabled:opacity-40"
           >
-            Abrir Sala
+            {isSubmitting ? "Abrindo..." : "Abrir Sala"}
           </button>
         </div>
 
@@ -281,10 +284,11 @@
           {#if playerCount > 0}
             <button
               onclick={handleNextQuestion}
+              disabled={isSubmitting}
               class="w-full py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
-                hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
+                hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm disabled:opacity-40"
             >
-              Iniciar Primeira Pergunta
+              {isSubmitting ? "Iniciando..." : "Iniciar Primeira Pergunta"}
             </button>
           {/if}
         </div>
@@ -351,15 +355,17 @@
       <div class="flex gap-3">
         <button
           onclick={handleNextQuestion}
+          disabled={isSubmitting}
           class="flex-1 py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
-            hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
+            hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm disabled:opacity-40"
         >
-          Próxima Pergunta
+          {isSubmitting ? "Avançando..." : "Próxima Pergunta"}
         </button>
         <button
           onclick={handleShowLeaderboard}
+          disabled={isSubmitting}
           class="flex-1 py-3 rounded-lg border border-slate-200 text-slate-600 text-sm font-semibold
-            hover:bg-slate-50 active:bg-slate-100 transition-colors"
+            hover:bg-slate-50 active:bg-slate-100 transition-colors disabled:opacity-40"
         >
           Mostrar Placar
         </button>
@@ -398,23 +404,26 @@
       {#if questionsExhausted}
         <button
           onclick={handleEndSession}
+          disabled={isSubmitting}
           class="w-full py-3 rounded-lg bg-emerald-600 text-white text-sm font-bold
-            hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-sm"
+            hover:bg-emerald-700 active:bg-emerald-800 transition-colors shadow-sm disabled:opacity-40"
         >
-          Finalizar e Salvar Resultados
+          {isSubmitting ? "Finalizando..." : "Finalizar e Salvar Resultados"}
         </button>
       {:else}
         <button
           onclick={handleNextQuestion}
+          disabled={isSubmitting}
           class="w-full py-3 rounded-lg bg-violet-600 text-white text-sm font-bold
-            hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm"
+            hover:bg-violet-700 active:bg-violet-800 transition-colors shadow-sm disabled:opacity-40"
         >
-          Próxima Pergunta
+          {isSubmitting ? "Avançando..." : "Próxima Pergunta"}
         </button>
         <button
           onclick={handleEndSession}
+          disabled={isSubmitting}
           class="w-full py-3 rounded-lg border border-red-200 text-red-500 text-sm font-semibold
-            hover:bg-red-50 active:bg-red-100 transition-colors"
+            hover:bg-red-50 active:bg-red-100 transition-colors disabled:opacity-40"
         >
           Encerrar Sessão
         </button>

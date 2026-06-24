@@ -28,6 +28,7 @@ interface HostSessionState {
   isConnected: boolean;
   questionsExhausted: boolean;
   presentationMode: boolean;
+  isSubmitting: boolean;
   countdown: number;
 }
 
@@ -48,6 +49,7 @@ function createHostSessionStore() {
     isConnected: false,
     questionsExhausted: false,
     presentationMode: false,
+    isSubmitting: false,
     countdown: 0,
   });
 
@@ -110,6 +112,7 @@ function createHostSessionStore() {
       state.update((s) => ({
         ...s,
         timeLimitSeconds: payload.timeLimitSeconds,
+        isSubmitting: false,
       }));
     });
 
@@ -142,6 +145,7 @@ function createHostSessionStore() {
             alternatives: payload.alternatives ?? [],
           },
           progress: { answered: 0, total: 0 },
+          isSubmitting: false,
         }));
         startCountdown(timeLimit);
       },
@@ -161,6 +165,7 @@ function createHostSessionStore() {
         phase: "leaderboard",
         leaderboard: payload.rankings,
         questionsExhausted: true,
+        isSubmitting: false,
       }));
     });
 
@@ -170,6 +175,7 @@ function createHostSessionStore() {
         ...s,
         phase: "leaderboard",
         leaderboard: payload.rankings,
+        isSubmitting: false,
       }));
     });
 
@@ -182,6 +188,7 @@ function createHostSessionStore() {
           phase: "ended",
           leaderboard: payload.finalRankings,
           playerCount: payload.totalPlayers,
+          isSubmitting: false,
         }));
       },
     );
@@ -233,6 +240,7 @@ function createHostSessionStore() {
   function startSession(timeLimitSeconds: number) {
     if (!socket?.connected) return;
     const clamped = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
+    state.update((s) => ({ ...s, isSubmitting: true }));
     socket.emit("host:session:start", { timeLimitSeconds: clamped });
   }
 
@@ -242,14 +250,17 @@ function createHostSessionStore() {
   }
 
   function nextQuestion() {
+    state.update((s) => ({ ...s, isSubmitting: true }));
     socket?.emit("host:question:next");
   }
 
   function showLeaderboard() {
+    state.update((s) => ({ ...s, isSubmitting: true }));
     socket?.emit("host:leaderboard:show");
   }
 
   function endSession() {
+    state.update((s) => ({ ...s, isSubmitting: true }));
     socket?.emit("host:session:end");
   }
 
@@ -276,6 +287,7 @@ function createHostSessionStore() {
       isConnected: false,
       questionsExhausted: false,
       presentationMode: false,
+      isSubmitting: false,
       countdown: 0,
     });
   }
@@ -297,6 +309,7 @@ function createHostSessionStore() {
     isConnected: derived(state, ($s) => $s.isConnected),
     questionsExhausted: derived(state, ($s) => $s.questionsExhausted),
     presentationMode: derived(state, ($s) => $s.presentationMode),
+    isSubmitting: derived(state, ($s) => $s.isSubmitting),
     countdown: derived(state, ($s) => $s.countdown),
 
     connect,

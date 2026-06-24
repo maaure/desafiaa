@@ -95,6 +95,17 @@
     @apply bg-slate-50 text-slate-800 font-sans;
   }
 
+  /* All clickable elements get pointer cursor */
+  button,
+  [role="button"],
+  a[href] {
+    cursor: pointer;
+  }
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
   /* Focus ring — visible, accessible, not harsh */
   :focus-visible {
     @apply outline-2 outline-offset-2 outline-violet-500;

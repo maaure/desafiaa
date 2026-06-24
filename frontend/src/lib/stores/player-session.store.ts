@@ -33,6 +33,7 @@ interface PlayerSessionState {
   lastResult: AnswerResult | null;
   correctAnswer: string | null;
   timedOut: boolean;
+  isSubmitting: boolean;
   countdown: number;
   leaderboard: LeaderboardEntry[];
   error: string | null;
@@ -80,6 +81,7 @@ const initialState: PlayerSessionState = {
   lastResult: null,
   correctAnswer: null,
   timedOut: false,
+  isSubmitting: false,
   countdown: 0,
   leaderboard: [],
   error: null,
@@ -143,6 +145,7 @@ function createPlayerSessionStore() {
         phase: "lobby",
         sessionId: payload.sessionId,
         totalPlayers: payload.totalPlayers,
+        isSubmitting: false,
       }));
     });
 
@@ -245,7 +248,7 @@ function createPlayerSessionStore() {
     );
 
     socket.on("error", (payload: { code?: string; message: string }) => {
-      state.update((s) => ({ ...s, error: payload.message }));
+      state.update((s) => ({ ...s, error: payload.message, isSubmitting: false }));
     });
   }
 
@@ -276,6 +279,7 @@ function createPlayerSessionStore() {
       nickname: trimmedNick,
       phase: "join",
       error: null,
+      isSubmitting: true,
     }));
 
     connect(pin);
@@ -348,6 +352,8 @@ function createPlayerSessionStore() {
     leaderboard: derived(state, ($s) => $s.leaderboard),
     error: derived(state, ($s) => $s.error),
     isConnected: derived(state, ($s) => $s.isConnected),
+    timedOut: derived(state, ($s) => $s.timedOut),
+    isSubmitting: derived(state, ($s) => $s.isSubmitting),
 
     join,
     reconnect,

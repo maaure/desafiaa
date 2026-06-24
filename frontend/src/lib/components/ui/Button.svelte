@@ -1,15 +1,18 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { Loader2 } from "@lucide/svelte";
 
   let {
     variant = "default",
     disabled = false,
+    loading = false,
     onclick,
     type = "button",
     children,
   }: {
     variant?: "default" | "primary" | "secondary" | "danger";
     disabled?: boolean;
+    loading?: boolean;
     onclick?: (e: MouseEvent) => void;
     type?: "button" | "submit";
     children: Snippet;
@@ -27,6 +30,9 @@
   };
 </script>
 
-<button class="{base} {variants[variant] ?? variants.default}" {disabled} {type} {onclick}>
+<button class="{base} {variants[variant] ?? variants.default}" disabled={disabled || loading} {type} {onclick}>
+  {#if loading}
+    <Loader2 class="w-4 h-4 animate-spin" />
+  {/if}
   {@render children()}
 </button>

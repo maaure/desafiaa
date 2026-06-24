@@ -68,7 +68,7 @@
         oninput={(e) => (password = (e.target as HTMLInputElement).value)}
       />
 
-      <Button type="submit" variant="primary" disabled={loading}>
+      <Button type="submit" variant="primary" {loading}>
         {loading ? "Entrando..." : "Entrar"}
       </Button>
     </form>

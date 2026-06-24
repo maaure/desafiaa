@@ -94,7 +94,7 @@
         oninput={(e) => (confirm = (e.target as HTMLInputElement).value)}
       />
 
-      <Button type="submit" variant="primary" disabled={loading}>
+      <Button type="submit" variant="primary" {loading}>
         {loading ? "Criando conta..." : "Criar conta"}
       </Button>
     </form>

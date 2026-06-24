@@ -108,11 +108,11 @@
           />
           <button
             type="submit"
-            disabled={nickInput.trim().length < 2}
+            disabled={nickInput.trim().length < 2 || $playerSession.isSubmitting}
             class="w-full py-3 rounded-xl bg-violet-600 text-white text-base font-bold
               hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
           >
-            Entrar
+            {$playerSession.isSubmitting ? "Entrando..." : "Entrar"}
           </button>
         </form>
       </div>

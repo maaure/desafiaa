@@ -5,9 +5,9 @@
 
   let pin = $state("");
   let nickname = $state("");
-  let joined = $state(false);
   let pinError = $state("");
   let nickError = $state("");
+  let didSubmit = $state(false);
 
   function handleSubmit(e: Event) {
     e.preventDefault();
@@ -27,12 +27,12 @@
       return;
     }
 
-    joined = true;
+    didSubmit = true;
     playerSession.join(pin, nickname.trim());
   }
 
   $effect(() => {
-    if (!joined) return;
+    if (!didSubmit) return;
     const p = $playerSession;
     if (p.phase === "lobby" && p.pin) {
       goto(resolve(`/play/${p.pin}`));
@@ -78,7 +78,7 @@
             bind:value={pin}
             maxlength={6}
             placeholder="000000"
-            disabled={joined}
+            disabled={$playerSession.isSubmitting}
             required
             class="w-full px-4 py-3 rounded-xl border text-center text-2xl font-mono font-bold tracking-[0.3em]
               placeholder:tracking-normal placeholder:text-lg placeholder:font-normal placeholder:text-slate-300
@@ -102,7 +102,7 @@
             bind:value={nickname}
             maxlength={20}
             placeholder="Como quer ser chamado"
-            disabled={joined}
+            disabled={$playerSession.isSubmitting}
             required
             class="w-full px-4 py-3 rounded-xl border border-slate-200 text-base
               placeholder:text-slate-300
@@ -118,12 +118,12 @@
 
         <button
           type="submit"
-          disabled={pin.length !== 6 || nickname.trim().length < 2 || joined}
+          disabled={pin.length !== 6 || nickname.trim().length < 2 || $playerSession.isSubmitting}
           class="w-full py-3 rounded-xl bg-violet-600 text-white text-base font-bold
             hover:bg-violet-700 active:bg-violet-800 disabled:opacity-40 disabled:cursor-not-allowed
             transition-colors shadow-sm"
         >
-          {joined ? "Entrando..." : "Entrar na partida"}
+          {$playerSession.isSubmitting ? "Entrando..." : "Entrar na partida"}
         </button>
       </form>
 
