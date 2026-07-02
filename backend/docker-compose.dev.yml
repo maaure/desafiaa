@@ -1,5 +1,6 @@
 services:
   postgres:
+    container_name: desafia-db-dev
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: quiz
@@ -16,6 +17,7 @@ services:
       retries: 10
 
   redis:
+    container_name: desafia-redis-dev
     image: redis:7-alpine
     ports:
       - "6379:6379"
@@ -26,6 +28,7 @@ services:
       retries: 10
 
   app:
+    container_name: desafia-api-dev
     build:
       context: .
       dockerfile: Dockerfile.dev

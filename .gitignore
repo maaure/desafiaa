@@ -5,6 +5,10 @@ dist/
 .DS_Store
 *.log
 
+# Tooling
+.claude/
+.superpowers/
+
 # Uploaded images
 uploads/
 

@@ -128,10 +128,10 @@ async function handleLogin() {
 
 Esta estrutura reflete os princípios acima. Respeite-a ao criar novos arquivos.
 
-### Backend (`src/`)
+### Backend (`backend/src/`)
 
 ```
-src/
+backend/src/
 ├── server.ts                  # Bootstrap: Fastify + Socket.IO + Redis
 ├── config/
 │   └── env.ts                 # Variáveis de ambiente tipadas (Zod)
@@ -166,10 +166,10 @@ src/
 - **Schema (Zod):** define formato de entrada e saída para validação runtime. Usado pelas routes.
 - **Middleware:** funções transversais (auth, erro). Não contêm regras de negócio.
 
-### Frontend (`src/`)
+### Frontend (`frontend/src/`)
 
 ```
-src/
+frontend/src/
 ├── lib/
 │   ├── api/                   # Model — funções puras de acesso a dados
 │   │   ├── client.ts          #   fetch wrapper + Socket.IO client

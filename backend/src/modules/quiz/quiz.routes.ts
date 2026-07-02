@@ -3,6 +3,7 @@ import { FastifyInstance } from "fastify";
 import { quizService } from "./quiz.service";
 import { createQuizSchema, updateQuizSchema } from "./quiz.schema";
 import { authenticate } from "../../middleware/auth";
+import { zSchema } from "../../lib/swagger";
 import { z } from "zod";
 
 const questionSchema = z.object({
@@ -23,50 +24,74 @@ const reorderSchema = z.object({ sortOrder: z.number().int().min(0) });
 export async function quizRoutes(app: FastifyInstance) {
   app.addHook("onRequest", authenticate);
 
-  // === QUIZZES ===
+  app.get(
+    "/api/quizzes",
+    {
+      schema: { tags: ["quizzes"] },
+    },
+    async (request) => {
+      const { page, limit } = request.query as any;
+      return quizService.list(
+        (request as any).userId,
+        Number(page) || 1,
+        Number(limit) || 20,
+      );
+    },
+  );
 
-  app.get("/api/quizzes", async (request) => {
-    const { page, limit } = request.query as any;
-    return quizService.list(
-      (request as any).userId,
-      Number(page) || 1,
-      Number(limit) || 20,
-    );
-  });
+  app.get<{ Params: { id: string } }>(
+    "/api/quizzes/:id",
+    {
+      schema: { tags: ["quizzes"] },
+    },
+    async (request) => {
+      return quizService.getById(request.params.id, (request as any).userId);
+    },
+  );
 
-  app.get<{ Params: { id: string } }>("/api/quizzes/:id", async (request) => {
-    return quizService.getById(request.params.id, (request as any).userId);
-  });
+  app.post(
+    "/api/quizzes",
+    {
+      schema: { tags: ["quizzes"], body: zSchema(createQuizSchema) },
+    },
+    async (request, reply) => {
+      const input = request.body as any;
+      const quiz = await quizService.create(input, (request as any).userId);
+      return reply.status(201).send(quiz);
+    },
+  );
 
-  app.post("/api/quizzes", async (request, reply) => {
-    const input = createQuizSchema.parse(request.body);
-    const quiz = await quizService.create(input, (request as any).userId);
-    return reply.status(201).send(quiz);
-  });
-
-  app.put<{ Params: { id: string } }>("/api/quizzes/:id", async (request) => {
-    const input = updateQuizSchema.parse(request.body);
-    return quizService.update(
-      request.params.id,
-      (request as any).userId,
-      input,
-    );
-  });
+  app.put<{ Params: { id: string } }>(
+    "/api/quizzes/:id",
+    {
+      schema: { tags: ["quizzes"], body: zSchema(updateQuizSchema) },
+    },
+    async (request) => {
+      const input = request.body as any;
+      return quizService.update(
+        request.params.id,
+        (request as any).userId,
+        input,
+      );
+    },
+  );
 
   app.delete<{ Params: { id: string } }>(
     "/api/quizzes/:id",
+    { schema: { tags: ["quizzes"] } },
     async (request, reply) => {
       await quizService.remove(request.params.id, (request as any).userId);
       return reply.status(204).send();
     },
   );
 
-  // === QUESTIONS ===
-
   app.post<{ Params: { id: string } }>(
     "/api/quizzes/:id/questions",
+    {
+      schema: { tags: ["questions"], body: zSchema(questionSchema) },
+    },
     async (request, reply) => {
-      const input = questionSchema.parse(request.body);
+      const input = request.body as any;
       const question = await quizService.createQuestion(
         request.params.id,
         (request as any).userId,
@@ -76,17 +101,24 @@ export async function quizRoutes(app: FastifyInstance) {
     },
   );
 
-  app.put<{ Params: { id: string } }>("/api/questions/:id", async (request) => {
-    const input = questionSchema.partial().parse(request.body);
-    return quizService.updateQuestion(
-      request.params.id,
-      (request as any).userId,
-      input,
-    );
-  });
+  app.put<{ Params: { id: string } }>(
+    "/api/questions/:id",
+    {
+      schema: { tags: ["questions"], body: zSchema(questionSchema.partial()) },
+    },
+    async (request) => {
+      const input = request.body as any;
+      return quizService.updateQuestion(
+        request.params.id,
+        (request as any).userId,
+        input,
+      );
+    },
+  );
 
   app.delete<{ Params: { id: string } }>(
     "/api/questions/:id",
+    { schema: { tags: ["questions"] } },
     async (request, reply) => {
       await quizService.deleteQuestion(
         request.params.id,
@@ -98,8 +130,11 @@ export async function quizRoutes(app: FastifyInstance) {
 
   app.put<{ Params: { id: string } }>(
     "/api/questions/:id/order",
+    {
+      schema: { tags: ["questions"], body: zSchema(reorderSchema) },
+    },
     async (request) => {
-      const { sortOrder } = reorderSchema.parse(request.body);
+      const { sortOrder } = request.body as any;
       return quizService.reorderQuestion(
         request.params.id,
         (request as any).userId,
@@ -108,12 +143,13 @@ export async function quizRoutes(app: FastifyInstance) {
     },
   );
 
-  // === ALTERNATIVES ===
-
   app.post<{ Params: { id: string } }>(
     "/api/questions/:id/alternatives",
+    {
+      schema: { tags: ["alternatives"], body: zSchema(alternativeSchema) },
+    },
     async (request, reply) => {
-      const input = alternativeSchema.parse(request.body);
+      const input = request.body as any;
       const alt = await quizService.createAlternative(
         request.params.id,
         (request as any).userId,
@@ -125,8 +161,14 @@ export async function quizRoutes(app: FastifyInstance) {
 
   app.put<{ Params: { id: string } }>(
     "/api/alternatives/:id",
+    {
+      schema: {
+        tags: ["alternatives"],
+        body: zSchema(alternativeSchema.partial()),
+      },
+    },
     async (request) => {
-      const input = alternativeSchema.partial().parse(request.body);
+      const input = request.body as any;
       return quizService.updateAlternative(
         request.params.id,
         (request as any).userId,
@@ -137,6 +179,7 @@ export async function quizRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { id: string } }>(
     "/api/alternatives/:id",
+    { schema: { tags: ["alternatives"] } },
     async (request, reply) => {
       await quizService.deleteAlternative(
         request.params.id,
@@ -148,6 +191,7 @@ export async function quizRoutes(app: FastifyInstance) {
 
   app.put<{ Params: { id: string } }>(
     "/api/alternatives/:id/correct",
+    { schema: { tags: ["alternatives"] } },
     async (request) => {
       return quizService.markAlternativeCorrect(
         request.params.id,
