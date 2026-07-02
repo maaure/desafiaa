@@ -30,32 +30,55 @@ export function registerPlayGateway(io: Namespace) {
     socket.on("player:join", async ({ nickname }: { nickname: string }) => {
       try {
         const normalizedNick = nickname.trim().toLowerCase();
-        if (!normalizedNick || normalizedNick.length < 2 || normalizedNick.length > 20) {
-          socket.emit("error", { message: "Apelido deve ter entre 2 e 20 caracteres" });
+        if (
+          !normalizedNick ||
+          normalizedNick.length < 2 ||
+          normalizedNick.length > 20
+        ) {
+          socket.emit("error", {
+            message: "Apelido deve ter entre 2 e 20 caracteres",
+          });
           return;
         }
 
         // Atomic uniqueness check via SADD (Issue 2: TOCTOU fix)
-        const added = await redis.sadd(keys.sessionNicknames(pin), normalizedNick);
+        const added = await redis.sadd(
+          keys.sessionNicknames(pin),
+          normalizedNick,
+        );
 
         if (added === 0) {
           // Nickname already in use — check if from a disconnected player (Issue 1: reconnection)
-          const oldSocketId = await redis.hget(keys.disconnectedPlayers(pin), normalizedNick);
+          const oldSocketId = await redis.hget(
+            keys.disconnectedPlayers(pin),
+            normalizedNick,
+          );
           if (!oldSocketId) {
-            socket.emit("error", { message: "Apelido já está em uso nesta partida" });
+            socket.emit("error", {
+              message: "Apelido já está em uso nesta partida",
+            });
             return;
           }
 
           // Reconnection: migrate data from old socket ID to the new one
-          const oldPlayerData = await redis.hgetall(keys.sessionPlayer(pin, oldSocketId));
+          const oldPlayerData = await redis.hgetall(
+            keys.sessionPlayer(pin, oldSocketId),
+          );
 
           // 1. Migrate player hash (includes total_score, correct_count, nickname)
           await redis.hset(keys.sessionPlayer(pin, socket.id), oldPlayerData);
 
           // 2. Migrate score in sorted set
-          const oldScore = await redis.zscore(keys.sessionScores(pin), oldSocketId);
+          const oldScore = await redis.zscore(
+            keys.sessionScores(pin),
+            oldSocketId,
+          );
           if (oldScore !== null) {
-            await redis.zadd(keys.sessionScores(pin), parseInt(oldScore, 10), socket.id);
+            await redis.zadd(
+              keys.sessionScores(pin),
+              parseInt(oldScore, 10),
+              socket.id,
+            );
           }
           await redis.zrem(keys.sessionScores(pin), oldSocketId);
 
@@ -93,7 +116,7 @@ export function registerPlayGateway(io: Namespace) {
           const p = await redis.hgetall(keys.sessionPlayer(pin, sid));
           nicknames.push(p.nickname ?? "?");
         }
-        io.server.of('/host').to(`session:${pin}`).emit("player:lobby:update", {
+        io.server.of("/host").to(`session:${pin}`).emit("player:lobby:update", {
           playerCount: members.length,
           nicknames,
         });
@@ -102,89 +125,127 @@ export function registerPlayGateway(io: Namespace) {
       }
     });
 
-    socket.on("player:answer", async ({ questionIndex, answer }: {
-      questionIndex: number; answer: string;
-    }) => {
-      try {
-        if (!socket.data.nickname) {
-          socket.emit("error", { message: "Entre na partida primeiro" });
-          return;
+    socket.on(
+      "player:answer",
+      async ({
+        questionIndex,
+        answer,
+      }: {
+        questionIndex: number;
+        answer: string;
+      }) => {
+        try {
+          if (!socket.data.nickname) {
+            socket.emit("error", { message: "Entre na partida primeiro" });
+            return;
+          }
+
+          // Verifica se a partida está em andamento (Issue 4)
+          const status = await redis.get(keys.sessionStatus(pin));
+          if (status !== "playing") {
+            socket.emit("error", {
+              message: "A partida não está em andamento",
+            });
+            return;
+          }
+
+          // Gate: uma resposta por pergunta
+          const alreadyAnswered = await redis.hexists(
+            keys.questionAnswers(pin, questionIndex),
+            socket.data.nickname,
+          );
+          if (alreadyAnswered) {
+            socket.emit("error", { code: "ALREADY_ANSWERED" });
+            return;
+          }
+
+          // Busca a pergunta correta
+          const config = await redis.hgetall(keys.sessionConfig(pin));
+          const quizId = config.quiz_id;
+          const question = await db.query.questions.findFirst({
+            where: eq(schema.questions.quizId, quizId),
+            with: { alternatives: true },
+            orderBy: (q, { asc }) => [asc(q.sortOrder)],
+            offset: questionIndex - 1,
+          });
+
+          if (!question) {
+            socket.emit("error", { message: "Pergunta não encontrada" });
+            return;
+          }
+
+          const selectedAlt = question.alternatives.find(
+            (a) => a.text === answer || a.id === answer,
+          );
+          const isCorrect = selectedAlt?.isCorrect ?? false;
+
+          // Calcula tempo de resposta
+          const revealedTs = await redis.get(
+            keys.questionRevealed(pin, questionIndex),
+          );
+          const responseMs = revealedTs
+            ? Date.now() - parseInt(revealedTs, 10)
+            : 0;
+
+          const timeLimit = parseInt(config.time_limit_seconds ?? "30", 10);
+          const points = scoringService.calculate({
+            basePoints: question.basePoints,
+            responseMs,
+            timeLimitSeconds: timeLimit,
+            isCorrect,
+          });
+
+          // Atualiza Redis
+          await redis.hset(
+            keys.questionAnswers(pin, questionIndex),
+            socket.data.nickname,
+            JSON.stringify({
+              answer,
+              responseMs,
+              points,
+            }),
+          );
+          await redis.zincrby(keys.sessionScores(pin), points, socket.id);
+          const totalScore = await redis.zscore(
+            keys.sessionScores(pin),
+            socket.id,
+          );
+          await redis.hset(
+            keys.sessionPlayer(pin, socket.id),
+            "total_score",
+            String(totalScore ?? 0),
+          );
+          if (isCorrect) {
+            await redis.hincrby(
+              keys.sessionPlayer(pin, socket.id),
+              "correct_count",
+              1,
+            );
+          }
+
+          socket.emit("player:answer:ack", {
+            isCorrect,
+            pointsEarned: points,
+            totalScore: parseInt(totalScore ?? "0", 10),
+          });
+
+          // Notifica Host sobre progresso
+          const totalAnswered = await redis.hlen(
+            keys.questionAnswers(pin, questionIndex),
+          );
+          const totalPlayers = await redis.scard(keys.sessionPlayers(pin));
+          io.server
+            .of("/host")
+            .to(`session:${pin}`)
+            .emit("host:answers:progress", {
+              answered: totalAnswered,
+              total: totalPlayers,
+            });
+        } catch (err) {
+          socket.emit("error", { message: "Erro interno" });
         }
-
-        // Verifica se a partida está em andamento (Issue 4)
-        const status = await redis.get(keys.sessionStatus(pin));
-        if (status !== "playing") {
-          socket.emit("error", { message: "A partida não está em andamento" });
-          return;
-        }
-
-        // Gate: uma resposta por pergunta
-        const alreadyAnswered = await redis.hexists(
-          keys.questionAnswers(pin, questionIndex), socket.data.nickname,
-        );
-        if (alreadyAnswered) {
-          socket.emit("error", { code: "ALREADY_ANSWERED" });
-          return;
-        }
-
-        // Busca a pergunta correta
-        const config = await redis.hgetall(keys.sessionConfig(pin));
-        const quizId = config.quiz_id;
-        const question = await db.query.questions.findFirst({
-          where: eq(schema.questions.quizId, quizId),
-          with: { alternatives: true },
-          orderBy: (q, { asc }) => [asc(q.sortOrder)],
-          offset: questionIndex - 1,
-        });
-
-        if (!question) {
-          socket.emit("error", { message: "Pergunta não encontrada" });
-          return;
-        }
-
-        const selectedAlt = question.alternatives.find((a) => a.text === answer || a.id === answer);
-        const isCorrect = selectedAlt?.isCorrect ?? false;
-
-        // Calcula tempo de resposta
-        const revealedTs = await redis.get(keys.questionRevealed(pin, questionIndex));
-        const responseMs = revealedTs ? Date.now() - parseInt(revealedTs, 10) : 0;
-
-        const timeLimit = parseInt(config.time_limit_seconds ?? "30", 10);
-        const points = scoringService.calculate({
-          basePoints: question.basePoints,
-          responseMs,
-          timeLimitSeconds: timeLimit,
-          isCorrect,
-        });
-
-        // Atualiza Redis
-        await redis.hset(keys.questionAnswers(pin, questionIndex), socket.data.nickname, JSON.stringify({
-          answer, responseMs, points,
-        }));
-        await redis.zincrby(keys.sessionScores(pin), points, socket.id);
-        const totalScore = await redis.zscore(keys.sessionScores(pin), socket.id);
-        await redis.hset(keys.sessionPlayer(pin, socket.id), "total_score", String(totalScore ?? 0));
-        if (isCorrect) {
-          await redis.hincrby(keys.sessionPlayer(pin, socket.id), "correct_count", 1);
-        }
-
-        socket.emit("player:answer:ack", {
-          isCorrect,
-          pointsEarned: points,
-          totalScore: parseInt(totalScore ?? "0", 10),
-        });
-
-        // Notifica Host sobre progresso
-        const totalAnswered = await redis.hlen(keys.questionAnswers(pin, questionIndex));
-        const totalPlayers = await redis.scard(keys.sessionPlayers(pin));
-        socket.server.of('/host').to(`session:${pin}`).emit("host:answers:progress", {
-          answered: totalAnswered,
-          total: totalPlayers,
-        });
-      } catch (err) {
-        socket.emit("error", { message: "Erro interno" });
-      }
-    });
+      },
+    );
 
     // Reconexão
     socket.on("disconnect", async () => {

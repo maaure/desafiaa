@@ -12,6 +12,7 @@
  */
 
 import bcrypt from "bcrypt";
+import { and, eq } from "drizzle-orm";
 import { db, schema } from "./index";
 
 // ── Helpers ──────────────────────────────────────────────────────────
@@ -100,7 +101,8 @@ async function seed() {
     {
       authorId: admin.id,
       title: "Quiz Relâmpago ⚡",
-      description: "Perguntas rápidas de verdadeiro ou falso — responda antes que o tempo acabe!",
+      description:
+        "Perguntas rápidas de verdadeiro ou falso — responda antes que o tempo acabe!",
       isPublished: false, // rascunho
     },
   ];
@@ -111,21 +113,17 @@ async function seed() {
     .returning();
 
   for (const q of createdQuizzes) {
-    console.log(`   ✅ "${q.title}" (${q.isPublished ? "publicado" : "rascunho"})`);
+    console.log(
+      `   ✅ "${q.title}" (${q.isPublished ? "publicado" : "rascunho"})`,
+    );
   }
 
   // ── Questões e Alternativas ─────────────────────────────────────
 
   console.log("\n❓ Criando questões e alternativas...");
 
-  const [
-    conhecimentos,
-    historia,
-    matematica,
-    ciencias,
-    cultura,
-    relampago,
-  ] = createdQuizzes;
+  const [conhecimentos, historia, matematica, ciencias, cultura, relampago] =
+    createdQuizzes;
 
   // Cada questão: { text, type, basePoints, alternatives: { text, correct }[] }
 
@@ -485,8 +483,11 @@ async function seed() {
     ],
   };
 
-  const allQuestions: typeof schema.questions.$inferInsert[] = [];
-  const allAlternatives: typeof schema.alternatives.$inferInsert[] = [];
+  // ponytail: $inferInsert has optional id, but seed sets explicit IDs
+  type SeedQuestion = typeof schema.questions.$inferInsert & { id: string };
+  type SeedAlternative = typeof schema.alternatives.$inferInsert & { id: string; questionId: string };
+  const allQuestions: SeedQuestion[] = [];
+  const allAlternatives: SeedAlternative[] = [];
 
   for (const [quizId, questions] of Object.entries(questionDefs)) {
     for (let qi = 0; qi < questions.length; qi++) {
@@ -524,7 +525,7 @@ async function seed() {
   console.log("\n🎮 Criando sessões de jogo...");
 
   // Agrupa questões por quiz para usar nas sessões
-  const questionsByQuiz = new Map<string, typeof allQuestions>();
+  const questionsByQuiz = new Map<string, SeedQuestion[]>();
   for (const q of allQuestions) {
     const list = questionsByQuiz.get(q.quizId) ?? [];
     list.push(q);
@@ -533,7 +534,7 @@ async function seed() {
 
   // Sessão 1 — Conhecimentos Gerais, finalizada, com 6 jogadores
   const conhecimentosQuestions = questionsByQuiz.get(conhecimentos.id)!;
-  const altByQuestion = new Map<string, typeof allAlternatives>();
+  const altByQuestion = new Map<string, SeedAlternative[]>();
   for (const a of allAlternatives) {
     const list = altByQuestion.get(a.questionId) ?? [];
     list.push(a);
@@ -555,7 +556,9 @@ async function seed() {
     })
     .returning();
 
-  console.log(`   ✅ Sessão "${conhecimentos.title}" — PIN: ${session1.pin} (finalizada, 6 jogadores)`);
+  console.log(
+    `   ✅ Sessão "${conhecimentos.title}" — PIN: ${session1.pin} (finalizada, 6 jogadores)`,
+  );
 
   // Sessão 2 — Cultura Pop, finalizada, com 4 jogadores
   const [session2] = await db
@@ -573,13 +576,22 @@ async function seed() {
     })
     .returning();
 
-  console.log(`   ✅ Sessão "${cultura.title}" — PIN: ${session2.pin} (finalizada, 4 jogadores)`);
+  console.log(
+    `   ✅ Sessão "${cultura.title}" — PIN: ${session2.pin} (finalizada, 4 jogadores)`,
+  );
 
   // ── Player Answers ───────────────────────────────────────────────
 
   console.log("\n🙋 Criando respostas dos jogadores...");
 
-  const nicknames1 = ["JogadorX", "MestreAzul", "LuaNinja", "Foguete99", "PandaVoador", "Bolt"];
+  const nicknames1 = [
+    "JogadorX",
+    "MestreAzul",
+    "LuaNinja",
+    "Foguete99",
+    "PandaVoador",
+    "Bolt",
+  ];
   const nicknames2 = ["GamerTotal", "FeraQuiz", "EstrelaMar", "Rocket"];
 
   let totalAnswers = 0;
@@ -593,9 +605,7 @@ async function seed() {
 
       // ~70% de acerto para variar
       const isCorrect = Math.random() < 0.7;
-      const chosen = isCorrect
-        ? correct!
-        : (pick(wrongs) ?? correct!);
+      const chosen = isCorrect ? correct! : (pick(wrongs) ?? correct!);
 
       await db.insert(schema.playerAnswers).values({
         sessionId: session1.id,
@@ -619,9 +629,7 @@ async function seed() {
       const wrongs = alternatives.filter((a) => !a.isCorrect);
 
       const isCorrect = Math.random() < 0.65;
-      const chosen = isCorrect
-        ? correct!
-        : (pick(wrongs) ?? correct!);
+      const chosen = isCorrect ? correct! : (pick(wrongs) ?? correct!);
 
       await db.insert(schema.playerAnswers).values({
         sessionId: session2.id,
@@ -653,24 +661,39 @@ async function seed() {
     }[] = [];
 
     for (const nick of nicknames) {
-      const answers = await db.query.playerAnswers.findMany({
-        where: (pa, { and, eq }) =>
-          and(eq(pa.sessionId, sessionId), eq(pa.playerNickname, nick)),
-      });
+      const answers = await db
+        .select()
+        .from(schema.playerAnswers)
+        .where(
+          and(
+            eq(schema.playerAnswers.sessionId, sessionId),
+            eq(schema.playerAnswers.playerNickname, nick),
+          ),
+        );
 
       const totalScore = answers.reduce((sum, a) => sum + a.pointsEarned, 0);
       const correctCount = answers.filter((a) => a.isCorrect).length;
       const totalCount = answers.length;
-      const avgResponseMs = totalCount > 0
-        ? Math.round(answers.reduce((sum, a) => sum + a.responseMs, 0) / totalCount)
-        : 0;
+      const avgResponseMs =
+        totalCount > 0
+          ? Math.round(
+              answers.reduce((sum, a) => sum + a.responseMs, 0) / totalCount,
+            )
+          : 0;
 
-      results.push({ playerNickname: nick, totalScore, correctCount, totalCount, avgResponseMs });
+      results.push({
+        playerNickname: nick,
+        totalScore,
+        correctCount,
+        totalCount,
+        avgResponseMs,
+      });
     }
 
     // Ordena por score (decrescente), depois por tempo médio (crescente)
-    results.sort((a, b) =>
-      b.totalScore - a.totalScore || a.avgResponseMs - b.avgResponseMs,
+    results.sort(
+      (a, b) =>
+        b.totalScore - a.totalScore || a.avgResponseMs - b.avgResponseMs,
     );
 
     await db.insert(schema.gameResults).values(
@@ -690,13 +713,17 @@ async function seed() {
 
   const results1 = await computeResults(session1.id, nicknames1);
   for (const r of results1) {
-    console.log(`   🥇 ${r.playerNickname}: ${r.totalScore} pts (${r.correctCount}/${r.totalCount} acertos)`);
+    console.log(
+      `   🥇 ${r.playerNickname}: ${r.totalScore} pts (${r.correctCount}/${r.totalCount} acertos)`,
+    );
   }
 
   console.log("   ---");
   const results2 = await computeResults(session2.id, nicknames2);
   for (const r of results2) {
-    console.log(`   🥇 ${r.playerNickname}: ${r.totalScore} pts (${r.correctCount}/${r.totalCount} acertos)`);
+    console.log(
+      `   🥇 ${r.playerNickname}: ${r.totalScore} pts (${r.correctCount}/${r.totalCount} acertos)`,
+    );
   }
 
   // ── Resumo ──────────────────────────────────────────────────────
