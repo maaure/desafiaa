@@ -50,6 +50,16 @@ services:
     volumes:
       - uploads:/app/uploads
 
+  frontend:
+    container_name: desafia-frontend
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - app
+
   nginx:
     container_name: desafia-nginx
     image: nginx:alpine
@@ -63,6 +73,7 @@ services:
       - /etc/letsencrypt/live/desafia.fun/privkey.pem:/etc/letsencrypt/live/desafia.fun/privkey.pem:ro
     depends_on:
       - app
+      - frontend
 
 volumes:
   pgdata:

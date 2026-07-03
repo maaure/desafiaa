@@ -7,8 +7,6 @@ RUN npm install --omit=dev
 
 # Build compilado
 COPY dist/ ./dist/
-COPY ../frontend/build/ ./frontend/build/
-
 # Migrations e config do drizzle
 COPY drizzle.config.ts ./
 COPY src/db/migrations/ ./src/db/migrations/
