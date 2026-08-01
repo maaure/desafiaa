@@ -7,7 +7,10 @@ RUN corepack enable && corepack prepare pnpm@10.33.4 --activate
 COPY package.json pnpm-lock.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
-COPY . .
+# Copia seletiva: configs raramente mudam, src muda sempre.
+# Assim a camada do pnpm install permanece em cache entre builds.
+COPY svelte.config.js vite.config.ts tsconfig.json ./
+COPY src/ ./src/
 RUN pnpm build
 
 # ── Run stage ────────────────────────────────────────────────────────
