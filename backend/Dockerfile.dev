@@ -1,9 +1,12 @@
 FROM node:22-alpine
 WORKDIR /app
 
+# Habilita pnpm (mesma versão dos Dockerfiles de produção)
+RUN corepack enable && corepack prepare pnpm@10.33.4 --activate
+
 # Instalar todas as dependências (incluindo dev)
-COPY package*.json ./
-RUN npm install
+COPY package.json pnpm-lock.yaml .npmrc ./
+RUN pnpm install --frozen-lockfile
 
 # Arquivos de config
 COPY tsconfig.json ./
@@ -16,4 +19,4 @@ RUN chmod +x ./scripts/entrypoint.sh
 EXPOSE 3000
 
 ENTRYPOINT ["sh", "./scripts/entrypoint.sh"]
-CMD ["npx", "tsx", "watch", "src/server.ts"]
+CMD ["pnpm", "exec", "tsx", "watch", "src/server.ts"]
