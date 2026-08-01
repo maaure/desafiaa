@@ -1,0 +1,35 @@
+pre-commit:
+  parallel: true
+  commands:
+    backend-lint:
+      root: "backend/"
+      glob: "*.{ts,js}"
+      run: pnpm exec eslint --fix --no-warn-ignored {staged_files}
+      stage_fixed: true
+    backend-format:
+      root: "backend/"
+      glob: "*.{ts,js,json,md}"
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
+    frontend-lint:
+      root: "frontend/"
+      glob: "*.{ts,js,svelte}"
+      run: pnpm exec eslint --fix --no-warn-ignored {staged_files}
+      stage_fixed: true
+    frontend-format:
+      root: "frontend/"
+      glob: "*.{ts,js,svelte,json,md,css}"
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  commands:
+    conventional-commits:
+      # {1} é o caminho do arquivo com a mensagem do commit (.git/COMMIT_EDITMSG)
+      run: |
+        if ! grep -qE '^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?!?: .+' "{1}"; then
+          echo "ERROR: mensagem de commit deve seguir o formato conventional commits"
+          echo "  ex: feat: adiciona tela de login"
+          echo "  ex: fix: corrige validacao do email"
+          exit 1
+        fi
