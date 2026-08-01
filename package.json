@@ -1,0 +1,19 @@
+{
+  "name": "n-de-agua",
+  "private": true,
+  "packageManager": "pnpm@10.33.4",
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,magenta \"pnpm --dir backend dev\" \"pnpm --dir frontend dev\"",
+    "build": "pnpm --dir backend build && pnpm --dir frontend build",
+    "lint": "pnpm --dir backend lint && pnpm --dir frontend lint",
+    "format": "pnpm --dir backend format && pnpm --dir frontend format",
+    "format:check": "pnpm --dir backend format:check && pnpm --dir frontend format:check",
+    "test": "pnpm --dir backend test",
+    "typecheck": "pnpm --dir backend typecheck && pnpm --dir frontend typecheck",
+    "validate": "pnpm typecheck && pnpm lint && pnpm format:check"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "lefthook": "^1.11.0"
+  }
+}
