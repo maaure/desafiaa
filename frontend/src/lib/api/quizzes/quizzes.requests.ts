@@ -50,15 +50,22 @@ export const quizRequests = {
   // Questions
   addQuestion: (
     quizId: string,
-    body: { text: string; imageUrl?: string | null; questionType: "multiple_choice" | "true_false"; basePoints?: number },
+    body: {
+      text: string;
+      imageUrl?: string | null;
+      questionType: "multiple_choice" | "true_false";
+      basePoints?: number;
+    },
   ) =>
     api.post<{ id: string; text: string; sortOrder: number }>(
       `/api/quizzes/${quizId}/questions`,
       body,
     ),
 
-  updateQuestion: (id: string, body: { text?: string; imageUrl?: string | null; basePoints?: number }) =>
-    api.put<{ id: string }>(`/api/questions/${id}`, body),
+  updateQuestion: (
+    id: string,
+    body: { text?: string; imageUrl?: string | null; basePoints?: number },
+  ) => api.put<{ id: string }>(`/api/questions/${id}`, body),
 
   deleteQuestion: (id: string) => api.delete<void>(`/api/questions/${id}`),
 
@@ -66,14 +73,19 @@ export const quizRequests = {
     api.put<{ id: string; sortOrder: number }>(`/api/questions/${id}/order`, { sortOrder }),
 
   // Alternatives
-  addAlternative: (questionId: string, body: { text: string; imageUrl?: string | null; isCorrect?: boolean }) =>
+  addAlternative: (
+    questionId: string,
+    body: { text: string; imageUrl?: string | null; isCorrect?: boolean },
+  ) =>
     api.post<{ id: string; text: string; sortOrder: number; isCorrect: boolean }>(
       `/api/questions/${questionId}/alternatives`,
       body,
     ),
 
-  updateAlternative: (id: string, body: { text?: string; imageUrl?: string | null; isCorrect?: boolean }) =>
-    api.put<{ id: string; isCorrect: boolean }>(`/api/alternatives/${id}`, body),
+  updateAlternative: (
+    id: string,
+    body: { text?: string; imageUrl?: string | null; isCorrect?: boolean },
+  ) => api.put<{ id: string; isCorrect: boolean }>(`/api/alternatives/${id}`, body),
 
   deleteAlternative: (id: string) => api.delete<void>(`/api/alternatives/${id}`),
 

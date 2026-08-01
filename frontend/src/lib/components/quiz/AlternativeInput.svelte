@@ -93,12 +93,19 @@
             {uploadImage.isPending ? 'opacity-50 pointer-events-none' : ''}"
         >
           {#if uploadImage.isPending}
-            <span class="w-3 h-3 border-2 border-slate-300 border-t-violet-500 rounded-full animate-spin"></span>
+            <span
+              class="w-3 h-3 border-2 border-slate-300 border-t-violet-500 rounded-full animate-spin"
+            ></span>
           {:else}
             <Image class="w-3 h-3" />
             Imagem
           {/if}
-          <input type="file" accept="image/jpeg,image/png,image/webp" onchange={handleImageUpload} class="hidden" />
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onchange={handleImageUpload}
+            class="hidden"
+          />
         </label>
         {#if uploadImage.error}
           <span class="text-xs text-red-500">{uploadImage.error.message}</span>

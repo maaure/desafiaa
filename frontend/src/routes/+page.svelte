@@ -156,10 +156,16 @@
     </a>
 
     <div class="hidden md:flex items-center gap-8">
-      <a href="#funcionalidades" class="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors">
+      <a
+        href="#funcionalidades"
+        class="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+      >
         Funcionalidades
       </a>
-      <a href="#como-funciona" class="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors">
+      <a
+        href="#como-funciona"
+        class="text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+      >
         Como funciona
       </a>
     </div>
@@ -195,7 +201,9 @@
     style="background-image: radial-gradient(circle, #7c3aed 1.2px, transparent 1.2px); background-size: 32px 32px;"
   ></div>
 
-  <div class="relative mx-auto max-w-7xl px-6 py-24 lg:py-32 lg:grid lg:grid-cols-2 lg:gap-16 items-center">
+  <div
+    class="relative mx-auto max-w-7xl px-6 py-24 lg:py-32 lg:grid lg:grid-cols-2 lg:gap-16 items-center"
+  >
     <!-- Left: Text -->
     <div class="animate-slide-up">
       <!-- Badge -->
@@ -218,7 +226,9 @@
 
       <p class="mt-6 text-lg text-slate-500 leading-relaxed max-w-xl">
         Crie quizzes interativos em minutos, compartilhe um PIN de 6 dígitos e veja dezenas de
-        pessoas competirem em tempo real — <strong class="text-slate-700">como um game show, na sua sala.</strong>
+        pessoas competirem em tempo real — <strong class="text-slate-700"
+          >como um game show, na sua sala.</strong
+        >
       </p>
 
       <div class="mt-10 flex flex-col sm:flex-row gap-3">
@@ -248,13 +258,16 @@
     </div>
 
     <!-- Right: Colorful Answer Grid + Confetti -->
-    <div class="hidden lg:flex items-center justify-center relative mt-16 lg:mt-0" aria-hidden="true">
+    <div
+      class="hidden lg:flex items-center justify-center relative mt-16 lg:mt-0"
+      aria-hidden="true"
+    >
       <!-- Confetti dots -->
       <div class="absolute inset-0 pointer-events-none">
-        {#each Array(16) as _, i}
+        {#each Array(16) as _, i (i)}
           {@const cx = answerColors[i % 4]}
-          {@const x = 15 + (i * 37) % 90}
-          {@const y = 8 + (i * 53) % 85}
+          {@const x = 15 + ((i * 37) % 90)}
+          {@const y = 8 + ((i * 53) % 85)}
           {@const size = 4 + (i % 3) * 3}
           {@const delay = (i * 0.35) % 3.5}
           <div
@@ -266,7 +279,7 @@
 
       <!-- 2x2 Answer Grid -->
       <div class="relative grid grid-cols-2 gap-5 w-[300px] h-[300px]">
-        {#each answerColors as card, i}
+        {#each answerColors as card, i (card.letter)}
           <div
             class="flex items-center justify-center {card.bg} border-2 border-transparent animate-answer-card relative"
             style="animation-delay: {i * 0.12}s; box-shadow: 0 8px 24px {card.shadow};"
@@ -285,32 +298,39 @@
 <section id="como-funciona" class="bg-slate-50">
   <div class="mx-auto max-w-7xl px-6 py-24">
     <div class="text-center mb-16">
-      <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">
-        Como funciona
-      </h2>
+      <h2 class="text-3xl font-extrabold text-slate-900 tracking-tight">Como funciona</h2>
       <p class="mt-4 text-lg text-slate-500 max-w-xl mx-auto">
         Do quiz pronto ao pódio final em três passos simples.
       </p>
     </div>
 
     <div class="grid sm:grid-cols-3 gap-8">
-      {#each steps as step}
+      {#each steps as step (step.title)}
         <div
           class="bg-white border border-slate-200 p-8 relative overflow-hidden group
           hover:{colorMap[step.color].glow} transition-shadow"
         >
           <!-- Colored top accent line -->
-          <div class="absolute top-0 left-0 right-0 h-1 {step.color === 'rose' ? 'bg-rose-500' : step.color === 'amber' ? 'bg-amber-500' : step.color === 'emerald' ? 'bg-emerald-500' : 'bg-violet-500'}"></div>
+          <div
+            class="absolute top-0 left-0 right-0 h-1 {step.color === 'rose'
+              ? 'bg-rose-500'
+              : step.color === 'amber'
+                ? 'bg-amber-500'
+                : step.color === 'emerald'
+                  ? 'bg-emerald-500'
+                  : 'bg-violet-500'}"
+          ></div>
 
           <!-- Icon in colored box -->
           <div
-            class="w-12 h-12 flex items-center justify-center {colorMap[step.color].light} border mb-6"
+            class="w-12 h-12 flex items-center justify-center {colorMap[step.color]
+              .light} border mb-6"
           >
             <step.icon class="w-6 h-6 {colorMap[step.color].text}" />
           </div>
 
           <h3 class="text-lg font-bold text-slate-900 mb-3">
-            <span class="{colorMap[step.color].text}">{steps.indexOf(step) + 1}.</span>
+            <span class={colorMap[step.color].text}>{steps.indexOf(step) + 1}.</span>
             {step.title}
           </h3>
           <p class="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
@@ -345,12 +365,13 @@
         </div>
 
         <div class="space-y-4">
-          {#each hostFeatures as feature}
+          {#each hostFeatures as feature (feature.title)}
             <div
               class="flex gap-4 p-4 border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors group"
             >
               <div
-                class="w-10 h-10 shrink-0 flex items-center justify-center {colorMap[feature.color].light} border"
+                class="w-10 h-10 shrink-0 flex items-center justify-center {colorMap[feature.color]
+                  .light} border"
               >
                 <feature.icon class="w-5 h-5 {colorMap[feature.color].text}" />
               </div>
@@ -373,12 +394,13 @@
         </div>
 
         <div class="space-y-4">
-          {#each playerFeatures as feature}
+          {#each playerFeatures as feature (feature.title)}
             <div
               class="flex gap-4 p-4 border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-colors group"
             >
               <div
-                class="w-10 h-10 shrink-0 flex items-center justify-center {colorMap[feature.color].light} border"
+                class="w-10 h-10 shrink-0 flex items-center justify-center {colorMap[feature.color]
+                  .light} border"
               >
                 <feature.icon class="w-5 h-5 {colorMap[feature.color].text}" />
               </div>
@@ -404,7 +426,7 @@
 
   <div class="relative mx-auto max-w-7xl px-6 py-20">
     <div class="grid sm:grid-cols-3 gap-[1px] bg-white/10">
-      {#each stats as stat}
+      {#each stats as stat (stat.label)}
         <div class="bg-slate-900/80 backdrop-blur-sm p-10 text-center">
           <div class="text-5xl font-extrabold text-white tracking-tight mb-3">
             {stat.value}

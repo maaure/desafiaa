@@ -60,7 +60,10 @@ interface UnwrappedApi {
 }
 
 // Adiciona o método upload
-(instance as unknown as UnwrappedApi).upload = async <T>(url: string, formData: FormData): Promise<T> => {
+(instance as unknown as UnwrappedApi).upload = async <T>(
+  url: string,
+  formData: FormData,
+): Promise<T> => {
   return instance.post<T>(url, formData, {
     headers: {
       "Content-Type": undefined as unknown as string, // deixa o browser definir o boundary
