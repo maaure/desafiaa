@@ -17,10 +17,7 @@ export async function sessionRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const { quizId } = request.body as any;
-      const session = await sessionService.create(
-        quizId,
-        (request as any).userId,
-      );
+      const session = await sessionService.create(quizId, (request as any).userId);
       return reply.status(201).send(session);
     },
   );
@@ -43,10 +40,7 @@ export async function sessionRoutes(app: FastifyInstance) {
       schema: { tags: ["sessions"] },
     },
     async (request) => {
-      return sessionService.getResults(
-        request.params.id,
-        (request as any).userId,
-      );
+      return sessionService.getResults(request.params.id, (request as any).userId);
     },
   );
 

@@ -32,11 +32,7 @@ export const uploadService = {
 
     // Valida tamanho
     if (buffer.length > MAX_SIZE_BYTES) {
-      throw new AppError(
-        `Arquivo muito grande. Máximo: ${MAX_SIZE_MB}MB.`,
-        400,
-        "FILE_TOO_LARGE",
-      );
+      throw new AppError(`Arquivo muito grande. Máximo: ${MAX_SIZE_MB}MB.`, 400, "FILE_TOO_LARGE");
     }
 
     // Gera nome único e salva

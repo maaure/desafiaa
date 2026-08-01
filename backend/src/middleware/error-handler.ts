@@ -2,11 +2,7 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import { ZodError } from "zod";
 import { AppError } from "../shared/errors";
 
-export const errorHandler = (
-  error: unknown,
-  request: FastifyRequest,
-  reply: FastifyReply,
-) => {
+export const errorHandler = (error: unknown, request: FastifyRequest, reply: FastifyReply) => {
   if (error instanceof AppError) {
     return reply.status(error.statusCode).send({
       error: error.code,

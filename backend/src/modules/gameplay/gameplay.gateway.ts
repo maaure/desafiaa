@@ -30,11 +30,7 @@ export function registerPlayGateway(io: Namespace) {
     socket.on("player:join", async ({ nickname }: { nickname: string }) => {
       try {
         const normalizedNick = nickname.trim().toLowerCase();
-        if (
-          !normalizedNick ||
-          normalizedNick.length < 2 ||
-          normalizedNick.length > 20
-        ) {
+        if (!normalizedNick || normalizedNick.length < 2 || normalizedNick.length > 20) {
           socket.emit("error", {
             message: "Apelido deve ter entre 2 e 20 caracteres",
           });
@@ -42,17 +38,11 @@ export function registerPlayGateway(io: Namespace) {
         }
 
         // Atomic uniqueness check via SADD (Issue 2: TOCTOU fix)
-        const added = await redis.sadd(
-          keys.sessionNicknames(pin),
-          normalizedNick,
-        );
+        const added = await redis.sadd(keys.sessionNicknames(pin), normalizedNick);
 
         if (added === 0) {
           // Nickname already in use — check if from a disconnected player (Issue 1: reconnection)
-          const oldSocketId = await redis.hget(
-            keys.disconnectedPlayers(pin),
-            normalizedNick,
-          );
+          const oldSocketId = await redis.hget(keys.disconnectedPlayers(pin), normalizedNick);
           if (!oldSocketId) {
             socket.emit("error", {
               message: "Apelido já está em uso nesta partida",
@@ -61,24 +51,15 @@ export function registerPlayGateway(io: Namespace) {
           }
 
           // Reconnection: migrate data from old socket ID to the new one
-          const oldPlayerData = await redis.hgetall(
-            keys.sessionPlayer(pin, oldSocketId),
-          );
+          const oldPlayerData = await redis.hgetall(keys.sessionPlayer(pin, oldSocketId));
 
           // 1. Migrate player hash (includes total_score, correct_count, nickname)
           await redis.hset(keys.sessionPlayer(pin, socket.id), oldPlayerData);
 
           // 2. Migrate score in sorted set
-          const oldScore = await redis.zscore(
-            keys.sessionScores(pin),
-            oldSocketId,
-          );
+          const oldScore = await redis.zscore(keys.sessionScores(pin), oldSocketId);
           if (oldScore !== null) {
-            await redis.zadd(
-              keys.sessionScores(pin),
-              parseInt(oldScore, 10),
-              socket.id,
-            );
+            await redis.zadd(keys.sessionScores(pin), parseInt(oldScore, 10), socket.id);
           }
           await redis.zrem(keys.sessionScores(pin), oldSocketId);
 
@@ -127,13 +108,7 @@ export function registerPlayGateway(io: Namespace) {
 
     socket.on(
       "player:answer",
-      async ({
-        questionIndex,
-        answer,
-      }: {
-        questionIndex: number;
-        answer: string;
-      }) => {
+      async ({ questionIndex, answer }: { questionIndex: number; answer: string }) => {
         try {
           if (!socket.data.nickname) {
             socket.emit("error", { message: "Entre na partida primeiro" });
@@ -180,12 +155,8 @@ export function registerPlayGateway(io: Namespace) {
           const isCorrect = selectedAlt?.isCorrect ?? false;
 
           // Calcula tempo de resposta
-          const revealedTs = await redis.get(
-            keys.questionRevealed(pin, questionIndex),
-          );
-          const responseMs = revealedTs
-            ? Date.now() - parseInt(revealedTs, 10)
-            : 0;
+          const revealedTs = await redis.get(keys.questionRevealed(pin, questionIndex));
+          const responseMs = revealedTs ? Date.now() - parseInt(revealedTs, 10) : 0;
 
           const timeLimit = parseInt(config.time_limit_seconds ?? "30", 10);
           const points = scoringService.calculate({
@@ -206,21 +177,14 @@ export function registerPlayGateway(io: Namespace) {
             }),
           );
           await redis.zincrby(keys.sessionScores(pin), points, socket.id);
-          const totalScore = await redis.zscore(
-            keys.sessionScores(pin),
-            socket.id,
-          );
+          const totalScore = await redis.zscore(keys.sessionScores(pin), socket.id);
           await redis.hset(
             keys.sessionPlayer(pin, socket.id),
             "total_score",
             String(totalScore ?? 0),
           );
           if (isCorrect) {
-            await redis.hincrby(
-              keys.sessionPlayer(pin, socket.id),
-              "correct_count",
-              1,
-            );
+            await redis.hincrby(keys.sessionPlayer(pin, socket.id), "correct_count", 1);
           }
 
           socket.emit("player:answer:ack", {
@@ -230,17 +194,12 @@ export function registerPlayGateway(io: Namespace) {
           });
 
           // Notifica Host sobre progresso
-          const totalAnswered = await redis.hlen(
-            keys.questionAnswers(pin, questionIndex),
-          );
+          const totalAnswered = await redis.hlen(keys.questionAnswers(pin, questionIndex));
           const totalPlayers = await redis.scard(keys.sessionPlayers(pin));
-          io.server
-            .of("/host")
-            .to(`session:${pin}`)
-            .emit("host:answers:progress", {
-              answered: totalAnswered,
-              total: totalPlayers,
-            });
+          io.server.of("/host").to(`session:${pin}`).emit("host:answers:progress", {
+            answered: totalAnswered,
+            total: totalPlayers,
+          });
         } catch (err) {
           socket.emit("error", { message: "Erro interno" });
         }

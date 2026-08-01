@@ -9,9 +9,7 @@ export const reportService = {
     if (!quiz) throw new NotFoundError("Quiz");
 
     return quiz.questions.map((q) => {
-      const answers = quiz.sessions.flatMap((s) =>
-        s.answers.filter((a) => a.questionId === q.id),
-      );
+      const answers = quiz.sessions.flatMap((s) => s.answers.filter((a) => a.questionId === q.id));
       const total = answers.length;
       const correct = answers.filter((a) => a.isCorrect).length;
       const avgMs =

@@ -1,4 +1,4 @@
-import { eq, asc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, schema } from "../../db";
 import { redis } from "../../redis/client";
 import { keys } from "../../redis/keys";
@@ -8,7 +8,7 @@ const PIN_TTL_SECONDS = 24 * 3600;
 export const sessionRepo = {
   // ── PostgreSQL ────────────────────────────────────────────────
 
-  async getQuizOwnedBy(quizId: string, hostId: string) {
+  async getQuizOwnedBy(quizId: string, _hostId: string) {
     return db.query.quizzes.findFirst({
       where: eq(schema.quizzes.id, quizId),
     });

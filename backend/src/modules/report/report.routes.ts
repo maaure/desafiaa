@@ -11,10 +11,7 @@ export async function reportRoutes(app: FastifyInstance) {
       schema: { tags: ["reports"] },
     },
     async (request) => {
-      return reportService.quizReport(
-        request.params.id,
-        (request as any).userId,
-      );
+      return reportService.quizReport(request.params.id, (request as any).userId);
     },
   );
 
@@ -24,10 +21,7 @@ export async function reportRoutes(app: FastifyInstance) {
       schema: { tags: ["reports"] },
     },
     async (request) => {
-      return reportService.quizSessions(
-        request.params.id,
-        (request as any).userId,
-      );
+      return reportService.quizSessions(request.params.id, (request as any).userId);
     },
   );
 
@@ -37,10 +31,7 @@ export async function reportRoutes(app: FastifyInstance) {
       schema: { tags: ["reports"] },
     },
     async (request) => {
-      return reportService.sessionReport(
-        request.params.id,
-        (request as any).userId,
-      );
+      return reportService.sessionReport(request.params.id, (request as any).userId);
     },
   );
 }

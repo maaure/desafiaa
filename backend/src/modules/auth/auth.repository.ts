@@ -15,10 +15,7 @@ export const authRepo = {
   },
 
   async insertUser(data: { name: string; email: string; passwordHash: string }) {
-    const [user] = await db
-      .insert(schema.users)
-      .values(data)
-      .returning();
+    const [user] = await db.insert(schema.users).values(data).returning();
     return user;
   },
 };

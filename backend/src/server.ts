@@ -33,13 +33,7 @@ const UPLOAD_FILE_SIZE_LIMIT = 5 * MB;
 const WS_PING_TIMEOUT = 30_000;
 const WS_PING_INTERVAL = 10_000;
 
-const ROUTE_MODULES = [
-  authRoutes,
-  quizRoutes,
-  sessionRoutes,
-  reportRoutes,
-  uploadRoutes,
-];
+const ROUTE_MODULES = [authRoutes, quizRoutes, sessionRoutes, reportRoutes, uploadRoutes];
 
 async function registerPlugins(app: FastifyInstance) {
   await app.register(cors, { origin: true, credentials: true });
@@ -92,12 +86,16 @@ async function main() {
     await app.register(register);
   }
 
-  app.get("/api/health", {
-    schema: { tags: ["health"] },
-  }, async () => {
-    const redisOk = redis.status === "ready" || redis.status === "connect";
-    return { status: redisOk ? "ok" : "degraded", redis: redisOk };
-  });
+  app.get(
+    "/api/health",
+    {
+      schema: { tags: ["health"] },
+    },
+    async () => {
+      const redisOk = redis.status === "ready" || redis.status === "connect";
+      return { status: redisOk ? "ok" : "degraded", redis: redisOk };
+    },
+  );
 
   const io = createSocketServer(app);
 

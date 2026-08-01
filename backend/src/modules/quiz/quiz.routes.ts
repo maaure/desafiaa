@@ -31,11 +31,7 @@ export async function quizRoutes(app: FastifyInstance) {
     },
     async (request) => {
       const { page, limit } = request.query as any;
-      return quizService.list(
-        (request as any).userId,
-        Number(page) || 1,
-        Number(limit) || 20,
-      );
+      return quizService.list((request as any).userId, Number(page) || 1, Number(limit) || 20);
     },
   );
 
@@ -68,11 +64,7 @@ export async function quizRoutes(app: FastifyInstance) {
     },
     async (request) => {
       const input = request.body as any;
-      return quizService.update(
-        request.params.id,
-        (request as any).userId,
-        input,
-      );
+      return quizService.update(request.params.id, (request as any).userId, input);
     },
   );
 
@@ -108,11 +100,7 @@ export async function quizRoutes(app: FastifyInstance) {
     },
     async (request) => {
       const input = request.body as any;
-      return quizService.updateQuestion(
-        request.params.id,
-        (request as any).userId,
-        input,
-      );
+      return quizService.updateQuestion(request.params.id, (request as any).userId, input);
     },
   );
 
@@ -120,10 +108,7 @@ export async function quizRoutes(app: FastifyInstance) {
     "/api/questions/:id",
     { schema: { tags: ["questions"] } },
     async (request, reply) => {
-      await quizService.deleteQuestion(
-        request.params.id,
-        (request as any).userId,
-      );
+      await quizService.deleteQuestion(request.params.id, (request as any).userId);
       return reply.status(204).send();
     },
   );
@@ -135,11 +120,7 @@ export async function quizRoutes(app: FastifyInstance) {
     },
     async (request) => {
       const { sortOrder } = request.body as any;
-      return quizService.reorderQuestion(
-        request.params.id,
-        (request as any).userId,
-        sortOrder,
-      );
+      return quizService.reorderQuestion(request.params.id, (request as any).userId, sortOrder);
     },
   );
 
@@ -169,11 +150,7 @@ export async function quizRoutes(app: FastifyInstance) {
     },
     async (request) => {
       const input = request.body as any;
-      return quizService.updateAlternative(
-        request.params.id,
-        (request as any).userId,
-        input,
-      );
+      return quizService.updateAlternative(request.params.id, (request as any).userId, input);
     },
   );
 
@@ -181,10 +158,7 @@ export async function quizRoutes(app: FastifyInstance) {
     "/api/alternatives/:id",
     { schema: { tags: ["alternatives"] } },
     async (request, reply) => {
-      await quizService.deleteAlternative(
-        request.params.id,
-        (request as any).userId,
-      );
+      await quizService.deleteAlternative(request.params.id, (request as any).userId);
       return reply.status(204).send();
     },
   );
@@ -193,10 +167,7 @@ export async function quizRoutes(app: FastifyInstance) {
     "/api/alternatives/:id/correct",
     { schema: { tags: ["alternatives"] } },
     async (request) => {
-      return quizService.markAlternativeCorrect(
-        request.params.id,
-        (request as any).userId,
-      );
+      return quizService.markAlternativeCorrect(request.params.id, (request as any).userId);
     },
   );
 }

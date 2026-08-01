@@ -25,10 +25,7 @@ export function registerHostGateway(io: Namespace) {
 
     socket.on("host:session:create", async ({ quizId }: { quizId: string }) => {
       const quiz = await db.query.quizzes.findFirst({
-        where: and(
-          eq(schema.quizzes.id, quizId),
-          eq(schema.quizzes.authorId, socket.data.userId),
-        ),
+        where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, socket.data.userId)),
       });
       if (!quiz) {
         socket.emit("error", { message: "Quiz não encontrado" });
@@ -36,8 +33,7 @@ export function registerHostGateway(io: Namespace) {
       }
 
       try {
-        const { sessionService } =
-          await import("../session/session.service.js");
+        const { sessionService } = await import("../session/session.service.js");
         const session = await sessionService.create(quizId, socket.data.userId);
         currentPin = session.pin;
         socket.join(`session:${session.pin}`);
@@ -50,43 +46,29 @@ export function registerHostGateway(io: Namespace) {
       }
     });
 
-    socket.on(
-      "host:session:start",
-      async ({ timeLimitSeconds }: { timeLimitSeconds: number }) => {
-        if (!currentPin) return;
-        const limit = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
-        await redis.hset(
-          keys.sessionConfig(currentPin),
-          "time_limit_seconds",
-          String(limit),
-        );
+    socket.on("host:session:start", async ({ timeLimitSeconds }: { timeLimitSeconds: number }) => {
+      if (!currentPin) return;
+      const limit = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
+      await redis.hset(keys.sessionConfig(currentPin), "time_limit_seconds", String(limit));
 
-        // Atualiza PG (only timeLimitSeconds; status is already "lobby")
-        const sessionId = await redis.get(keys.pinLookup(currentPin));
-        if (sessionId) {
-          await db
-            .update(schema.gameSessions)
-            .set({ timeLimitSeconds: limit })
-            .where(eq(schema.gameSessions.id, sessionId));
-        }
-        socket.emit("session:started", {
-          pin: currentPin,
-          timeLimitSeconds: limit,
-        });
-      },
-    );
+      // Atualiza PG (only timeLimitSeconds; status is already "lobby")
+      const sessionId = await redis.get(keys.pinLookup(currentPin));
+      if (sessionId) {
+        await db
+          .update(schema.gameSessions)
+          .set({ timeLimitSeconds: limit })
+          .where(eq(schema.gameSessions.id, sessionId));
+      }
+      socket.emit("session:started", {
+        pin: currentPin,
+        timeLimitSeconds: limit,
+      });
+    });
 
-    socket.on(
-      "host:session:presentation-mode",
-      async ({ enabled }: { enabled: boolean }) => {
-        if (!currentPin) return;
-        await redis.hset(
-          keys.sessionConfig(currentPin),
-          "presentation_mode",
-          enabled ? "1" : "0",
-        );
-      },
-    );
+    socket.on("host:session:presentation-mode", async ({ enabled }: { enabled: boolean }) => {
+      if (!currentPin) return;
+      await redis.hset(keys.sessionConfig(currentPin), "presentation_mode", enabled ? "1" : "0");
+    });
 
     socket.on("host:question:next", async () => {
       if (!currentPin) return;
@@ -111,11 +93,7 @@ export function registerHostGateway(io: Namespace) {
       }
 
       // Atualiza estado no Redis
-      await redis.hset(
-        keys.sessionConfig(currentPin),
-        "current_question_index",
-        String(nextIndex),
-      );
+      await redis.hset(keys.sessionConfig(currentPin), "current_question_index", String(nextIndex));
       await redis.set(
         keys.questionRevealed(currentPin, nextIndex),
         Date.now().toString(),
@@ -154,10 +132,7 @@ export function registerHostGateway(io: Namespace) {
       // Host sempre recebe o texto completo (para projeção / tela grande)
       socket.emit("host:question:active", {
         questionIndex: nextIndex,
-        total: await db.$count(
-          schema.questions,
-          eq(schema.questions.quizId, quizId),
-        ),
+        total: await db.$count(schema.questions, eq(schema.questions.quizId, quizId)),
         questionText: question.text,
         questionImageUrl: question.imageUrl ?? null,
         alternatives: question.alternatives.map((a) => ({
@@ -170,8 +145,7 @@ export function registerHostGateway(io: Namespace) {
 
       // Timer de timeout automático (cancela o anterior se existir)
       if (questionTimeout) clearTimeout(questionTimeout);
-      const timeLimitMs =
-        parseInt(config.time_limit_seconds ?? "30", 10) * 1000;
+      const timeLimitMs = parseInt(config.time_limit_seconds ?? "30", 10) * 1000;
       questionTimeout = setTimeout(async () => {
         const status = await redis.get(keys.sessionStatus(currentPin!));
         if (status !== "playing") return;
@@ -181,26 +155,27 @@ export function registerHostGateway(io: Namespace) {
           .of("/play")
           .to(`session:${currentPin}`)
           .emit("game:question:timeout", {
-            correctAnswer: presentationMode
-              ? ""
-              : correctAlt?.text ?? "?",
+            correctAnswer: presentationMode ? "" : (correctAlt?.text ?? "?"),
           });
       }, timeLimitMs);
     });
 
     socket.on("host:leaderboard:show", async () => {
       if (!currentPin) return;
-      if (questionTimeout) { clearTimeout(questionTimeout); questionTimeout = null; }
+      if (questionTimeout) {
+        clearTimeout(questionTimeout);
+        questionTimeout = null;
+      }
       const rankings = await leaderboardService.getTop(currentPin);
-      io.server
-        .of("/play")
-        .to(`session:${currentPin}`)
-        .emit("game:leaderboard:show", { rankings });
+      io.server.of("/play").to(`session:${currentPin}`).emit("game:leaderboard:show", { rankings });
     });
 
     socket.on("host:session:end", async () => {
       if (!currentPin) return;
-      if (questionTimeout) { clearTimeout(questionTimeout); questionTimeout = null; }
+      if (questionTimeout) {
+        clearTimeout(questionTimeout);
+        questionTimeout = null;
+      }
       await redis.set(keys.sessionStatus(currentPin), "finished");
 
       const sessionId = await redis.get(keys.pinLookup(currentPin));
@@ -211,9 +186,7 @@ export function registerHostGateway(io: Namespace) {
       const totalQuestions = parseInt(config.current_question_index ?? "0", 10);
       const allAnswers = new Map<string, Record<string, string>>();
       for (let qi = 1; qi <= totalQuestions; qi++) {
-        const answers = await redis.hgetall(
-          keys.questionAnswers(currentPin!, qi),
-        );
+        const answers = await redis.hgetall(keys.questionAnswers(currentPin!, qi));
         if (Object.keys(answers).length > 0) {
           allAnswers.set(String(qi), answers);
         }
@@ -225,9 +198,7 @@ export function registerHostGateway(io: Namespace) {
 
       // Persiste respostas individuais no PostgreSQL
       for (const [qIdx, answerMap] of allAnswers) {
-        for (const [nickname, data] of Object.entries(
-          answerMap as Record<string, string>,
-        )) {
+        for (const [nickname, data] of Object.entries(answerMap as Record<string, string>)) {
           const parsed = JSON.parse(data);
           const question = await db.query.questions.findFirst({
             where: eq(schema.questions.quizId, quizId),
@@ -246,9 +217,7 @@ export function registerHostGateway(io: Namespace) {
             questionId: question.id,
             playerNickname: nickname,
             selectedAnswer: parsed.answer,
-            isCorrect: alt
-              ? parsed.answer === alt.text || parsed.answer === alt.id
-              : false,
+            isCorrect: alt ? parsed.answer === alt.text || parsed.answer === alt.id : false,
             responseMs: parsed.responseMs ?? 0,
             pointsEarned: parsed.points ?? 0,
           });
@@ -265,15 +234,10 @@ export function registerHostGateway(io: Namespace) {
           ),
         });
         const totalCount = playerAnswersList.length;
-        const correctCount = playerAnswersList.filter(
-          (a) => a.isCorrect,
-        ).length;
+        const correctCount = playerAnswersList.filter((a) => a.isCorrect).length;
         const avgMs =
           totalCount > 0
-            ? Math.round(
-                playerAnswersList.reduce((s, a) => s + a.responseMs, 0) /
-                  totalCount,
-              )
+            ? Math.round(playerAnswersList.reduce((s, a) => s + a.responseMs, 0) / totalCount)
             : 0;
 
         await db.insert(schema.gameResults).values({
@@ -302,9 +266,7 @@ export function registerHostGateway(io: Namespace) {
       });
 
       // Limpa Redis
-      const playerSockets = await redis.smembers(
-        keys.sessionPlayers(currentPin),
-      );
+      const playerSockets = await redis.smembers(keys.sessionPlayers(currentPin));
       const pipeline = redis.pipeline();
       pipeline.del(keys.sessionStatus(currentPin));
       pipeline.del(keys.sessionConfig(currentPin));
@@ -317,7 +279,10 @@ export function registerHostGateway(io: Namespace) {
     });
 
     socket.on("disconnect", () => {
-      if (questionTimeout) { clearTimeout(questionTimeout); questionTimeout = null; }
+      if (questionTimeout) {
+        clearTimeout(questionTimeout);
+        questionTimeout = null;
+      }
       // Host saiu — a sessão continua ativa para Players
     });
   });

@@ -10,8 +10,7 @@ export const keys = {
   sessionPlayers: (pin: string) => `pin:${pin}:players` as const,
 
   /** Dados de um player especifico: { nickname, total_score } */
-  sessionPlayer: (pin: string, socketId: string) =>
-    `pin:${pin}:player:${socketId}` as const,
+  sessionPlayer: (pin: string, socketId: string) => `pin:${pin}:player:${socketId}` as const,
 
   /** Sorted Set de pontuacoes: { socket_id: score } */
   sessionScores: (pin: string) => `pin:${pin}:scores` as const,

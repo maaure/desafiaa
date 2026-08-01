@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect } from "vitest";
 import { authService } from "@/modules/auth/auth.service";
 
 describe("authService.register", () => {

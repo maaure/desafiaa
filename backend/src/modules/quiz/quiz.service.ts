@@ -14,20 +14,14 @@ import type {
 
 // ── Helpers internos ──────────────────────────────────────────────
 
-async function assertQuizOwnership(
-  userId: string,
-  questionId: string,
-): Promise<void> {
+async function assertQuizOwnership(userId: string, questionId: string): Promise<void> {
   const question = await quizRepo.getQuestionOwnedByUser(questionId);
   if (!question || question.quiz.authorId !== userId) {
     throw new NotFoundError("Pergunta");
   }
 }
 
-async function assertQuizOwnershipByAlt(
-  userId: string,
-  alternativeId: string,
-): Promise<void> {
+async function assertQuizOwnershipByAlt(userId: string, alternativeId: string): Promise<void> {
   const alt = await quizRepo.getAlternativeOwnedByUser(alternativeId);
   if (!alt || alt.question.quiz.authorId !== userId) {
     throw new NotFoundError("Alternativa");
@@ -178,10 +172,7 @@ export const quizService = {
       await quizRepo.unmarkCorrectInQuestion(questionId);
     }
 
-    const maxOrder = question.alternatives.reduce(
-      (max, a) => Math.max(max, a.sortOrder),
-      -1,
-    );
+    const maxOrder = question.alternatives.reduce((max, a) => Math.max(max, a.sortOrder), -1);
     const alt = await quizRepo.insertAlternative({
       questionId,
       text: input.text,
@@ -209,10 +200,7 @@ export const quizService = {
     await quizRepo.deleteAlternative(alternativeId);
   },
 
-  async markAlternativeCorrect(
-    alternativeId: string,
-    userId: string,
-  ): Promise<AlternativeEntity> {
+  async markAlternativeCorrect(alternativeId: string, userId: string): Promise<AlternativeEntity> {
     await assertQuizOwnershipByAlt(userId, alternativeId);
     const alt = await quizRepo.getAlternativeById(alternativeId);
     if (!alt) throw new NotFoundError("Alternativa");

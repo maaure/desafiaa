@@ -2,10 +2,7 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import jwt from "jsonwebtoken";
 import { env } from "../config/env";
 
-export async function authenticate(
-  request: FastifyRequest,
-  reply: FastifyReply,
-) {
+export async function authenticate(request: FastifyRequest, reply: FastifyReply) {
   const header = request.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
     return reply.status(401).send({ error: "UNAUTHORIZED", message: "Não autenticado" });

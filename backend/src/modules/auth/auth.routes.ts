@@ -16,8 +16,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const input = request.body as any;
-      const { user, accessToken, refreshToken } =
-        await authService.register(input);
+      const { user, accessToken, refreshToken } = await authService.register(input);
 
       reply.setCookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -41,8 +40,7 @@ export async function authRoutes(app: FastifyInstance) {
     },
     async (request, reply) => {
       const input = request.body as any;
-      const { user, accessToken, refreshToken } =
-        await authService.login(input);
+      const { user, accessToken, refreshToken } = await authService.login(input);
 
       reply.setCookie("refreshToken", refreshToken, {
         httpOnly: true,
@@ -64,9 +62,7 @@ export async function authRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const token = request.cookies.refreshToken;
       if (!token)
-        return reply
-          .status(401)
-          .send({ error: "UNAUTHORIZED", message: "Sem refresh token" });
+        return reply.status(401).send({ error: "UNAUTHORIZED", message: "Sem refresh token" });
 
       const { accessToken, refreshToken } = await authService.refresh(token);
 

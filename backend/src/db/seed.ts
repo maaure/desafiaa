@@ -66,8 +66,7 @@ async function seed() {
     {
       authorId: admin.id,
       title: "Conhecimentos Gerais",
-      description:
-        "Teste seus conhecimentos sobre geografia, história e curiosidades do mundo.",
+      description: "Teste seus conhecimentos sobre geografia, história e curiosidades do mundo.",
       isPublished: true,
     },
     {
@@ -87,43 +86,34 @@ async function seed() {
     {
       authorId: joao.id,
       title: "Ciências da Natureza",
-      description:
-        "Biologia, química e física no cotidiano. Perguntas para todas as idades.",
+      description: "Biologia, química e física no cotidiano. Perguntas para todas as idades.",
       isPublished: true,
     },
     {
       authorId: joao.id,
       title: "Cultura Pop 🎬",
-      description:
-        "Filmes, séries, música e games. De clássicos a lançamentos recentes.",
+      description: "Filmes, séries, música e games. De clássicos a lançamentos recentes.",
       isPublished: true,
     },
     {
       authorId: admin.id,
       title: "Quiz Relâmpago ⚡",
-      description:
-        "Perguntas rápidas de verdadeiro ou falso — responda antes que o tempo acabe!",
+      description: "Perguntas rápidas de verdadeiro ou falso — responda antes que o tempo acabe!",
       isPublished: false, // rascunho
     },
   ];
 
-  const createdQuizzes = await db
-    .insert(schema.quizzes)
-    .values(quizDefs)
-    .returning();
+  const createdQuizzes = await db.insert(schema.quizzes).values(quizDefs).returning();
 
   for (const q of createdQuizzes) {
-    console.log(
-      `   ✅ "${q.title}" (${q.isPublished ? "publicado" : "rascunho"})`,
-    );
+    console.log(`   ✅ "${q.title}" (${q.isPublished ? "publicado" : "rascunho"})`);
   }
 
   // ── Questões e Alternativas ─────────────────────────────────────
 
   console.log("\n❓ Criando questões e alternativas...");
 
-  const [conhecimentos, historia, matematica, ciencias, cultura, relampago] =
-    createdQuizzes;
+  const [conhecimentos, historia, matematica, ciencias, cultura, relampago] = createdQuizzes;
 
   // Cada questão: { text, type, basePoints, alternatives: { text, correct }[] }
 
@@ -485,7 +475,10 @@ async function seed() {
 
   // ponytail: $inferInsert has optional id, but seed sets explicit IDs
   type SeedQuestion = typeof schema.questions.$inferInsert & { id: string };
-  type SeedAlternative = typeof schema.alternatives.$inferInsert & { id: string; questionId: string };
+  type SeedAlternative = typeof schema.alternatives.$inferInsert & {
+    id: string;
+    questionId: string;
+  };
   const allQuestions: SeedQuestion[] = [];
   const allAlternatives: SeedAlternative[] = [];
 
@@ -576,22 +569,13 @@ async function seed() {
     })
     .returning();
 
-  console.log(
-    `   ✅ Sessão "${cultura.title}" — PIN: ${session2.pin} (finalizada, 4 jogadores)`,
-  );
+  console.log(`   ✅ Sessão "${cultura.title}" — PIN: ${session2.pin} (finalizada, 4 jogadores)`);
 
   // ── Player Answers ───────────────────────────────────────────────
 
   console.log("\n🙋 Criando respostas dos jogadores...");
 
-  const nicknames1 = [
-    "JogadorX",
-    "MestreAzul",
-    "LuaNinja",
-    "Foguete99",
-    "PandaVoador",
-    "Bolt",
-  ];
+  const nicknames1 = ["JogadorX", "MestreAzul", "LuaNinja", "Foguete99", "PandaVoador", "Bolt"];
   const nicknames2 = ["GamerTotal", "FeraQuiz", "EstrelaMar", "Rocket"];
 
   let totalAnswers = 0;
@@ -676,9 +660,7 @@ async function seed() {
       const totalCount = answers.length;
       const avgResponseMs =
         totalCount > 0
-          ? Math.round(
-              answers.reduce((sum, a) => sum + a.responseMs, 0) / totalCount,
-            )
+          ? Math.round(answers.reduce((sum, a) => sum + a.responseMs, 0) / totalCount)
           : 0;
 
       results.push({
@@ -691,10 +673,7 @@ async function seed() {
     }
 
     // Ordena por score (decrescente), depois por tempo médio (crescente)
-    results.sort(
-      (a, b) =>
-        b.totalScore - a.totalScore || a.avgResponseMs - b.avgResponseMs,
-    );
+    results.sort((a, b) => b.totalScore - a.totalScore || a.avgResponseMs - b.avgResponseMs);
 
     await db.insert(schema.gameResults).values(
       results.map((r, i) => ({

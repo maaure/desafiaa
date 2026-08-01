@@ -11,9 +11,7 @@ export interface LeaderboardEntry {
 export const leaderboardService = {
   async getTop(pin: string, topN = 10): Promise<LeaderboardEntry[]> {
     // ZREVRANGE retorna do maior para o menor score
-    const results = await redis.zrevrange(
-      keys.sessionScores(pin), 0, topN - 1, "WITHSCORES",
-    );
+    const results = await redis.zrevrange(keys.sessionScores(pin), 0, topN - 1, "WITHSCORES");
 
     const entries: LeaderboardEntry[] = [];
     for (let i = 0; i < results.length; i += 2) {
@@ -37,9 +35,7 @@ export const leaderboardService = {
   },
 
   async getFullRankings(pin: string): Promise<LeaderboardEntry[]> {
-    const results = await redis.zrevrange(
-      keys.sessionScores(pin), 0, -1, "WITHSCORES",
-    );
+    const results = await redis.zrevrange(keys.sessionScores(pin), 0, -1, "WITHSCORES");
 
     const entries: LeaderboardEntry[] = [];
     for (let i = 0; i < results.length; i += 2) {

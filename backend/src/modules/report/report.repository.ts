@@ -4,10 +4,7 @@ import { db, schema } from "../../db";
 export const reportRepo = {
   async getQuizWithSessions(quizId: string, userId: string) {
     return db.query.quizzes.findFirst({
-      where: and(
-        eq(schema.quizzes.id, quizId),
-        eq(schema.quizzes.authorId, userId),
-      ),
+      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
       with: {
         questions: {
           orderBy: asc(schema.questions.sortOrder),

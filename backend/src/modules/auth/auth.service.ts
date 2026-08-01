@@ -17,7 +17,12 @@ function signRefresh(userId: string): string {
   return jwt.sign({ sub: userId }, env.JWT_REFRESH_SECRET, { expiresIn: REFRESH_TTL });
 }
 
-function toUserResponse(user: { id: string; name: string; email: string; createdAt: Date }): UserResponse {
+function toUserResponse(user: {
+  id: string;
+  name: string;
+  email: string;
+  createdAt: Date;
+}): UserResponse {
   return {
     id: user.id,
     name: user.name,
