@@ -22,12 +22,15 @@ import { registerHostGateway } from "./modules/session/session.gateway";
 import { registerPlayGateway } from "./modules/gameplay/gameplay.gateway";
 
 const MB = 1024 * 1024;
-const LOGGER_CONFIG = {
-  transport: {
-    target: "pino-pretty",
-    options: { colorize: true, translateTime: "HH:MM:ss" },
-  },
-};
+const LOGGER_CONFIG =
+  process.env.NODE_ENV === "production"
+    ? { level: "info" }
+    : {
+        transport: {
+          target: "pino-pretty",
+          options: { colorize: true, translateTime: "HH:MM:ss" },
+        },
+      };
 const BODY_LIMIT = 10 * MB;
 const UPLOAD_FILE_SIZE_LIMIT = 5 * MB;
 const WS_PING_TIMEOUT = 30_000;
@@ -77,7 +80,8 @@ function createSocketServer(app: FastifyInstance) {
 }
 
 async function main() {
-  const app = Fastify({ logger: LOGGER_CONFIG, bodyLimit: BODY_LIMIT });
+  // trustProxy: atrás do Caddy, o IP real do cliente vem em X-Forwarded-For
+  const app = Fastify({ logger: LOGGER_CONFIG, bodyLimit: BODY_LIMIT, trustProxy: true });
 
   await registerPlugins(app);
   app.setErrorHandler(errorHandler);

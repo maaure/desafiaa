@@ -15,6 +15,8 @@ RUN pnpm build
 FROM node:22-alpine
 WORKDIR /app
 
+ENV NODE_ENV=production
+
 RUN corepack enable && corepack prepare pnpm@10.33.4 --activate
 
 COPY package.json pnpm-lock.yaml .npmrc ./
