@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { LayoutDashboard, LogOut, Menu, Plus, X } from "@lucide/svelte";
+  import { BarChart3, LayoutDashboard, LogOut, Menu, Pencil, Plus, X } from "@lucide/svelte";
   import { auth } from "$lib/stores/auth.store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -36,6 +36,9 @@
     return pathname.startsWith(route);
   }
 
+  // Quiz aberto no momento (/quiz/:id/edit ou /quiz/:id/report) → atalhos no menu
+  let currentQuizId = $derived(pathname.match(/^\/quiz\/([^/]+)\/(edit|report)$/)?.[1] ?? null);
+
   function handleLogout() {
     auth.logout().then(() => goto(resolve("/login")));
   }
@@ -52,18 +55,20 @@
     {/if}
 
     <aside
-      class="fixed inset-y-0 left-0 z-50 w-56 bg-white border-r border-slate-200 flex flex-col transition-transform duration-200
+      class="fixed inset-y-0 left-0 z-50 w-64 bg-surface-raised border-r-2 border-ink flex flex-col transition-transform duration-200
         md:relative md:translate-x-0
         {mobileOpen ? 'translate-x-0' : '-translate-x-full'}"
     >
       <!-- Brand -->
-      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
+      <div class="px-6 py-5 border-b-2 border-ink flex items-center justify-between">
         <a href={resolve("/dashboard")} class="block">
-          <span class="text-lg font-bold tracking-tight text-slate-900">Desafia</span>
-          <span class="block text-xs text-slate-400 mt-0.5 font-medium">Painel do Host</span>
+          <span class="font-display text-2xl font-extrabold tracking-tight text-ink"
+            >Desafia<span class="text-primary">.</span></span
+          >
+          <span class="block text-sm text-ink-faint mt-0.5 font-medium">Painel do Host</span>
         </a>
         <button
-          class="md:hidden p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+          class="md:hidden p-1 rounded-lg text-ink-faint hover:text-ink hover:bg-sand-100"
           onclick={() => (mobileOpen = false)}
           aria-label="Fechar menu"
         >
@@ -71,38 +76,68 @@
         </button>
       </div>
 
-      <!-- Navigation -->
-      <nav class="flex-1 px-3 py-4 space-y-1">
+      <!-- Navigation — agrupada por ação -->
+      <nav class="flex-1 px-4 py-5 overflow-y-auto">
+        <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">
+          Meus Quizzes
+        </p>
         <a
           href={resolve("/dashboard")}
-          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+          class="flex items-center gap-3 px-3 py-3 mb-5 rounded-xl text-base font-semibold transition-colors
             {isActive('/dashboard')
-            ? 'bg-violet-50 text-violet-700'
-            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}"
+            ? 'bg-ocean-500 text-white shadow-soft'
+            : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
         >
-          <LayoutDashboard class="w-4 h-4 shrink-0" />
+          <LayoutDashboard class="w-5 h-5 shrink-0" />
           Dashboard
         </a>
 
+        <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">Criar</p>
         <a
           href={resolve("/quiz/new")}
-          class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+          class="flex items-center gap-3 px-3 py-3 mb-5 rounded-xl text-base font-semibold transition-colors
             {isActive('/quiz/new')
-            ? 'bg-violet-50 text-violet-700'
-            : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}"
+            ? 'bg-ocean-500 text-white shadow-soft'
+            : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
         >
-          <Plus class="w-4 h-4 shrink-0" />
+          <Plus class="w-5 h-5 shrink-0" />
           Novo Quiz
         </a>
+
+        {#if currentQuizId}
+          <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">
+            Quiz Atual
+          </p>
+          <a
+            href={resolve(`/quiz/${currentQuizId}/edit`)}
+            class="flex items-center gap-3 px-3 py-3 mb-1 rounded-xl text-base font-semibold transition-colors
+              {isActive(`/quiz/${currentQuizId}/edit`)
+              ? 'bg-ocean-500 text-white shadow-soft'
+              : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
+          >
+            <Pencil class="w-5 h-5 shrink-0" />
+            Editar
+          </a>
+          <a
+            href={resolve(`/quiz/${currentQuizId}/report`)}
+            class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-semibold transition-colors
+              {isActive(`/quiz/${currentQuizId}/report`)
+              ? 'bg-ocean-500 text-white shadow-soft'
+              : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
+          >
+            <BarChart3 class="w-5 h-5 shrink-0" />
+            Relatório
+          </a>
+        {/if}
       </nav>
 
       <!-- User footer -->
-      <div class="border-t border-slate-100 px-3 py-3">
+      <div class="border-t-2 border-ink px-4 py-4">
         <button
           onclick={handleLogout}
-          class="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm font-medium text-slate-500 hover:bg-slate-50 hover:text-red-500 transition-colors"
+          class="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-base font-semibold text-ink-soft hover:bg-tomato-50 hover:text-danger transition-colors"
         >
-          <LogOut class="w-4 h-4 shrink-0" />
+          <LogOut class="w-5 h-5 shrink-0" />
           Sair
         </button>
       </div>
@@ -110,15 +145,17 @@
 
     <!-- Main content -->
     <main class="flex-1 overflow-y-auto">
-      <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-200 bg-white md:hidden">
+      <div
+        class="flex items-center gap-3 px-4 py-3 border-b-2 border-ink bg-surface-raised md:hidden"
+      >
         <button
           onclick={() => (mobileOpen = true)}
-          class="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+          class="p-1.5 rounded-lg text-ink-faint hover:text-ink hover:bg-sand-100"
           aria-label="Abrir menu"
         >
           <Menu class="w-5 h-5" />
         </button>
-        <span class="text-sm font-bold text-slate-900">Desafia</span>
+        <span class="font-display text-base font-bold text-ink">Desafia</span>
       </div>
 
       {@render children()}

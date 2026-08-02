@@ -44,15 +44,13 @@
 </script>
 
 <div
-  class="flex items-center gap-3 p-3 rounded-lg border transition-colors
-  {alt.isCorrect
-    ? 'border-emerald-300 bg-emerald-50'
-    : 'border-slate-200 bg-white hover:border-slate-300'}"
+  class="flex items-center gap-3 p-3 rounded-lg border-2 shadow-soft transition-colors
+  {alt.isCorrect ? 'border-ink bg-leaf-50' : 'border-ink bg-surface-raised hover:bg-sand-50'}"
 >
   <!-- Letter badge -->
   <span
-    class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0
-    {alt.isCorrect ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-500'}"
+    class="flex items-center justify-center w-7 h-7 rounded-full border-2 border-ink text-xs font-bold shrink-0
+    {alt.isCorrect ? 'bg-leaf-500 text-white' : 'bg-sand-100 text-ink-faint'}"
   >
     {letter}
   </span>
@@ -65,7 +63,7 @@
       placeholder="Texto da alternativa"
       oninput={handleTextInput}
       class="w-full px-3 py-1.5 rounded-md border-0 bg-transparent text-sm
-        placeholder:text-slate-300 focus:outline-none"
+        placeholder:text-ink-faint focus:outline-none"
     />
 
     <!-- Imagem da alternativa -->
@@ -74,12 +72,12 @@
         <img
           src={alt.imageUrl}
           alt="Imagem da alternativa"
-          class="max-h-24 rounded border border-slate-200 object-contain"
+          class="max-h-24 rounded border border-line object-contain"
         />
         <button
           onclick={handleRemoveImage}
           class="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full
-            bg-red-500 text-white hover:bg-red-600 transition-colors"
+            bg-danger text-white hover:bg-tomato-700 transition-colors"
           title="Remover imagem"
         >
           <X class="w-2.5 h-2.5" />
@@ -89,12 +87,12 @@
       <div class="inline-flex flex-col gap-0.5">
         <label
           class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium
-            text-slate-300 hover:text-violet-500 hover:bg-violet-50 cursor-pointer transition-colors
+            text-ink-faint hover:text-ocean-600 hover:bg-ocean-50 cursor-pointer transition-colors
             {uploadImage.isPending ? 'opacity-50 pointer-events-none' : ''}"
         >
           {#if uploadImage.isPending}
             <span
-              class="w-3 h-3 border-2 border-slate-300 border-t-violet-500 rounded-full animate-spin"
+              class="w-3 h-3 border-2 border-sand-300 border-t-ocean-500 rounded-full animate-spin"
             ></span>
           {:else}
             <Image class="w-3 h-3" />
@@ -108,7 +106,7 @@
           />
         </label>
         {#if uploadImage.error}
-          <span class="text-xs text-red-500">{uploadImage.error.message}</span>
+          <span class="text-xs text-danger">{uploadImage.error.message}</span>
         {/if}
       </div>
     {/if}
@@ -121,11 +119,11 @@
       name={`correct_${questionId}`}
       checked={alt.isCorrect}
       onchange={handleCorrect}
-      class="w-3.5 h-3.5 accent-emerald-500 cursor-pointer"
+      class="w-3.5 h-3.5 accent-leaf-500 cursor-pointer"
     />
     <span
       class="text-xs font-medium select-none
-      {alt.isCorrect ? 'text-emerald-600' : 'text-slate-400'}"
+      {alt.isCorrect ? 'text-leaf-700' : 'text-ink-faint'}"
     >
       Correta
     </span>

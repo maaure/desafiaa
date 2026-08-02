@@ -8,6 +8,7 @@
     loading = false,
     onclick,
     type = "button",
+    class: className = "",
     children,
   }: {
     variant?: "default" | "primary" | "secondary" | "danger";
@@ -15,24 +16,23 @@
     loading?: boolean;
     onclick?: (e: MouseEvent) => void;
     type?: "button" | "submit";
+    class?: string;
     children: Snippet;
   } = $props();
 
   const base =
-    "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm disabled:opacity-40 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-base font-semibold border-2 border-ink transition-colors shadow-soft active:translate-y-[2px] active:shadow-none disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:shadow-soft";
 
   const variants: Record<string, string> = {
-    default:
-      "bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 active:bg-slate-100",
-    primary: "bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800",
-    secondary:
-      "bg-white border border-violet-200 text-violet-700 hover:bg-violet-50 active:bg-violet-100",
-    danger: "bg-red-500 text-white hover:bg-red-600 active:bg-red-700",
+    default: "bg-surface-raised text-ink-soft hover:bg-sand-100 active:bg-sand-100",
+    primary: "bg-primary text-white hover:bg-primary-hover active:bg-coral-800",
+    secondary: "bg-ocean-50 text-ocean-800 hover:bg-ocean-100 active:bg-ocean-100",
+    danger: "bg-danger text-white hover:bg-tomato-700 active:bg-tomato-800",
   };
 </script>
 
 <button
-  class="{base} {variants[variant] ?? variants.default}"
+  class="{base} {variants[variant] ?? variants.default} {className}"
   disabled={disabled || loading}
   {type}
   {onclick}

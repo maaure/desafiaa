@@ -4,9 +4,9 @@ export function formatMs(ms: number): string {
 }
 
 export function accuracyColor(rate: number): string {
-  if (rate >= 80) return "text-emerald-600";
-  if (rate >= 50) return "text-amber-600";
-  return "text-red-500";
+  if (rate >= 80) return "text-leaf-600";
+  if (rate >= 50) return "text-mango-600";
+  return "text-tomato-600";
 }
 
 export function formatDate(iso: string | null): string {

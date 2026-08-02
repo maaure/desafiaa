@@ -24,7 +24,7 @@
 
 <div class="mb-4">
   {#if label}
-    <label for={id || undefined} class="block text-sm font-semibold text-slate-700 mb-1.5">
+    <label for={id || undefined} class="block text-sm font-semibold text-ink-soft mb-1.5">
       {label}
     </label>
   {/if}
@@ -37,8 +37,8 @@
     {required}
     {oninput}
     {...rest}
-    class="w-full px-3.5 py-2.5 rounded-lg border border-slate-200 text-sm
-      placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100
+    class="w-full px-4 py-3.5 rounded-xl border-2 border-ink bg-surface-raised shadow-soft text-base
+      placeholder:text-ink-faint focus:border-ocean-500
       disabled:opacity-50 disabled:cursor-not-allowed
       transition-colors outline-none"
   />

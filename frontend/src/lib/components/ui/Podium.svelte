@@ -23,9 +23,9 @@
   function bg(i: number): string {
     if (bgColors) return bgColors[i];
     return [
-      "bg-amber-50 border-amber-200",
-      "bg-slate-50 border-slate-200",
-      "bg-orange-50 border-orange-100",
+      "bg-mango-400 border-ink text-mango-950",
+      "bg-sand-300 border-ink text-sand-900",
+      "bg-coral-700 border-ink text-white",
     ][i];
   }
 </script>
@@ -34,18 +34,17 @@
   {#each entries.slice(0, 3) as entry, i (entry.rank)}
     <div class="flex flex-col items-center gap-2">
       <span
-        class="{compact ? 'text-xs' : 'text-sm'} font-semibold text-slate-800 text-center {compact
-          ? 'max-w-[72px]'
-          : 'max-w-[80px]'} truncate">{entry.nickname}</span
+        class="{compact ? 'text-sm' : 'text-base'} font-semibold text-ink-soft text-center {compact
+          ? 'max-w-[80px]'
+          : 'max-w-[96px]'} truncate">{entry.nickname}</span
       >
       <div
         class="{compact ? 'w-18' : 'w-20'} {h(i)} rounded-t-lg {bg(
           i,
-        )} border border-b-0 flex flex-col items-center justify-center"
+        )} border-2 border-b-0 shadow-soft flex flex-col items-center justify-center"
       >
-        <span class={compact ? "text-xl" : "text-2xl"}>{medals[i]}</span>
-        <span class="{compact ? 'text-xs' : 'text-sm'} font-bold text-slate-700 tabular-nums"
-          >{entry.score}</span
+        <span class={compact ? "text-2xl" : "text-3xl"}>{medals[i]}</span>
+        <span class="{compact ? 'text-base' : 'text-lg'} font-bold tabular-nums">{entry.score}</span
         >
       </div>
     </div>

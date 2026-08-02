@@ -9,14 +9,24 @@
   import Podium from "$lib/components/ui/Podium.svelte";
 
   const LABELS = ["A", "B", "C", "D", "E", "F"];
+  // Cores do jogo (tokens bg-answer-*) — cicla A→B→C→D
   const BUTTON_COLORS = [
-    "bg-red-500 hover:bg-red-600",
-    "bg-blue-500 hover:bg-blue-600",
-    "bg-emerald-500 hover:bg-emerald-600",
-    "bg-violet-500 hover:bg-violet-600",
-    "bg-amber-500 hover:bg-amber-600",
-    "bg-teal-500 hover:bg-teal-600",
+    "bg-answer-a",
+    "bg-answer-b",
+    "bg-answer-c",
+    "bg-answer-d",
+    "bg-answer-a",
+    "bg-answer-b",
   ];
+
+  const PHASE_LABELS: Record<string, string> = {
+    join: "Entrada",
+    lobby: "Lobby",
+    question: "Pergunta",
+    feedback: "Resultado",
+    leaderboard: "Placar",
+    ended: "Fim de jogo",
+  };
 
   let pin = $derived($page.params.pin ?? "");
   let nickInput = $state("");
@@ -51,20 +61,26 @@
   }
 </script>
 
-<div class="min-h-screen bg-slate-50 flex flex-col">
-  <!-- Header -->
-  <header class="bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shrink-0">
-    <span class="text-sm font-bold text-slate-900 truncate flex-1">
+<div class="min-h-screen bg-surface text-ink flex flex-col">
+  <!-- ══ HUD — nickname · fase · placar ══ -->
+  <header
+    class="sticky top-0 z-40 bg-surface-raised border-b-2 border-ink px-4 py-3 flex items-center gap-3 shrink-0"
+  >
+    <span class="font-display text-lg font-bold truncate flex-1">
       {$playerSession.nickname || "Jogador"}
     </span>
+    <span class="text-sm font-bold uppercase tracking-wider text-ink-faint">
+      {PHASE_LABELS[phase]}
+    </span>
     {#if $playerSession.totalScore > 0}
-      <span class="text-sm font-bold text-emerald-600 tabular-nums"
+      <span class="font-display text-xl font-bold text-leaf-600 tabular-nums"
         >{$playerSession.totalScore} pts</span
       >
     {/if}
     <button
       onclick={handleLeave}
-      class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-red-500 hover:bg-red-50 transition-colors"
+      class="px-4 py-2 rounded-lg border-2 border-ink text-base font-semibold text-ink-soft shadow-soft
+        hover:text-danger hover:border-tomato-500 transition-colors"
     >
       Sair
     </button>
@@ -73,44 +89,48 @@
   <!-- Error banner -->
   {#if $playerSession.error}
     <div
-      class="mx-4 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700 flex items-center justify-between animate-fade-in"
+      class="mx-4 mt-4 rounded-lg border-2 border-tomato-500 bg-tomato-50 px-4 py-3 text-base font-medium text-tomato-700 flex items-center justify-between animate-fade-in"
     >
       <span>{$playerSession.error}</span>
       <button
         onclick={() => playerSession.clearError()}
-        class="text-red-400 hover:text-red-600 p-1"
+        class="text-tomato-400 hover:text-tomato-600 p-1"
       >
-        <X class="w-4 h-4" />
+        <X class="w-5 h-5" />
       </button>
     </div>
   {/if}
 
   <!-- Main content -->
-  <div class="flex-1 flex flex-col p-4">
+  <div class="flex-1 flex flex-col p-4 sm:p-6">
     <!-- ── Phase: Join ── -->
     {#if phase === "join"}
       <div class="flex-1 flex flex-col items-center justify-center text-center">
-        <h2 class="text-xl font-bold text-slate-800 mb-2">Entrar na partida</h2>
-        <p class="text-2xl font-mono font-bold text-violet-600 tracking-[0.3em] mb-6 tabular-nums">
+        <h2 class="font-display text-3xl font-extrabold mb-2">Entrar na partida</h2>
+        <p
+          class="font-display text-5xl font-extrabold text-primary tracking-[0.2em] mb-8 tabular-nums animate-pulse-soft"
+        >
           {pin}
         </p>
 
-        <form onsubmit={handleJoin} class="w-full max-w-xs space-y-4">
+        <form onsubmit={handleJoin} class="w-full max-w-sm space-y-4">
           <input
             type="text"
             bind:value={nickInput}
             maxlength={20}
             placeholder="Seu apelido"
             required
-            class="w-full px-4 py-3 rounded-xl border border-slate-200 text-center text-base
-              placeholder:text-slate-300 focus:border-violet-400 focus:ring-2 focus:ring-violet-100
+            class="w-full px-4 py-4 rounded-xl border-2 border-ink bg-surface-raised text-center text-lg font-semibold shadow-soft
+              placeholder:text-ink-faint focus:border-ocean-500
               outline-none transition-colors"
           />
           <button
             type="submit"
             disabled={nickInput.trim().length < 2 || $playerSession.isSubmitting}
-            class="w-full py-3 rounded-xl bg-violet-600 text-white text-base font-bold
-              hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-sm"
+            class="w-full py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
+              shadow-lift hover:bg-primary-hover active:translate-y-[3px] active:shadow-none
+              disabled:opacity-40 disabled:cursor-not-allowed disabled:active:translate-y-0 disabled:active:shadow-lift
+              transition-all"
           >
             {$playerSession.isSubmitting ? "Entrando..." : "Entrar"}
           </button>
@@ -121,12 +141,12 @@
     {:else if phase === "lobby"}
       <div class="flex-1 flex flex-col items-center justify-center text-center">
         <div
-          class="w-12 h-12 mb-4 rounded-full border-2 border-slate-200 border-t-violet-500 animate-spin-slow"
+          class="w-16 h-16 mb-5 rounded-full border-4 border-sand-300 border-t-ocean-500 animate-spin-slow"
         ></div>
-        <h2 class="text-lg font-semibold text-slate-800 mb-1">Aguardando o host</h2>
-        <p class="text-sm text-slate-400 mb-8">A partida vai começar em breve</p>
+        <h2 class="font-display text-3xl font-extrabold mb-2">Aguardando o host</h2>
+        <p class="text-lg text-ink-faint mb-8">A partida vai começar em breve</p>
 
-        <div class="text-sm font-medium text-violet-600 mb-4">
+        <div class="font-display text-3xl font-extrabold text-leaf-600 mb-4">
           {$playerSession.totalPlayers} jogador{($playerSession.totalPlayers ?? 0) !== 1
             ? "es"
             : ""} na sala
@@ -135,7 +155,7 @@
         <div class="flex flex-wrap gap-2 justify-center max-w-sm">
           {#each $playerSession.nicknames as nick (nick)}
             <span
-              class="px-3 py-1.5 rounded-full bg-white border border-slate-200 text-sm font-medium text-slate-600"
+              class="px-4 py-2 rounded-full border-2 border-ink bg-surface-raised text-base font-semibold text-ink-soft shadow-soft"
               >{nick}</span
             >
           {/each}
@@ -152,44 +172,44 @@
               <img
                 src={$playerSession.currentQuestion.imageUrl}
                 alt=""
-                class="max-h-48 w-auto mx-auto rounded-xl mb-4 object-contain"
+                class="max-h-52 w-auto mx-auto rounded-xl mb-4 object-contain"
               />
             {/if}
-            <p class="text-lg font-semibold text-slate-800 text-center leading-relaxed mb-4">
+            <p class="font-display text-stage font-extrabold text-center leading-tight mb-6">
               {$playerSession.currentQuestion.text}
             </p>
 
             <!-- Timer (normal size) -->
-            <div class="text-center mb-4">
+            <div class="text-center mb-6">
               <span
-                class="inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold font-mono tabular-nums
+                class="inline-flex items-center justify-center w-24 h-24 rounded-full border-[3px] border-ink shadow-lift text-4xl font-bold font-mono tabular-nums
                 {$playerSession.countdown <= 5
-                  ? 'bg-red-50 text-red-500'
-                  : 'bg-white border border-slate-200 text-slate-800'}"
+                  ? 'border-tomato-500 text-tomato-600 bg-tomato-50 animate-pulse-soft'
+                  : 'bg-surface-raised text-ink'}"
               >
                 {$playerSession.countdown}
               </span>
             </div>
           {:else}
             <!-- Presentation mode: no question text — larger timer + hint -->
-            <div class="text-center mb-2">
+            <div class="text-center mb-3">
               <span
-                class="inline-flex items-center justify-center w-24 h-24 rounded-full text-4xl font-bold font-mono tabular-nums
+                class="inline-flex items-center justify-center w-36 h-36 rounded-full border-[3px] border-ink shadow-lift text-7xl font-bold font-mono tabular-nums
                 {$playerSession.countdown <= 5
-                  ? 'bg-red-50 text-red-500'
-                  : 'bg-white border-2 border-slate-200 text-slate-800'}"
+                  ? 'border-tomato-500 text-tomato-600 bg-tomato-50 animate-pulse-soft'
+                  : 'bg-surface-raised text-ink'}"
               >
                 {$playerSession.countdown}
               </span>
             </div>
-            <p class="text-center text-sm text-violet-500 font-medium mb-6">
+            <p class="text-center text-lg text-ocean-600 font-semibold mb-6">
               Veja a pergunta na tela do apresentador
             </p>
           {/if}
 
           <!-- Alternatives -->
           <div
-            class="flex-1 flex flex-col gap-3 {($playerSession.currentQuestion?.alternatives
+            class="flex-1 flex flex-col gap-4 {($playerSession.currentQuestion?.alternatives
               ?.length ?? 0) === 2
               ? 'flex-row items-stretch'
               : ''}"
@@ -198,24 +218,27 @@
               <button
                 onclick={() => handleAnswer(i, alt.text)}
                 disabled={$playerSession.hasAnswered}
-                class="flex flex-col gap-3 p-4 rounded-xl text-white text-left font-semibold text-sm
+                class="flex flex-col gap-3 p-5 min-h-16 rounded-2xl border-2 border-ink text-white text-left font-display font-bold text-xl
                   transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed
-                  active:scale-[0.98] shadow-sm {BUTTON_COLORS[i % BUTTON_COLORS.length]}
+                  active:translate-y-[3px] active:shadow-none shadow-lift {BUTTON_COLORS[
+                  i % BUTTON_COLORS.length
+                ]}
+                  hover:brightness-110
                   {($playerSession.currentQuestion?.alternatives?.length ?? 0) === 2
-                  ? 'flex-1 justify-center text-center py-8'
+                  ? 'flex-1 justify-center text-center py-10'
                   : ''}"
               >
                 {#if alt.imageUrl}
                   <img src={alt.imageUrl} alt="" class="w-full max-h-40 rounded-lg object-cover" />
                 {/if}
                 <span
-                  class="flex items-center gap-3 {($playerSession.currentQuestion?.alternatives
+                  class="flex items-center gap-4 {($playerSession.currentQuestion?.alternatives
                     ?.length ?? 0) === 2
                     ? 'flex-col'
                     : ''}"
                 >
                   <span
-                    class="flex items-center justify-center w-8 h-8 rounded-full bg-white/20 text-sm font-bold shrink-0"
+                    class="flex items-center justify-center w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 text-lg font-bold shrink-0"
                   >
                     {getLetter(i)}
                   </span>
@@ -228,10 +251,10 @@
           <!-- Fallback: no question data yet, show timer only -->
           <div class="text-center mb-4">
             <span
-              class="inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold font-mono tabular-nums
+              class="inline-flex items-center justify-center w-24 h-24 rounded-full border-[3px] border-ink shadow-lift text-4xl font-bold font-mono tabular-nums
               {$playerSession.countdown <= 5
-                ? 'bg-red-50 text-red-500'
-                : 'bg-white border border-slate-200 text-slate-800'}"
+                ? 'border-tomato-500 text-tomato-600 bg-tomato-50 animate-pulse-soft'
+                : 'bg-surface-raised text-ink'}"
             >
               {$playerSession.countdown}
             </span>
@@ -245,45 +268,48 @@
         {#if $playerSession.lastResult}
           {#if $playerSession.timedOut}
             <div
-              class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4 bg-amber-100 text-amber-500"
+              class="w-28 h-28 rounded-full border-[3px] border-ink shadow-lift flex items-center justify-center text-6xl mb-5 bg-mango-100 text-mango-600 animate-pop"
             >
               ⏰
             </div>
-            <h2 class="text-2xl font-bold mb-3 text-amber-600">Tempo esgotado!</h2>
+            <h2 class="font-display text-4xl font-extrabold mb-3 text-mango-700">
+              Tempo esgotado!
+            </h2>
             <div class="text-center mb-6">
-              <p class="text-lg font-bold text-slate-400">0 pts</p>
-              <p class="text-sm text-slate-400 mt-1">
+              <p class="font-display text-2xl font-bold text-ink-faint">0 pts</p>
+              <p class="text-base text-ink-faint mt-1">
                 Total: {$playerSession.totalScore} pts
               </p>
             </div>
           {:else}
             <div
-              class="w-20 h-20 rounded-full flex items-center justify-center text-4xl mb-4
+              class="w-28 h-28 rounded-full border-[3px] border-ink shadow-lift flex items-center justify-center text-6xl mb-5 animate-pop
               {$playerSession.lastResult.isCorrect
-                ? 'bg-emerald-100 text-emerald-600'
-                : 'bg-red-100 text-red-500'}"
+                ? 'bg-leaf-100 text-leaf-600'
+                : 'bg-tomato-100 text-tomato-600'}"
             >
               {$playerSession.lastResult.isCorrect ? "✓" : "✗"}
             </div>
 
             <h2
-              class="text-2xl font-bold mb-3 {$playerSession.lastResult.isCorrect
-                ? 'text-emerald-700'
-                : 'text-red-600'}"
+              class="font-display text-4xl font-extrabold mb-3 {$playerSession.lastResult.isCorrect
+                ? 'text-leaf-700'
+                : 'text-tomato-600'}"
             >
               {$playerSession.lastResult.isCorrect ? "Correto!" : "Errado!"}
             </h2>
 
             <div class="text-center mb-6">
               <p
-                class="text-lg font-bold {$playerSession.lastResult.isCorrect
-                  ? 'text-emerald-600'
-                  : 'text-slate-400'}"
+                class="font-display text-4xl font-extrabold {$playerSession.lastResult.isCorrect
+                  ? 'text-leaf-600'
+                  : 'text-ink-faint'}"
               >
-                {#if $playerSession.lastResult.isCorrect}+{$playerSession.lastResult.pointsEarned} pts{:else}0
-                  pts{/if}
+                {#if $playerSession.lastResult.isCorrect}+{$playerSession.lastResult
+                    .pointsEarned}{:else}0{/if}
+                pts
               </p>
-              <p class="text-sm text-slate-400 mt-1">
+              <p class="text-base text-ink-faint mt-1">
                 Total: {$playerSession.totalScore} pts
               </p>
             </div>
@@ -291,47 +317,51 @@
         {/if}
 
         {#if $playerSession.correctAnswer}
-          <div class="bg-white rounded-xl border border-slate-200 px-5 py-3 max-w-xs w-full">
-            <p class="text-xs text-slate-400 mb-1">Resposta correta</p>
-            <p class="text-sm font-semibold text-emerald-600">
+          <div
+            class="bg-surface-raised rounded-2xl border-2 border-ink shadow-lift px-6 py-4 max-w-sm w-full"
+          >
+            <p class="text-sm text-ink-faint mb-1">Resposta correta</p>
+            <p class="text-lg font-bold text-leaf-700">
               {$playerSession.correctAnswer}
             </p>
           </div>
         {:else}
-          <p class="text-sm text-slate-400">Aguardando o resultado...</p>
+          <p class="text-lg text-ink-faint">Aguardando o resultado...</p>
         {/if}
       </div>
 
       <!-- ── Phase: Leaderboard ── -->
     {:else if phase === "leaderboard"}
       <div class="flex-1 flex flex-col">
-        <h2 class="text-xl font-bold text-slate-900 text-center mb-4">Placar</h2>
+        <h2 class="font-display text-3xl font-extrabold text-center mb-4">Placar</h2>
 
         {#if $leaderboardMyRank}
           <div
-            class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 flex items-center gap-3"
+            class="bg-mango-400 border-2 border-ink shadow-lift rounded-xl px-4 py-4 mb-4 flex items-center gap-3 -rotate-[0.5deg]"
           >
-            <span class="text-lg font-bold text-amber-700">#{$leaderboardMyRank}</span>
-            <span class="text-sm text-amber-700">Sua posição</span>
-            <span class="ml-auto text-sm font-bold text-amber-700 tabular-nums"
+            <span class="font-display text-2xl font-extrabold text-mango-950"
+              >#{$leaderboardMyRank}</span
+            >
+            <span class="text-base font-bold text-mango-950">Sua posição</span>
+            <span class="ml-auto font-display text-xl font-extrabold text-mango-950 tabular-nums"
               >{$leaderboardMyScore} pts</span
             >
           </div>
         {/if}
 
-        <div class="space-y-2">
+        <div class="space-y-2.5">
           {#each $playerSession.leaderboard as entry, i (entry.rank)}
             <div
-              class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm
+              class="flex items-center gap-3 px-4 py-4 rounded-xl border-2 shadow-soft text-base
               {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
-                ? 'bg-violet-50 border border-violet-200'
-                : 'bg-white border border-slate-100'}"
+                ? 'bg-ocean-500 border-ink text-white'
+                : 'bg-surface-raised border-ink text-ink'}"
             >
               <span
-                class="w-8 text-center font-bold shrink-0
+                class="w-10 text-center font-bold shrink-0
                 {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
-                  ? 'text-violet-700'
-                  : 'text-slate-400'}"
+                  ? 'text-white'
+                  : 'text-ink-faint'}"
               >
                 {#if i === 0}🥇
                 {:else if i === 1}🥈
@@ -339,10 +369,18 @@
                 {:else}#{entry.rank}
                 {/if}
               </span>
-              <span class="font-medium text-slate-700 truncate flex-1">{entry.nickname}</span>
-              <span class="font-bold text-slate-900 tabular-nums">{entry.score}</span>
-              <span class="text-xs text-slate-400 tabular-nums w-10 text-right"
-                >{entry.correctCount} ✓</span
+              <span
+                class="font-semibold truncate flex-1
+                {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
+                  ? 'text-white'
+                  : 'text-ink-soft'}">{entry.nickname}</span
+              >
+              <span class="font-display font-bold tabular-nums">{entry.score}</span>
+              <span
+                class="text-sm tabular-nums w-10 text-right
+                {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
+                  ? 'text-white/80'
+                  : 'text-ink-faint'}">{entry.correctCount} ✓</span
               >
             </div>
           {/each}
@@ -354,11 +392,11 @@
       <div class="flex-1 flex flex-col">
         <div class="text-center mb-6">
           <div
-            class="w-14 h-14 mx-auto mb-3 rounded-full bg-emerald-100 flex items-center justify-center"
+            class="w-20 h-20 mx-auto mb-3 rounded-full border-2 border-ink shadow-lift bg-leaf-100 flex items-center justify-center animate-pop"
           >
-            <CheckCircle class="w-7 h-7 text-emerald-500" />
+            <CheckCircle class="w-10 h-10 text-leaf-600" />
           </div>
-          <h2 class="text-xl font-bold text-slate-900">Partida encerrada!</h2>
+          <h2 class="font-display text-3xl font-extrabold">Partida encerrada!</h2>
         </div>
 
         <!-- Podium top 3 -->
@@ -367,35 +405,45 @@
         {/if}
 
         <!-- Full rankings -->
-        <div class="space-y-1.5 mb-6">
+        <div class="space-y-2 mb-6">
           {#each $playerSession.leaderboard as entry (entry.rank)}
             <div
-              class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm
+              class="flex items-center gap-3 px-4 py-3 rounded-lg border-2 shadow-soft text-base
               {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
-                ? 'bg-violet-50 font-semibold'
-                : 'bg-white'}"
+                ? 'bg-ocean-500 border-ink text-white font-bold'
+                : 'bg-surface-raised border-ink text-ink'}"
             >
-              <span class="w-6 text-center text-slate-400 text-xs tabular-nums">#{entry.rank}</span>
-              <span class="flex-1 text-slate-700 truncate">{entry.nickname}</span>
-              <span class="font-bold text-slate-900 tabular-nums">{entry.score} pts</span>
+              <span
+                class="w-6 text-center text-sm tabular-nums
+                {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
+                  ? 'text-white/80'
+                  : 'text-ink-faint'}">#{entry.rank}</span
+              >
+              <span
+                class="flex-1 truncate
+                {entry.nickname.toLowerCase() === ($playerSession.nickname ?? '').toLowerCase()
+                  ? 'text-white'
+                  : 'text-ink-soft'}">{entry.nickname}</span
+              >
+              <span class="font-display font-bold tabular-nums">{entry.score} pts</span>
             </div>
           {/each}
         </div>
 
         {#if $leaderboardMyRank}
           <div
-            class="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-center text-sm font-medium text-violet-700 mb-4"
+            class="bg-mango-400 border-2 border-ink shadow-lift rounded-xl px-4 py-4 text-center text-base font-bold text-mango-950 mb-4 rotate-[0.5deg]"
           >
-            Você terminou em <span class="font-bold">#{$leaderboardMyRank}</span>
+            Você terminou em <span class="font-display text-2xl">#{$leaderboardMyRank}</span>
             de {$playerSession.totalPlayers} jogadores com
-            <span class="font-bold">{$playerSession.totalScore} pts</span>
+            <span class="font-display text-2xl">{$playerSession.totalScore} pts</span>
           </div>
         {/if}
 
         <button
           onclick={handleLeave}
-          class="w-full py-3 rounded-xl bg-violet-600 text-white text-base font-bold
-            hover:bg-violet-700 transition-colors shadow-sm"
+          class="w-full py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
+            shadow-lift hover:bg-primary-hover active:translate-y-[3px] active:shadow-none transition-all"
         >
           Voltar ao início
         </button>

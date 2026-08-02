@@ -1,90 +1,273 @@
 @import "tailwindcss";
 
-/* ── Design tokens ── */
-@theme {
-  /* Brand palette — derived from landing page (+page.svelte) */
-  --color-brand-50: #f5f3ff;
-  --color-brand-100: #ede9fe;
-  --color-brand-200: #ddd6fe;
-  --color-brand-300: #c4b5fd;
-  --color-brand-400: #a78bfa;
-  --color-brand-500: #8b5cf6;
-  --color-brand-600: #7c3aed;
-  --color-brand-700: #6d28d9;
-  --color-brand-800: #5b21b6;
-  --color-brand-900: #4c1d95;
-  --color-brand-950: #2e1065;
+/* ═══════════════════════════════════════════════════════════════
+   Design System "Desafia." — CARTOLINA + ATMOSFERA GEOGUESSR
+   Cartolina: contorno de tinta, sombra dura, imperfeição humana.
+   GeoGuessr: TUDO claro, arejado, tipografia GRANDE e moderna.
+   Sem dark, sem glass, sem amarelado. Neutros frios.
+   Fonte da verdade: DESIGN-SYSTEM.md (frontend/DESIGN-SYSTEM.md)
+   ═══════════════════════════════════════════════════════════════ */
 
-  /* Typography */
+@theme {
+  /* ── Paleta 1: Sand (neutros FRIOS — nada de amarelado) ───── */
+  --color-sand-50: #f8f9fb;
+  --color-sand-100: #f0f2f5;
+  --color-sand-200: #e2e6ec;
+  --color-sand-300: #cbd2dc;
+  --color-sand-400: #a8b2c0;
+  --color-sand-500: #8490a0;
+  --color-sand-600: #66717f;
+  --color-sand-700: #4e5763;
+  --color-sand-800: #3a414c;
+  --color-sand-900: #2a2f37;
+  --color-sand-950: #161a20;
+
+  /* ── Paleta 2: Ocean (identidade / secundário) ─────────────── */
+  --color-ocean-50: #edf7f9;
+  --color-ocean-100: #d4edf1;
+  --color-ocean-200: #a9d9e2;
+  --color-ocean-300: #72bdcc;
+  --color-ocean-400: #3f9daf;
+  --color-ocean-500: #238295;
+  --color-ocean-600: #14697c;
+  --color-ocean-700: #0f5565;
+  --color-ocean-800: #10424e;
+  --color-ocean-900: #103640;
+  --color-ocean-950: #07222a;
+
+  /* ── Paleta 3: Coral (ação / energia) ──────────────────────── */
+  --color-coral-50: #fdf1ed;
+  --color-coral-100: #fae0d6;
+  --color-coral-200: #f4beac;
+  --color-coral-300: #ec967c;
+  --color-coral-400: #e47152;
+  --color-coral-500: #d84f2e;
+  --color-coral-600: #d6451f;
+  --color-coral-700: #b13a18;
+  --color-coral-800: #8f3217;
+  --color-coral-900: #752d17;
+  --color-coral-950: #401507;
+
+  /* ── Paleta 4: Leaf (sucesso) ──────────────────────────────── */
+  --color-leaf-50: #f0faf2;
+  --color-leaf-100: #dbf3e0;
+  --color-leaf-200: #b9e7c5;
+  --color-leaf-300: #8ad5a0;
+  --color-leaf-400: #58bd79;
+  --color-leaf-500: #35a15a;
+  --color-leaf-600: #268246;
+  --color-leaf-700: #1f683b;
+  --color-leaf-800: #1d5331;
+  --color-leaf-900: #19442a;
+  --color-leaf-950: #0b2516;
+
+  /* ── Paleta 5: Mango (conquista / ouro) ────────────────────── */
+  --color-mango-50: #fdf8e8;
+  --color-mango-100: #fbeec4;
+  --color-mango-200: #f8db8a;
+  --color-mango-300: #f4c14e;
+  --color-mango-400: #f0a922;
+  --color-mango-500: #e08f0b;
+  --color-mango-600: #c17104;
+  --color-mango-700: #9a5207;
+  --color-mango-800: #7e410e;
+  --color-mango-900: #69360f;
+  --color-mango-950: #3c1b05;
+
+  /* ── Paleta 6: Tomato (erro / perigo) ──────────────────────── */
+  --color-tomato-50: #fdeeee;
+  --color-tomato-100: #fadada;
+  --color-tomato-200: #f5baba;
+  --color-tomato-300: #ec8d8d;
+  --color-tomato-400: #df5e5e;
+  --color-tomato-500: #cf3d3d;
+  --color-tomato-600: #b92d2d;
+  --color-tomato-700: #9b2424;
+  --color-tomato-800: #812323;
+  --color-tomato-900: #6e2323;
+
+  /* ── Tipografia ──────────────────────────────────────────────
+     Baloo 2: redonda, expressiva — cara de game show.
+     Inter para leitura longa, JetBrains Mono para números/PIN. */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
-  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Baloo 2", "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  /* Refined type scale */
-  --text-xs: 0.75rem;
-  --text-xs--line-height: 1rem;
-  --text-sm: 0.8125rem;
-  --text-sm--line-height: 1.25rem;
-  --text-base: 0.9375rem;
-  --text-base--line-height: 1.5rem;
-  --text-lg: 1.0625rem;
-  --text-lg--line-height: 1.625rem;
-  --text-xl: 1.25rem;
-  --text-xl--line-height: 1.75rem;
-  --text-2xl: 1.5rem;
-  --text-2xl--line-height: 2rem;
-  --text-3xl: 1.875rem;
-  --text-3xl--line-height: 2.25rem;
+  /* Escala GEOGUESSR — generosa, legível para baixa visão.
+     Corpo mínimo 16px; captions 13px; títulos enormes. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 1rem;
+  --text-sm--line-height: 1.5rem;
+  --text-base: 1.125rem;
+  --text-base--line-height: 1.75rem;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.875rem;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-2xl: 1.875rem;
+  --text-2xl--line-height: 2.375rem;
+  --text-3xl: 2.375rem;
+  --text-3xl--line-height: 2.875rem;
 
-  /* Refined spacing scale for medium density */
+  /* Escala de palco (jogo / momentos de destaque) */
+  --text-hero: clamp(3rem, 9vw, 5.5rem);
+  --text-hero--line-height: 1;
+  --text-stage: clamp(2rem, 6vw, 3.5rem);
+  --text-stage--line-height: 1.1;
+
+  /* ── Espaçamento ───────────────────────────────────────────── */
   --spacing-section: 2rem;
   --spacing-card-pad: 1.25rem;
 
-  /* Custom animations */
-  --animate-fade-in: fade-in 200ms ease-out;
-  --animate-slide-up: slide-up 250ms ease-out;
-  --animate-pulse-glow: pulse-glow 3s ease-in-out infinite;
-  --animate-spin-slow: spin 3s linear infinite;
-
-  /* Border radius */
+  /* ── Raios ───────────────────────────────────────────────────
+     Cartolina cortada à tesoura: três cantos redondos, um vivo. */
   --radius-sm: 0.375rem;
   --radius-md: 0.5rem;
   --radius-lg: 0.75rem;
   --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-organic: 2rem 2rem 0.5rem 2rem; /* canto de tesoura — feature cards */
+
+  /* ── Sombras — duras, deslocadas, sem blur, PRETAS.
+     Preto funciona nos dois modos (hub claro e gameplay escuro). ── */
+  --shadow-soft: 2px 2px 0 rgb(0 0 0);
+  --shadow-lift: 4px 4px 0 rgb(0 0 0);
+  --shadow-glow: 3px 3px 0 rgb(0 0 0);
+
+  /* ── Animações ─────────────────────────────────────────────── */
+  --animate-fade-in: fade-in 200ms ease-out;
+  --animate-slide-up: slide-up 250ms ease-out;
+  --animate-spin-slow: spin 3s linear infinite;
+  --animate-pulse-soft: pulse-soft 3s ease-in-out infinite;
+  --animate-pulse-glow: pulse-soft 3s ease-in-out infinite; /* ponytail: alias de migração do host PIN; remover quando migrado */
+  --animate-rise: rise 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-pop: pop 350ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-blob: blob 14s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-wiggle: wiggle 400ms ease-in-out infinite;
+
+  /* ── Keyframes ─────────────────────────────────────────────── */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes pulse-soft {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgb(214 69 31 / 0.25);
+    }
+    50% {
+      box-shadow: 0 0 0 8px rgb(214 69 31 / 0);
+    }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      transform: scale(0.85);
+    }
+    60% {
+      transform: scale(1.06);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @keyframes blob {
+    0%,
+    100% {
+      border-radius: 60% 40% 55% 45% / 55% 45% 60% 40%;
+      transform: translate(0, 0) rotate(0deg);
+    }
+    33% {
+      border-radius: 45% 55% 40% 60% / 60% 40% 55% 45%;
+      transform: translate(12px, -18px) rotate(8deg);
+    }
+    66% {
+      border-radius: 55% 45% 60% 40% / 45% 60% 40% 55%;
+      transform: translate(-10px, 12px) rotate(-6deg);
+    }
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(-1deg);
+    }
+    50% {
+      transform: rotate(1deg);
+    }
+  }
 }
 
-/* ── Keyframes ── */
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* ── Tokens semânticos ─────────────────────────────────────────
+   @theme inline: resolução em build → utilitários usam o valor
+   direto, então bg-primary/50 (opacity) funciona.
+   Uso nos componentes SEMPRE via estes nomes de papel. */
+@theme inline {
+  --color-surface: var(--color-sand-50);
+  --color-surface-raised: #ffffff;
+  --color-ink: var(--color-sand-950);
+  --color-ink-soft: var(--color-sand-700);
+  --color-ink-faint: var(--color-sand-500);
+  --color-line: var(--color-sand-200);
+
+  --color-primary: var(--color-coral-600);
+  --color-primary-hover: var(--color-coral-700);
+  --color-primary-soft: var(--color-coral-100);
+  --color-secondary: var(--color-ocean-600);
+  --color-success: var(--color-leaf-600);
+  --color-warning: var(--color-mango-500);
+  --color-danger: var(--color-tomato-600);
+
+  /* Alternativas de resposta — cores do jogo.
+     -500 não rende contraste com branco (leaf 3.3:1, mango 2.6:1),
+     então A/B usam -500 e C/D usam -600 (≥3:1 em texto grande). */
+  --color-answer-a: var(--color-coral-500);
+  --color-answer-b: var(--color-ocean-500);
+  --color-answer-c: var(--color-leaf-600);
+  --color-answer-d: var(--color-mango-600);
 }
 
-@keyframes slide-up {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(124, 58, 237, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 0 8px rgba(124, 58, 237, 0);
-  }
-}
-
-/* ── Base layer ── */
+/* ── Base layer ──────────────────────────────────────────────── */
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
@@ -92,10 +275,14 @@
   }
 
   body {
-    @apply bg-slate-50 text-slate-800 font-sans;
+    @apply bg-surface text-ink font-sans;
   }
 
-  /* All clickable elements get pointer cursor */
+  ::selection {
+    background: var(--color-coral-100);
+  }
+
+  /* Todos os elementos clicáveis ganham cursor pointer */
   button,
   [role="button"],
   a[href] {
@@ -106,9 +293,9 @@
     cursor: not-allowed;
   }
 
-  /* Focus ring — visible, accessible, not harsh */
+  /* Foco visível — ocean, acessível, não agressivo */
   :focus-visible {
-    @apply outline-2 outline-offset-2 outline-violet-500;
+    @apply outline-2 outline-offset-2 outline-ocean-500;
   }
 
   /* Reduce motion */
@@ -120,5 +307,15 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+}
+
+/* ── Utilitário de papel ───────────────────────────────────────
+   Textura de papel (pontos sutis de caderno). Use em seções de
+   destaque, nunca sobre áreas de leitura densa. */
+@layer utilities {
+  .paper-dots {
+    background-image: radial-gradient(var(--color-sand-400) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 }
