@@ -386,6 +386,20 @@
                   : 0}%"
               ></div>
             </div>
+
+            <!-- Todos responderam → sinaliza que pode avançar -->
+            {#if progress.total > 0 && progress.answered >= progress.total}
+              <div
+                class="mt-4 rounded-xl border-2 border-leaf-500 bg-leaf-100 px-4 py-3 flex items-center gap-3 animate-pop"
+                role="status"
+              >
+                <CheckCircle class="w-7 h-7 text-leaf-600 shrink-0" />
+                <div>
+                  <p class="text-lg font-bold text-leaf-700">Todos responderam!</p>
+                  <p class="text-sm text-leaf-700/80">Pode avançar para o placar.</p>
+                </div>
+              </div>
+            {/if}
           </div>
 
           <!-- Avançar: fecha a pergunta e mostra o placar parcial -->
