@@ -30,6 +30,8 @@ interface HostSessionState {
   presentationMode: boolean;
   isSubmitting: boolean;
   countdown: number;
+  /** Lobby já aberto (tempo configurado) — restaurado no rejoin */
+  lobbyStarted: boolean;
 }
 
 function createHostSessionStore() {
@@ -51,10 +53,15 @@ function createHostSessionStore() {
     presentationMode: false,
     isSubmitting: false,
     countdown: 0,
+    lobbyStarted: false,
   });
 
   let socket: Socket | null = null;
   let pendingQuizId: string | null = null;
+  let pendingRejoinId: string | null = null;
+  let pendingAbortId: string | null = null;
+  // Se o rejoin falhar, cria sessão nova com este quiz (recarga de página)
+  let rejoinFallbackQuizId: string | null = null;
 
   // --- Countdown timer ---
 
@@ -89,7 +96,13 @@ function createHostSessionStore() {
 
     socket.on("connect", () => {
       state.update((s) => ({ ...s, isConnected: true }));
-      if (pendingQuizId) {
+      if (pendingAbortId) {
+        socket?.emit("host:session:abort", { sessionId: pendingAbortId });
+        pendingAbortId = null;
+      } else if (pendingRejoinId) {
+        socket?.emit("host:session:rejoin", { sessionId: pendingRejoinId });
+        pendingRejoinId = null;
+      } else if (pendingQuizId) {
         socket?.emit("host:session:create", { quizId: pendingQuizId });
         pendingQuizId = null;
       }
@@ -100,6 +113,7 @@ function createHostSessionStore() {
     });
 
     socket.on("session:created", (payload: { pin: string; sessionId: string }) => {
+      localStorage.setItem("currentSessionId", payload.sessionId);
       state.update((s) => ({
         ...s,
         phase: "lobby",
@@ -112,6 +126,7 @@ function createHostSessionStore() {
       state.update((s) => ({
         ...s,
         timeLimitSeconds: payload.timeLimitSeconds,
+        lobbyStarted: true,
         isSubmitting: false,
       }));
     });
@@ -123,6 +138,68 @@ function createHostSessionStore() {
         nicknames: payload.nicknames,
       }));
     });
+
+    // Restaura estado completo ao reconectar em sessão ativa
+    socket.on(
+      "host:session:rejoined",
+      (payload: {
+        sessionId: string;
+        pin: string;
+        quizId: string;
+        status: HostPhase;
+        timeLimitSeconds: number;
+        presentationMode: boolean;
+        playerCount: number;
+        nicknames: string[];
+        currentQuestionIndex: number;
+        totalQuestions: number;
+        questionsExhausted: boolean;
+        lobbyStarted: boolean;
+        questionText: string | null;
+        questionImageUrl: string | null;
+        alternatives: { id: string; text: string; imageUrl: string | null; sortOrder: number }[];
+        progress: { answered: number; total: number };
+        rankings: LeaderboardEntry[];
+        countdown: number;
+      }) => {
+        stopCountdown();
+        rejoinFallbackQuizId = null;
+        localStorage.setItem("currentSessionId", payload.sessionId);
+        state.update((s) => ({
+          ...s,
+          phase: payload.status,
+          pin: payload.pin,
+          sessionId: payload.sessionId,
+          quizId: payload.quizId,
+          timeLimitSeconds: payload.timeLimitSeconds,
+          presentationMode: payload.presentationMode,
+          playerCount: payload.playerCount,
+          nicknames: payload.nicknames,
+          currentQuestion:
+            payload.currentQuestionIndex > 0
+              ? { index: payload.currentQuestionIndex, total: payload.totalQuestions }
+              : null,
+          currentQuestionData:
+            payload.status === "playing"
+              ? {
+                  text: payload.questionText ?? "",
+                  imageUrl: payload.questionImageUrl ?? null,
+                  timeLimit: payload.timeLimitSeconds,
+                  alternatives: payload.alternatives ?? [],
+                }
+              : null,
+          progress: payload.progress ?? { answered: 0, total: 0 },
+          leaderboard: payload.rankings ?? [],
+          questionsExhausted: payload.questionsExhausted,
+          lobbyStarted: payload.lobbyStarted,
+          isSubmitting: false,
+          error: null,
+        }));
+        if (payload.status === "playing" && payload.countdown != null) {
+          startCountdown(payload.countdown);
+        }
+      },
+    );
 
     socket.on(
       "host:question:active",
@@ -190,6 +267,7 @@ function createHostSessionStore() {
 
     socket.on("host:session:ended", (payload: { sessionId: string; playerCount: number }) => {
       stopCountdown();
+      localStorage.removeItem("currentSessionId");
       state.update((s) => ({
         ...s,
         phase: "ended",
@@ -199,7 +277,14 @@ function createHostSessionStore() {
     });
 
     socket.on("error", (payload: { message: string }) => {
-      state.update((s) => ({ ...s, error: payload.message }));
+      // Rejoin falhou (sessão encerrada/expirou) → cai no fluxo de criar sessão nova
+      if (rejoinFallbackQuizId) {
+        const fallbackQuizId = rejoinFallbackQuizId;
+        rejoinFallbackQuizId = null;
+        createSession(fallbackQuizId);
+        return;
+      }
+      state.update((s) => ({ ...s, error: payload.message, isSubmitting: false }));
     });
   }
 
@@ -233,12 +318,42 @@ function createHostSessionStore() {
       questionsExhausted: false,
       presentationMode: false,
       countdown: 0,
+      lobbyStarted: false,
     }));
 
     if (socket?.connected) {
       socket.emit("host:session:create", { quizId });
     } else {
       pendingQuizId = quizId;
+    }
+  }
+
+  function abortSession(sessionId: string) {
+    if (!sessionId) return;
+    if (socket?.connected) {
+      socket.emit("host:session:abort", { sessionId });
+    } else {
+      pendingAbortId = sessionId;
+      connect();
+    }
+  }
+
+  function rejoinSession(sessionId: string, fallbackQuizId?: string) {
+    if (!sessionId) return;
+    rejoinFallbackQuizId = fallbackQuizId ?? null;
+    localStorage.setItem("currentSessionId", sessionId);
+    state.update((s) => ({
+      ...s,
+      sessionId,
+      quizId: fallbackQuizId ?? s.quizId,
+      error: null,
+      isSubmitting: false,
+    }));
+    if (socket?.connected) {
+      socket.emit("host:session:rejoin", { sessionId });
+    } else {
+      pendingRejoinId = sessionId;
+      connect();
     }
   }
 
@@ -272,6 +387,7 @@ function createHostSessionStore() {
   function reset() {
     disconnect();
     localStorage.removeItem("currentQuizId");
+    localStorage.removeItem("currentSessionId");
     state.set({
       phase: "idle",
       pin: null,
@@ -290,6 +406,7 @@ function createHostSessionStore() {
       presentationMode: false,
       isSubmitting: false,
       countdown: 0,
+      lobbyStarted: false,
     });
   }
 
@@ -312,10 +429,13 @@ function createHostSessionStore() {
     presentationMode: derived(state, ($s) => $s.presentationMode),
     isSubmitting: derived(state, ($s) => $s.isSubmitting),
     countdown: derived(state, ($s) => $s.countdown),
+    lobbyStarted: derived(state, ($s) => $s.lobbyStarted),
 
     connect,
     disconnect,
     createSession,
+    rejoinSession,
+    abortSession,
     startSession,
     setPresentationMode,
     advance,

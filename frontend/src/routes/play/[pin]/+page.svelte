@@ -27,6 +27,7 @@
     leaderboard: "Placar",
     drumroll: "Rufem os tambores",
     ended: "Fim de jogo",
+    aborted: "Encerrada",
   };
 
   let pin = $derived($page.params.pin ?? "");
@@ -398,6 +399,29 @@
             </div>
           {/each}
         </div>
+      </div>
+
+      <!-- ── Phase: Aborted (host encerrou) ── -->
+    {:else if phase === "aborted"}
+      <div class="flex-1 flex flex-col items-center justify-center text-center">
+        <div
+          class="w-28 h-28 rounded-full border-[3px] border-ink shadow-lift flex items-center justify-center text-6xl mb-5 bg-tomato-100 text-tomato-600 animate-pop"
+        >
+          ✕
+        </div>
+        <h2 class="font-display text-4xl font-extrabold mb-2 text-tomato-600">
+          O Host encerrou a sessão
+        </h2>
+        <p class="text-lg text-ink-faint mb-8">
+          Obrigado por jogar! Volte em breve para uma nova partida
+        </p>
+        <button
+          onclick={handleLeave}
+          class="px-8 py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
+            shadow-lift hover:bg-primary-hover active:bg-coral-800 active:translate-y-[3px] active:shadow-none transition-all"
+        >
+          Sair
+        </button>
       </div>
 
       <!-- ── Phase: Ended ── -->

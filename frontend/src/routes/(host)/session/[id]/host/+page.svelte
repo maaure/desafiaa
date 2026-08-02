@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ArrowLeft, CheckCircle, Projector, Trophy, Users, X } from "@lucide/svelte";
+  import { ArrowLeft, CheckCircle, Power, Projector, Trophy, Users, X } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
@@ -34,7 +34,10 @@
   let isSubmitting = $state(get(hostSession.isSubmitting));
 
   let selectedTimeLimit = $state(30);
-  let sessionStarted = $state(false);
+  let lobbyStarted = $state(get(hostSession.lobbyStarted));
+  // Dupla confirmação do encerramento — armado por alguns segundos
+  let confirmAbort = $state(false);
+  let abortTimer: ReturnType<typeof setTimeout> | null = null;
 
   const TIME_PRESETS = [
     { label: "15s", value: 15 },
@@ -73,13 +76,20 @@
       hostSession.questionsExhausted.subscribe((v) => (questionsExhausted = v)),
       hostSession.presentationMode.subscribe((v) => (presentationMode = v)),
       hostSession.isSubmitting.subscribe((v) => (isSubmitting = v)),
+      hostSession.lobbyStarted.subscribe((v) => (lobbyStarted = v)),
     ];
 
     hostSession.connect();
 
-    // Only create a session if we don't already have one (e.g. after page refresh)
-    if (phase === "idle" && quizId) {
-      hostSession.createSession(quizId);
+    // Após refresh: reconecta na sessão ativa em vez de criar outra; sem sessão salva, cria nova
+    if (phase === "idle") {
+      const storedSessionId =
+        typeof localStorage !== "undefined" ? localStorage.getItem("currentSessionId") : null;
+      if (storedSessionId) {
+        hostSession.rejoinSession(storedSessionId, quizId ?? undefined);
+      } else if (quizId) {
+        hostSession.createSession(quizId);
+      }
     }
 
     return () => {
@@ -90,7 +100,6 @@
 
   function handleOpenRoom() {
     hostSession.startSession(selectedTimeLimit);
-    sessionStarted = true;
   }
   function handleTogglePresentationMode() {
     hostSession.setPresentationMode(!presentationMode);
@@ -100,6 +109,16 @@
   }
   function handleEndSession() {
     hostSession.endSession();
+  }
+  function handleAbortSession() {
+    if (!confirmAbort) {
+      confirmAbort = true;
+      abortTimer = setTimeout(() => (confirmAbort = false), 5000);
+      return;
+    }
+    if (abortTimer) clearTimeout(abortTimer);
+    confirmAbort = false;
+    hostSession.abortSession(get(hostSession.sessionId) ?? "");
   }
   function handleBackToDashboard() {
     hostSession.reset();
@@ -125,14 +144,14 @@
   <!-- ══ HUD — sempre visível: fase · PIN · jogadores · timer · conexão ══ -->
   <header class="sticky top-0 z-40 bg-surface-raised border-b-2 border-ink shrink-0">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3 sm:gap-5">
-      <a
-        href={resolve("/dashboard")}
+      <button
+        onclick={handleBackToDashboard}
         class="inline-flex items-center gap-1.5 text-base font-semibold text-ink-faint hover:text-ink transition-colors"
         title="Voltar ao Dashboard"
       >
         <ArrowLeft class="w-5 h-5" />
         <span class="hidden sm:inline">Sair</span>
-      </a>
+      </button>
 
       <div class="flex-1 flex items-center gap-3 sm:gap-5 min-w-0">
         <!-- Fase atual -->
@@ -194,6 +213,24 @@
           {isConnected ? "Conectado" : "Desconectado"}
         </span>
       </span>
+
+      <!-- Encerrar sessão (dupla confirmação) -->
+      {#if phase !== "idle" && phase !== "ended"}
+        <button
+          onclick={handleAbortSession}
+          class="inline-flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-lg border-2 border-ink text-sm font-bold
+            shadow-soft transition-all active:translate-y-[2px] active:shadow-none
+            {confirmAbort
+            ? 'bg-tomato-600 text-white animate-pulse-soft'
+            : 'bg-surface-raised text-danger hover:bg-tomato-50'}"
+          title={confirmAbort
+            ? "Clique novamente para confirmar o encerramento"
+            : "Encerrar sessão"}
+        >
+          <Power class="w-4 h-4" />
+          {confirmAbort ? "Confirmar encerrar?" : "Encerrar"}
+        </button>
+      {/if}
     </div>
   </header>
 
@@ -248,7 +285,7 @@
           {/if}
 
           <!-- Timer config (before opening room) -->
-          {#if !sessionStarted}
+          {#if !lobbyStarted}
             <div class="bg-surface-raised rounded-2xl border-2 border-ink shadow-lift p-6 sm:p-8">
               <p class="text-xl font-bold text-ink mb-4">Tempo por pergunta</p>
               <div class="grid grid-cols-4 gap-2 mb-6">

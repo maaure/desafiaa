@@ -7,6 +7,20 @@ import { db, schema } from "../../db";
 import { and, eq, asc } from "drizzle-orm";
 import { leaderboardService } from "../gameplay/leaderboard.service";
 
+/** Limpa o estado de runtime da sessão no Redis (fim normal ou aborto) */
+async function clearSessionRedis(pin: string) {
+  const playerSockets = await redis.smembers(keys.sessionPlayers(pin));
+  const pipeline = redis.pipeline();
+  pipeline.del(keys.sessionStatus(pin));
+  pipeline.del(keys.sessionConfig(pin));
+  pipeline.del(keys.sessionScores(pin));
+  pipeline.del(keys.sessionPlayers(pin));
+  for (const sid of playerSockets) {
+    pipeline.del(keys.sessionPlayer(pin, sid));
+  }
+  await pipeline.exec();
+}
+
 export function registerHostGateway(io: Namespace) {
   io.use(async (socket, next) => {
     try {
@@ -46,10 +60,116 @@ export function registerHostGateway(io: Namespace) {
       }
     });
 
+    // Reconexão do host em sessão ativa (após recarregar a página ou pela lista de sessões)
+    socket.on("host:session:rejoin", async ({ sessionId }: { sessionId: string }) => {
+      if (!sessionId) return;
+      const session = await db.query.gameSessions.findFirst({
+        where: and(
+          eq(schema.gameSessions.id, sessionId),
+          eq(schema.gameSessions.hostId, socket.data.userId),
+        ),
+        with: { quiz: true },
+      });
+      if (!session) {
+        socket.emit("error", { message: "Sessão não encontrada" });
+        return;
+      }
+
+      const pin = session.pin;
+      const status = await redis.get(keys.sessionStatus(pin));
+      if (!status || status === "finished") {
+        socket.emit("error", { message: "Sessão encerrada ou expirada" });
+        return;
+      }
+
+      currentPin = pin;
+      socket.join(`session:${pin}`);
+      const config = await redis.hgetall(keys.sessionConfig(pin));
+      const quizId = config.quiz_id ?? session.quizId;
+      const currentIndex = parseInt(config.current_question_index ?? "0", 10);
+      const timeLimitSeconds = parseInt(config.time_limit_seconds ?? "30", 10);
+      const presentationMode = config.presentation_mode === "1";
+      const total = await db.$count(schema.questions, eq(schema.questions.quizId, quizId));
+
+      const members = await redis.smembers(keys.sessionPlayers(pin));
+      const nicknames: string[] = [];
+      for (const sid of members) {
+        const p = await redis.hgetall(keys.sessionPlayer(pin, sid));
+        nicknames.push(p.nickname ?? "?");
+      }
+
+      const payload: Record<string, unknown> = {
+        sessionId: session.id,
+        pin,
+        quizId,
+        status,
+        timeLimitSeconds,
+        presentationMode,
+        playerCount: members.length,
+        nicknames,
+        currentQuestionIndex: currentIndex,
+        totalQuestions: total,
+        questionsExhausted: status === "leaderboard" && currentIndex >= total,
+        lobbyStarted: config.started === "1",
+      };
+
+      if (status === "playing") {
+        // Restaura pergunta ativa, progresso e countdown
+        const question = await db.query.questions.findFirst({
+          where: eq(schema.questions.quizId, quizId),
+          orderBy: [asc(schema.questions.sortOrder)],
+          offset: currentIndex - 1,
+          with: { alternatives: { orderBy: asc(schema.alternatives.sortOrder) } },
+        });
+        if (question) {
+          payload.questionText = question.text;
+          payload.questionImageUrl = question.imageUrl ?? null;
+          payload.alternatives = question.alternatives.map((a) => ({
+            id: a.id,
+            text: a.text,
+            imageUrl: a.imageUrl ?? null,
+            sortOrder: a.sortOrder,
+          }));
+        }
+        const answered = await redis.hlen(keys.questionAnswers(pin, currentIndex));
+        payload.progress = { answered, total: members.length };
+
+        const revealedTs = await redis.get(keys.questionRevealed(pin, currentIndex));
+        const remainingMs = revealedTs
+          ? Math.max(0, parseInt(revealedTs, 10) + timeLimitSeconds * 1000 - Date.now())
+          : timeLimitSeconds * 1000;
+        payload.countdown = Math.ceil(remainingMs / 1000);
+
+        // O timer de timeout morreu com o socket antigo — re-arma o que falta
+        if (questionTimeout) clearTimeout(questionTimeout);
+        questionTimeout = setTimeout(async () => {
+          const st = await redis.get(keys.sessionStatus(pin));
+          if (st !== "playing") return;
+          const correctAlt = question?.alternatives.find((a) => a.isCorrect);
+          io.server
+            .of("/play")
+            .to(`session:${pin}`)
+            .emit("game:question:timeout", {
+              correctAnswer: presentationMode ? "" : (correctAlt?.text ?? "?"),
+            });
+        }, remainingMs);
+      } else if (status === "leaderboard" || status === "drumroll") {
+        payload.rankings = await leaderboardService.getTop(pin);
+      }
+
+      socket.emit("host:session:rejoined", payload);
+    });
+
     socket.on("host:session:start", async ({ timeLimitSeconds }: { timeLimitSeconds: number }) => {
       if (!currentPin) return;
       const limit = Math.min(300, Math.max(5, timeLimitSeconds ?? 30));
-      await redis.hset(keys.sessionConfig(currentPin), "time_limit_seconds", String(limit));
+      await redis.hset(
+        keys.sessionConfig(currentPin),
+        "time_limit_seconds",
+        String(limit),
+        "started",
+        "1",
+      );
 
       // Atualiza PG (only timeLimitSeconds; status is already "lobby")
       const sessionId = await redis.get(keys.pinLookup(currentPin));
@@ -301,16 +421,50 @@ export function registerHostGateway(io: Namespace) {
       });
 
       // Limpa Redis
-      const playerSockets = await redis.smembers(keys.sessionPlayers(currentPin));
-      const pipeline = redis.pipeline();
-      pipeline.del(keys.sessionStatus(currentPin));
-      pipeline.del(keys.sessionConfig(currentPin));
-      pipeline.del(keys.sessionScores(currentPin));
-      pipeline.del(keys.sessionPlayers(currentPin));
-      for (const sid of playerSockets) {
-        pipeline.del(keys.sessionPlayer(currentPin, sid));
+      await clearSessionRedis(currentPin);
+    });
+
+    // Aborto: encerra a sessão sem persistir resultados — jogadores veem "O Host encerrou a sessão"
+    socket.on("host:session:abort", async ({ sessionId }: { sessionId: string }) => {
+      if (!sessionId) return;
+      const session = await db.query.gameSessions.findFirst({
+        where: and(
+          eq(schema.gameSessions.id, sessionId),
+          eq(schema.gameSessions.hostId, socket.data.userId),
+        ),
+      });
+      if (!session) {
+        socket.emit("error", { message: "Sessão não encontrada" });
+        return;
       }
-      await pipeline.exec();
+
+      const pin = session.pin;
+      const status = await redis.get(keys.sessionStatus(pin));
+      if (!status || status === "finished") {
+        socket.emit("error", { message: "Sessão já encerrada" });
+        return;
+      }
+
+      if (currentPin === pin && questionTimeout) {
+        clearTimeout(questionTimeout);
+        questionTimeout = null;
+      }
+
+      const playerCount = await redis.scard(keys.sessionPlayers(pin));
+      await redis.set(keys.sessionStatus(pin), "finished");
+      await db
+        .update(schema.gameSessions)
+        .set({ status: "finished", finishedAt: new Date(), playerCount })
+        .where(eq(schema.gameSessions.id, session.id));
+
+      // Jogadores conectados são derrubados e vão para a tela de encerramento
+      io.server.of("/play").to(`session:${pin}`).emit("game:aborted");
+
+      if (currentPin === pin) {
+        socket.emit("host:session:ended", { sessionId: session.id, playerCount });
+      }
+
+      await clearSessionRedis(pin);
     });
 
     socket.on("disconnect", () => {

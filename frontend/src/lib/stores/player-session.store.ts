@@ -5,7 +5,7 @@ import { setLeaderboard, resetLeaderboard } from "$lib/stores/leaderboard.store"
 import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
 
 export type PlayerPhase =
-  "join" | "lobby" | "question" | "feedback" | "leaderboard" | "drumroll" | "ended";
+  "join" | "lobby" | "question" | "feedback" | "leaderboard" | "drumroll" | "ended" | "aborted";
 
 interface QuestionData {
   questionIndex: number;
@@ -213,6 +213,14 @@ function createPlayerSessionStore() {
           ? s.lastResult
           : { isCorrect: false, pointsEarned: 0, totalScore: s.totalScore },
       }));
+    });
+
+    socket.on("game:aborted", () => {
+      stopCountdown();
+      clearSession();
+      state.update((s) => ({ ...s, phase: "aborted" }));
+      // Host encerrou — derruba a conexão; a tela de aviso permanece
+      disconnect();
     });
 
     socket.on("game:drumroll", () => {

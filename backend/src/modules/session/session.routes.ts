@@ -5,6 +5,17 @@ import { authenticate } from "../../middleware/auth";
 import { zSchema } from "../../lib/swagger";
 
 export async function sessionRoutes(app: FastifyInstance) {
+  app.get(
+    "/api/sessions",
+    {
+      onRequest: authenticate,
+      schema: { tags: ["sessions"] },
+    },
+    async (request) => {
+      return sessionService.listActive((request as any).userId);
+    },
+  );
+
   app.post(
     "/api/sessions",
     {

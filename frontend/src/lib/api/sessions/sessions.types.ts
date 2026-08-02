@@ -11,6 +11,16 @@ export interface GameSession {
   timeLimitSeconds: number;
 }
 
+export interface ActiveSession {
+  id: string;
+  pin: string;
+  quizTitle: string;
+  status: SessionStatus;
+  playerCount: number;
+  timeLimitSeconds: number;
+  createdAt: string;
+}
+
 export interface LeaderboardEntry {
   nickname: string;
   score: number;

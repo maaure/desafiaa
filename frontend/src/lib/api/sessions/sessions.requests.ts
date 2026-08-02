@@ -1,4 +1,5 @@
 import { api } from "$lib/api/client";
+import type { ActiveSession } from "./sessions.types";
 
 export const sessionRequests = {
   create: (quizId: string) =>
@@ -9,6 +10,8 @@ export const sessionRequests = {
       status: string;
       timeLimitSeconds: number;
     }>("/api/sessions", { quizId }),
+
+  listActive: () => api.get<ActiveSession[]>("/api/sessions"),
 
   getById: (id: string) =>
     api.get<{

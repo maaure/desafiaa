@@ -56,6 +56,19 @@ export const sessionService = {
     return session;
   },
 
+  async listActive(hostId: string) {
+    const sessions = await sessionRepo.listActiveByHost(hostId);
+    return sessions.map((s) => ({
+      id: s.id,
+      pin: s.pin,
+      quizTitle: s.quiz.title,
+      status: s.status,
+      playerCount: s.playerCount,
+      timeLimitSeconds: s.timeLimitSeconds,
+      createdAt: s.createdAt,
+    }));
+  },
+
   async verifyPin(pin: string): Promise<PinInfo> {
     const sessionId = await sessionRepo.getSessionIdByPin(pin);
     if (!sessionId) throw new NotFoundError("Sessão");

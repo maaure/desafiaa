@@ -107,6 +107,37 @@ export interface HostSessionEndedPayload {
   playerCount: number;
 }
 
+export interface HostSessionRejoinedPayload {
+  sessionId: string;
+  pin: string;
+  quizId: string;
+  status: "lobby" | "playing" | "leaderboard" | "drumroll";
+  timeLimitSeconds: number;
+  presentationMode: boolean;
+  playerCount: number;
+  nicknames: string[];
+  currentQuestionIndex: number;
+  totalQuestions: number;
+  questionsExhausted: boolean;
+  lobbyStarted: boolean;
+  questionText: string | null;
+  questionImageUrl: string | null;
+  alternatives: {
+    id: string;
+    text: string;
+    imageUrl: string | null;
+    sortOrder: number;
+  }[];
+  progress: { answered: number; total: number };
+  rankings: {
+    nickname: string;
+    score: number;
+    rank: number;
+    correctCount: number;
+  }[];
+  countdown: number;
+}
+
 // ── Event name map for typed listeners ──
 
 export interface ServerToClientEvents {
@@ -137,6 +168,9 @@ export interface ServerToClientEvents {
   /** Drumroll before final leaderboard */
   "game:drumroll": () => void;
 
+  /** Host aborted the session — players are kicked to the aborted screen */
+  "game:aborted": () => void;
+
   /** Leaderboard snapshot broadcast */
   "game:leaderboard:show": (payload: GameLeaderboardShowPayload) => void;
 
@@ -160,6 +194,9 @@ export interface ServerToClientEvents {
 
   /** Host-only: session finished, final screen */
   "host:session:ended": (payload: HostSessionEndedPayload) => void;
+
+  /** Host-only: rejoin restored full session state */
+  "host:session:rejoined": (payload: HostSessionRejoinedPayload) => void;
 }
 
 export interface ClientToServerEvents {
@@ -171,6 +208,12 @@ export interface ClientToServerEvents {
 
   /** Host creates a new session */
   "host:session:create": (payload: HostSessionCreatePayload) => void;
+
+  /** Host rejoins an active session */
+  "host:session:rejoin": (payload: { sessionId: string }) => void;
+
+  /** Host aborts an active session (players kicked) */
+  "host:session:abort": (payload: { sessionId: string }) => void;
 
   /** Host starts the session */
   "host:session:start": (payload: HostSessionStartPayload) => void;

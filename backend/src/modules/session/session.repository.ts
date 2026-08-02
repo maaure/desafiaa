@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, gt, ne } from "drizzle-orm";
 import { db, schema } from "../../db";
 import { redis } from "../../redis/client";
 import { keys } from "../../redis/keys";
@@ -29,6 +29,20 @@ export const sessionRepo = {
     return db.query.gameSessions.findFirst({
       where: eq(schema.gameSessions.id, sessionId),
       with: { quiz: true },
+    });
+  },
+
+  /** Sessões do host ainda não finalizadas (janela de 24h, igual ao TTL do pinLookup no Redis) */
+  async listActiveByHost(hostId: string) {
+    const since = new Date(Date.now() - 24 * 3600 * 1000);
+    return db.query.gameSessions.findMany({
+      where: and(
+        eq(schema.gameSessions.hostId, hostId),
+        ne(schema.gameSessions.status, "finished"),
+        gt(schema.gameSessions.createdAt, since),
+      ),
+      with: { quiz: true },
+      orderBy: (s, { desc }) => [desc(s.createdAt)],
     });
   },
 
