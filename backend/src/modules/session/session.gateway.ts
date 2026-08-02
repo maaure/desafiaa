@@ -294,6 +294,12 @@ export function registerHostGateway(io: Namespace) {
         totalPlayers: rankings.length,
       });
 
+      // Host também precisa sair da tela de placar final
+      socket.emit("host:session:ended", {
+        sessionId,
+        playerCount: rankings.length,
+      });
+
       // Limpa Redis
       const playerSockets = await redis.smembers(keys.sessionPlayers(currentPin));
       const pipeline = redis.pipeline();

@@ -188,19 +188,15 @@ function createHostSessionStore() {
       }));
     });
 
-    socket.on(
-      "game:ended",
-      (payload: { finalRankings: LeaderboardEntry[]; totalPlayers: number }) => {
-        stopCountdown();
-        state.update((s) => ({
-          ...s,
-          phase: "ended",
-          leaderboard: payload.finalRankings,
-          playerCount: payload.totalPlayers,
-          isSubmitting: false,
-        }));
-      },
-    );
+    socket.on("host:session:ended", (payload: { sessionId: string; playerCount: number }) => {
+      stopCountdown();
+      state.update((s) => ({
+        ...s,
+        phase: "ended",
+        playerCount: payload.playerCount,
+        isSubmitting: false,
+      }));
+    });
 
     socket.on("error", (payload: { message: string }) => {
       state.update((s) => ({ ...s, error: payload.message }));

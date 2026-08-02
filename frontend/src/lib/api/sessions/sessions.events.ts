@@ -102,6 +102,11 @@ export interface GameEndedPayload {
   totalPlayers: number;
 }
 
+export interface HostSessionEndedPayload {
+  sessionId: string;
+  playerCount: number;
+}
+
 // ── Event name map for typed listeners ──
 
 export interface ServerToClientEvents {
@@ -152,6 +157,9 @@ export interface ServerToClientEvents {
 
   /** Host-only: all questions answered, final leaderboard */
   "host:questions:exhausted": (payload: GameLeaderboardShowPayload) => void;
+
+  /** Host-only: session finished, final screen */
+  "host:session:ended": (payload: HostSessionEndedPayload) => void;
 }
 
 export interface ClientToServerEvents {
