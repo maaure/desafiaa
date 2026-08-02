@@ -6,20 +6,30 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
+  import { useQuiz } from "$lib/api/quizzes/quizzes.queries";
+  import { useSaveQuiz } from "$lib/api/quizzes/quizzes.mutations";
+  import { validateQuiz } from "$lib/api/quizzes/quizzes.utils";
   import QuestionEditor from "$lib/components/quiz/QuestionEditor.svelte";
   import type { Quiz } from "$lib/api/quizzes/quizzes.types";
 
   let quizId = $page.params.id;
   let quiz = $state<Quiz | null>(get(quizEditor));
-  let errors = $state<Record<string, string>>({});
-  let isSaving = $state(false);
+  let validationErrors = $state<Record<string, string>>({});
   let isLoading = $state(true);
   let saveSuccess = $state(false);
 
+  // Query alimenta o draft do editor (estado local); o save é mutation composta
+  const quizQuery = useQuiz(quizId && quizId !== "new" ? quizId : "");
+  const saveQuiz = useSaveQuiz();
+
+  let isSaving = $derived(saveQuiz.isPending);
+  let errors = $derived.by(() => {
+    const saveError = saveQuiz.error?.message;
+    return saveError ? { ...validationErrors, save: saveError } : validationErrors;
+  });
+
   onMount(() => {
-    const unsub1 = quizEditor.subscribe((v) => (quiz = v));
-    const unsub2 = quizEditor.errors.subscribe((v) => (errors = v));
-    const unsub3 = quizEditor.isSaving.subscribe((v) => (isSaving = v));
+    const unsub = quizEditor.subscribe((v) => (quiz = v));
 
     if (quizId === "new") {
       if (!get(quizEditor)) {
@@ -27,30 +37,35 @@
         return;
       }
       isLoading = false;
-    } else {
-      quizEditor.load(quizId!).then(() => {
-        isLoading = false;
-      });
     }
 
-    return () => {
-      unsub1();
-      unsub2();
-      unsub3();
-    };
+    return () => unsub();
+  });
+
+  $effect(() => {
+    if (quizQuery.data) {
+      quizEditor.setQuiz(quizQuery.data);
+      isLoading = false;
+    } else if (quizQuery.isError) {
+      isLoading = false;
+    }
   });
 
   async function handleSave() {
+    const draft = get(quizEditor);
+    if (!draft) return;
+    const ve = validateQuiz(draft);
+    if (Object.keys(ve).length > 0) {
+      validationErrors = ve;
+      return;
+    }
+    validationErrors = {};
     saveSuccess = false;
-    const ok = await quizEditor.save();
-    if (ok) {
-      saveSuccess = true;
-      if (quizId === "new") {
-        const saved = get(quizEditor);
-        if (saved && saved.id) {
-          goto(resolve(`/quiz/${saved.id}/edit`));
-        }
-      }
+    const saved = await saveQuiz.mutateAsync(draft);
+    quizEditor.setQuiz(saved);
+    saveSuccess = true;
+    if (quizId === "new" && saved.id) {
+      goto(resolve(`/quiz/${saved.id}/edit`));
     }
   }
 

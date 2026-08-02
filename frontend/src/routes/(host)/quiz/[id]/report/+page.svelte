@@ -1,35 +1,22 @@
 <script lang="ts">
   import { ArrowLeft, BarChart3 } from "@lucide/svelte";
-  import { onMount } from "svelte";
-  import { get } from "svelte/store";
   import { page } from "$app/stores";
   import { resolve } from "$app/paths";
-  import { report } from "$lib/stores/report.store";
+  import { useQuizReport, useQuizSessions } from "$lib/api/reports/reports.queries";
   import { formatMs, statusLabel, formatDate, accuracyColor } from "$lib/api/reports/reports.utils";
   import type { QuizReportItem, SessionSummary } from "$lib/api/reports/reports.types";
 
   let quizId = $page.params.id;
 
-  let reportItems = $state<QuizReportItem[]>(get(report.quizReport));
-  let sessions = $state<SessionSummary[]>(get(report.sessions));
-  let loading = $state(get(report.loading));
-  let storeError = $state<string | null>(get(report.error));
+  const reportQuery = useQuizReport(quizId ?? "");
+  const sessionsQuery = useQuizSessions(quizId ?? "");
 
-  onMount(() => {
-    if (quizId) {
-      report.loadQuizReport(quizId);
-    }
-    const unsub1 = report.quizReport.subscribe((v) => (reportItems = v));
-    const unsub2 = report.sessions.subscribe((v) => (sessions = v));
-    const unsub3 = report.loading.subscribe((v) => (loading = v));
-    const unsub4 = report.error.subscribe((v) => (storeError = v));
-    return () => {
-      unsub1();
-      unsub2();
-      unsub3();
-      unsub4();
-    };
-  });
+  let reportItems = $derived<QuizReportItem[]>(reportQuery.data ?? []);
+  let sessions = $derived<SessionSummary[]>(sessionsQuery.data ?? []);
+  let loading = $derived(reportQuery.isLoading || sessionsQuery.isLoading);
+  let storeError = $derived<string | null>(
+    (reportQuery.error ?? sessionsQuery.error)?.message ?? null,
+  );
 </script>
 
 <div class="px-4 sm:px-8 py-8 sm:py-10 max-w-5xl">

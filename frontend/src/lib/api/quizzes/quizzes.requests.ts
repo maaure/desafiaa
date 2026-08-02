@@ -1,8 +1,9 @@
 import { api } from "$lib/api/client";
+import type { QuizListItem } from "./quizzes.types";
 
 export const quizRequests = {
   list: (page = 1) =>
-    api.get<{ data?: unknown[]; total?: number; page?: number; limit?: number }>(
+    api.get<{ data: QuizListItem[]; total: number; page: number; limit: number }>(
       `/api/quizzes?page=${page}`,
     ),
 

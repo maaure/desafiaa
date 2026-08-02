@@ -465,6 +465,9 @@ export function registerHostGateway(io: Namespace) {
       }
 
       await clearSessionRedis(pin);
+
+      // Ack para o cliente sincronizar o cache (lista de sessões ativas)
+      socket.emit("host:session:aborted", { sessionId: session.id });
     });
 
     socket.on("disconnect", () => {

@@ -10,30 +10,27 @@
     X,
   } from "@lucide/svelte";
   import { onMount } from "svelte";
-  import { get } from "svelte/store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { hostSession } from "$lib/stores/host-session.store";
-  import { quizEditor } from "$lib/stores/quiz-editor.store";
+  import { useQuizList } from "$lib/api/quizzes/quizzes.queries";
+  import { useDeleteQuiz } from "$lib/api/quizzes/quizzes.mutations";
   import type { QuizListItem } from "$lib/api/quizzes/quizzes.types";
 
-  let quizzes = $state<QuizListItem[]>(get(quizEditor.quizList));
-  let isLoading = $state(get(quizEditor.isLoadingList));
-  let listError = $state<string | null>(get(quizEditor.listError));
   let sessionError = $state<string | null>(null);
 
+  const quizQuery = useQuizList();
+  const deleteQuiz = useDeleteQuiz();
+
+  let quizzes = $derived<QuizListItem[]>(quizQuery.data?.data ?? []);
+  let isLoading = $derived(quizQuery.isLoading);
+  let listError = $derived<string | null>(
+    quizQuery.error ? "Não foi possível carregar os quizzes" : null,
+  );
+
   onMount(() => {
-    quizEditor.loadList();
-    const unsub1 = quizEditor.quizList.subscribe((v) => (quizzes = v));
-    const unsub2 = quizEditor.isLoadingList.subscribe((v) => (isLoading = v));
-    const unsub3 = quizEditor.listError.subscribe((v) => (listError = v));
-    const unsub4 = hostSession.error.subscribe((v) => (sessionError = v));
-    return () => {
-      unsub1();
-      unsub2();
-      unsub3();
-      unsub4();
-    };
+    const unsub = hostSession.error.subscribe((v) => (sessionError = v));
+    return () => unsub();
   });
 
   $effect(() => {
@@ -50,7 +47,7 @@
 
   function handleDelete(id: string) {
     if (confirm("Excluir este quiz permanentemente?")) {
-      quizEditor.deleteQuiz(id);
+      deleteQuiz.mutate(id);
     }
   }
 </script>

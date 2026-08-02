@@ -1,7 +1,11 @@
 import { writable, derived, get } from "svelte/store";
 import type { Socket } from "socket.io-client";
 import { createHostSocket } from "$lib/game/socket-host";
+import { queryClient } from "$lib/query-client";
 import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
+
+// Lista de sessões ativas — invalidada nos eventos de ciclo de vida da sessão
+const ACTIVE_SESSIONS_KEY = ["sessions", "active"] as const;
 
 export type HostPhase = "idle" | "lobby" | "playing" | "leaderboard" | "drumroll" | "ended";
 
@@ -120,6 +124,7 @@ function createHostSessionStore() {
         pin: payload.pin,
         sessionId: payload.sessionId,
       }));
+      queryClient.invalidateQueries({ queryKey: ACTIVE_SESSIONS_KEY });
     });
 
     socket.on("session:started", (payload: { pin: string; timeLimitSeconds: number }) => {
@@ -274,6 +279,11 @@ function createHostSessionStore() {
         playerCount: payload.playerCount,
         isSubmitting: false,
       }));
+      queryClient.invalidateQueries({ queryKey: ACTIVE_SESSIONS_KEY });
+    });
+
+    socket.on("host:session:aborted", () => {
+      queryClient.invalidateQueries({ queryKey: ACTIVE_SESSIONS_KEY });
     });
 
     socket.on("error", (payload: { message: string }) => {

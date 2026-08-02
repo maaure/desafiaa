@@ -5,7 +5,6 @@ export const reportKeys = {
   all: ["reports"] as const,
   quizReport: (quizId: string) => ["reports", "quiz", quizId] as const,
   quizSessions: (quizId: string) => ["reports", "quiz-sessions", quizId] as const,
-  sessionReport: (sessionId: string) => ["reports", "session", sessionId] as const,
 };
 
 export function useQuizReport(quizId: string) {
@@ -21,13 +20,5 @@ export function useQuizSessions(quizId: string) {
     queryKey: reportKeys.quizSessions(quizId),
     queryFn: () => reportRequests.quizSessions(quizId),
     enabled: !!quizId,
-  }));
-}
-
-export function useSessionReport(sessionId: string) {
-  return createQuery(() => ({
-    queryKey: reportKeys.sessionReport(sessionId),
-    queryFn: () => reportRequests.sessionReport(sessionId),
-    enabled: !!sessionId,
   }));
 }

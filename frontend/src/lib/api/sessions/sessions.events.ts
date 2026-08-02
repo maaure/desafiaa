@@ -197,6 +197,9 @@ export interface ServerToClientEvents {
 
   /** Host-only: rejoin restored full session state */
   "host:session:rejoined": (payload: HostSessionRejoinedPayload) => void;
+
+  /** Host-only: abort confirmed — caches can sync */
+  "host:session:aborted": (payload: { sessionId: string }) => void;
 }
 
 export interface ClientToServerEvents {

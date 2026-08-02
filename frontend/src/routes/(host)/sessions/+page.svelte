@@ -1,32 +1,38 @@
 <script lang="ts">
   import { Power, Radio, RefreshCw, X } from "@lucide/svelte";
+  import { useQueryClient } from "@tanstack/svelte-query";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { hostSession } from "$lib/stores/host-session.store";
-  import { sessionRequests } from "$lib/api/sessions/sessions.requests";
+  import { useActiveSessions, sessionKeys } from "$lib/api/sessions/sessions.queries";
   import type { ActiveSession } from "$lib/api/sessions/sessions.types";
 
-  let activeSessions = $state<ActiveSession[]>([]);
-  let activeLoading = $state(true);
-  let activeError = $state<string | null>(null);
   let sessionError = $state<string | null>(get(hostSession.error));
 
+  const activeQuery = useActiveSessions();
+  const queryClient = useQueryClient();
+
+  let activeSessions = $derived<ActiveSession[]>(activeQuery.data ?? []);
+  // isLoading só no primeiro carregamento — refetches atualizam a lista no lugar
+  let activeLoading = $derived(activeQuery.isLoading);
+  let activeRefreshing = $derived(activeQuery.isFetching);
+  let activeError = $derived<string | null>(
+    activeQuery.error ? "Não foi possível carregar as sessões ativas" : null,
+  );
+
   onMount(() => {
-    load();
-    const unsub = hostSession.error.subscribe((v) => (sessionError = v));
+    const unsub = hostSession.error.subscribe((v) => {
+      sessionError = v;
+      // Erro (ex.: abort falhou) → refetch devolve a verdade da listagem
+      if (v) queryClient.invalidateQueries({ queryKey: sessionKeys.active });
+    });
     return () => unsub();
   });
 
-  function load() {
-    activeLoading = true;
-    activeError = null;
-    sessionRequests
-      .listActive()
-      .then((list) => (activeSessions = list))
-      .catch(() => (activeError = "Não foi possível carregar as sessões ativas"))
-      .finally(() => (activeLoading = false));
+  function handleRefresh() {
+    queryClient.invalidateQueries({ queryKey: sessionKeys.active });
   }
 
   function handleReconnect(id: string) {
@@ -47,8 +53,12 @@
     }
     if (abortTimer) clearTimeout(abortTimer);
     confirmAbortId = null;
+    // Otimista: tira da listagem na hora; o ack do servidor invalida o cache
+    queryClient.setQueryData<ActiveSession[]>(
+      sessionKeys.active,
+      (old) => old?.filter((s) => s.id !== id) ?? [],
+    );
     hostSession.abortSession(id);
-    load();
   }
 
   function timeAgo(iso: string): string {
@@ -75,13 +85,13 @@
       </p>
     </div>
     <button
-      onclick={load}
-      disabled={activeLoading}
+      onclick={handleRefresh}
+      disabled={activeRefreshing}
       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 border-ink bg-surface-raised text-base font-semibold text-ink-soft shadow-soft
         hover:bg-sand-50 active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40"
       title="Atualizar lista"
     >
-      <RefreshCw class="w-4 h-4 {activeLoading ? 'animate-spin' : ''}" />
+      <RefreshCw class="w-4 h-4 {activeRefreshing ? 'animate-spin' : ''}" />
       Atualizar
     </button>
   </div>
