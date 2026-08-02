@@ -129,6 +129,9 @@ export interface ServerToClientEvents {
   /** Question time limit reached */
   "game:question:timeout": (payload: GameQuestionTimeoutPayload) => void;
 
+  /** Drumroll before final leaderboard */
+  "game:drumroll": () => void;
+
   /** Leaderboard snapshot broadcast */
   "game:leaderboard:show": (payload: GameLeaderboardShowPayload) => void;
 
@@ -140,6 +143,15 @@ export interface ServerToClientEvents {
 
   /** Host-only: answer progress update */
   "host:answers:progress": (payload: HostAnswersProgressPayload) => void;
+
+  /** Host-only: leaderboard shown between questions */
+  "host:leaderboard:show": (payload: GameLeaderboardShowPayload) => void;
+
+  /** Host-only: last question closed, drumroll before final placar */
+  "host:drumroll": () => void;
+
+  /** Host-only: all questions answered, final leaderboard */
+  "host:questions:exhausted": (payload: GameLeaderboardShowPayload) => void;
 }
 
 export interface ClientToServerEvents {
@@ -155,11 +167,8 @@ export interface ClientToServerEvents {
   /** Host starts the session */
   "host:session:start": (payload: HostSessionStartPayload) => void;
 
-  /** Host advances to next question */
+  /** Host advances the game: Pergunta → Placar → Pergunta → Tambores → Placar Final */
   "host:question:next": () => void;
-
-  /** Host shows leaderboard */
-  "host:leaderboard:show": () => void;
 
   /** Host ends the session */
   "host:session:end": () => void;

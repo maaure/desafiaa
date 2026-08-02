@@ -3,7 +3,7 @@ import type { Socket } from "socket.io-client";
 import { createHostSocket } from "$lib/game/socket-host";
 import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
 
-export type HostPhase = "idle" | "lobby" | "playing" | "leaderboard" | "ended";
+export type HostPhase = "idle" | "lobby" | "playing" | "leaderboard" | "drumroll" | "ended";
 
 interface QuestionData {
   text: string;
@@ -169,12 +169,21 @@ function createHostSessionStore() {
       }));
     });
 
-    socket.on("game:leaderboard:show", (payload: { rankings: LeaderboardEntry[] }) => {
+    socket.on("host:leaderboard:show", (payload: { rankings: LeaderboardEntry[] }) => {
       stopCountdown();
       state.update((s) => ({
         ...s,
         phase: "leaderboard",
         leaderboard: payload.rankings,
+        isSubmitting: false,
+      }));
+    });
+
+    socket.on("host:drumroll", () => {
+      stopCountdown();
+      state.update((s) => ({
+        ...s,
+        phase: "drumroll",
         isSubmitting: false,
       }));
     });
@@ -249,14 +258,10 @@ function createHostSessionStore() {
     socket?.emit("host:session:presentation-mode", { enabled });
   }
 
-  function nextQuestion() {
+  // Botão único: avança Pergunta → Placar Parcial → Pergunta → Tambores → Placar Final
+  function advance() {
     state.update((s) => ({ ...s, isSubmitting: true }));
     socket?.emit("host:question:next");
-  }
-
-  function showLeaderboard() {
-    state.update((s) => ({ ...s, isSubmitting: true }));
-    socket?.emit("host:leaderboard:show");
   }
 
   function endSession() {
@@ -317,8 +322,7 @@ function createHostSessionStore() {
     createSession,
     startSession,
     setPresentationMode,
-    nextQuestion,
-    showLeaderboard,
+    advance,
     endSession,
     clearError,
     reset,

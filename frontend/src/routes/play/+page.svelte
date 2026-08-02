@@ -54,7 +54,6 @@
       style="animation-delay: -7s"
     ></div>
     <div class="relative text-center">
-      <div class="text-8xl mb-6 animate-float">🌊</div>
       <h1 class="font-display text-5xl font-extrabold text-ink tracking-tight mb-4">
         Desafia<span class="text-primary">.</span>
       </h1>

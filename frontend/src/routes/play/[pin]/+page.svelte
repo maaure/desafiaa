@@ -25,6 +25,7 @@
     question: "Pergunta",
     feedback: "Resultado",
     leaderboard: "Placar",
+    drumroll: "Rufem os tambores",
     ended: "Fim de jogo",
   };
 
@@ -328,6 +329,18 @@
         {:else}
           <p class="text-lg text-ink-faint">Aguardando o resultado...</p>
         {/if}
+      </div>
+
+      <!-- ── Phase: Drumroll ── -->
+    {:else if phase === "drumroll"}
+      <div class="flex-1 flex flex-col items-center justify-center text-center">
+        <div
+          class="w-28 h-28 rounded-full border-[3px] border-ink shadow-lift flex items-center justify-center text-6xl mb-5 bg-mango-100 text-mango-600 animate-pulse-soft"
+        >
+          🥁
+        </div>
+        <h2 class="font-display text-4xl font-extrabold mb-2 text-mango-700">Rufem os tambores!</h2>
+        <p class="text-lg text-ink-faint">O placar final está chegando...</p>
       </div>
 
       <!-- ── Phase: Leaderboard ── -->

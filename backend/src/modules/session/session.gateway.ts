@@ -70,14 +70,53 @@ export function registerHostGateway(io: Namespace) {
       await redis.hset(keys.sessionConfig(currentPin), "presentation_mode", enabled ? "1" : "0");
     });
 
+    // Botão único "Avançar": Pergunta → Placar Parcial → Pergunta → ... → Última Pergunta
+    // → "Rufem os tambores" → Placar Final. Decide o próximo estado pela fase atual.
     socket.on("host:question:next", async () => {
       if (!currentPin) return;
       const config = await redis.hgetall(keys.sessionConfig(currentPin));
-      const nextIndex = parseInt(config.current_question_index ?? "0", 10) + 1;
+      const quizId = config.quiz_id;
       const presentationMode = config.presentation_mode === "1";
+      const status = await redis.get(keys.sessionStatus(currentPin));
+      const currentIndex = parseInt(config.current_question_index ?? "0", 10);
+      const total = await db.$count(schema.questions, eq(schema.questions.quizId, quizId));
+
+      // Pergunta ativa → fecha e mostra placar (parcial, ou tambores se era a última)
+      if (status === "playing") {
+        if (questionTimeout) {
+          clearTimeout(questionTimeout);
+          questionTimeout = null;
+        }
+        const rankings = await leaderboardService.getTop(currentPin);
+        if (currentIndex >= total) {
+          await redis.set(keys.sessionStatus(currentPin), "drumroll");
+          io.server.of("/play").to(`session:${currentPin}`).emit("game:drumroll");
+          socket.emit("host:drumroll");
+        } else {
+          await redis.set(keys.sessionStatus(currentPin), "leaderboard");
+          io.server.of("/play").to(`session:${currentPin}`).emit("game:leaderboard:show", {
+            rankings,
+          });
+          socket.emit("host:leaderboard:show", { rankings });
+        }
+        return;
+      }
+
+      // Tambores → placar final
+      if (status === "drumroll") {
+        await redis.set(keys.sessionStatus(currentPin), "leaderboard");
+        const rankings = await leaderboardService.getTop(currentPin);
+        io.server.of("/play").to(`session:${currentPin}`).emit("game:leaderboard:show", {
+          rankings,
+        });
+        socket.emit("host:questions:exhausted", { rankings });
+        return;
+      }
+
+      // Lobby ou placar parcial → próxima pergunta
+      const nextIndex = currentIndex + 1;
 
       // Busca a pergunta por offset (ordem estável durante a sessão)
-      const quizId = config.quiz_id;
       const question = await db.query.questions.findFirst({
         where: eq(schema.questions.quizId, quizId),
         orderBy: [asc(schema.questions.sortOrder)],
@@ -158,16 +197,6 @@ export function registerHostGateway(io: Namespace) {
             correctAnswer: presentationMode ? "" : (correctAlt?.text ?? "?"),
           });
       }, timeLimitMs);
-    });
-
-    socket.on("host:leaderboard:show", async () => {
-      if (!currentPin) return;
-      if (questionTimeout) {
-        clearTimeout(questionTimeout);
-        questionTimeout = null;
-      }
-      const rankings = await leaderboardService.getTop(currentPin);
-      io.server.of("/play").to(`session:${currentPin}`).emit("game:leaderboard:show", { rankings });
     });
 
     socket.on("host:session:end", async () => {

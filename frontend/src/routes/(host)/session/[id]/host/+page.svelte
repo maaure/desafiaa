@@ -48,6 +48,7 @@
     lobby: "Lobby",
     playing: "Pergunta em jogo",
     leaderboard: "Placar",
+    drumroll: "Rufem os tambores",
     ended: "Encerrado",
   };
 
@@ -94,11 +95,8 @@
   function handleTogglePresentationMode() {
     hostSession.setPresentationMode(!presentationMode);
   }
-  function handleNextQuestion() {
-    hostSession.nextQuestion();
-  }
-  function handleShowLeaderboard() {
-    hostSession.showLeaderboard();
+  function handleAdvance() {
+    hostSession.advance();
   }
   function handleEndSession() {
     hostSession.endSession();
@@ -344,7 +342,7 @@
 
               {#if playerCount > 0}
                 <button
-                  onclick={handleNextQuestion}
+                  onclick={handleAdvance}
                   disabled={isSubmitting}
                   class="w-full py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
                     shadow-lift hover:bg-primary-hover active:bg-coral-800 active:translate-y-[3px] active:shadow-none
@@ -390,27 +388,16 @@
             </div>
           </div>
 
-          <!-- Actions -->
-          <div class="flex gap-3">
-            <button
-              onclick={handleNextQuestion}
-              disabled={isSubmitting}
-              class="flex-1 py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
-                shadow-lift hover:bg-primary-hover active:bg-coral-800 active:translate-y-[3px] active:shadow-none
-                transition-all disabled:opacity-40 disabled:active:translate-y-0 disabled:active:shadow-lift"
-            >
-              {isSubmitting ? "Avançando..." : "Próxima Pergunta"}
-            </button>
-            <button
-              onclick={handleShowLeaderboard}
-              disabled={isSubmitting}
-              class="flex-1 py-4 rounded-xl border-2 border-ink bg-surface-raised text-ink-soft text-xl font-bold
-                shadow-lift hover:bg-sand-50 active:translate-y-[3px] active:shadow-none
-                transition-all disabled:opacity-40 disabled:active:translate-y-0 disabled:active:shadow-lift"
-            >
-              Mostrar Placar
-            </button>
-          </div>
+          <!-- Avançar: fecha a pergunta e mostra o placar parcial -->
+          <button
+            onclick={handleAdvance}
+            disabled={isSubmitting}
+            class="w-full py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
+              shadow-lift hover:bg-primary-hover active:bg-coral-800 active:translate-y-[3px] active:shadow-none
+              transition-all disabled:opacity-40 disabled:active:translate-y-0 disabled:active:shadow-lift"
+          >
+            {isSubmitting ? "Avançando..." : "Avançar"}
+          </button>
         </div>
 
         <!-- ── Phase: Leaderboard ── -->
@@ -453,25 +440,43 @@
               {isSubmitting ? "Finalizando..." : "Finalizar e Salvar Resultados"}
             </button>
           {:else}
+            <!-- Placar parcial → Avançar para a próxima pergunta -->
             <button
-              onclick={handleNextQuestion}
+              onclick={handleAdvance}
               disabled={isSubmitting}
               class="w-full py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
                 shadow-lift hover:bg-primary-hover active:bg-coral-800 active:translate-y-[3px] active:shadow-none
                 transition-all disabled:opacity-40 disabled:active:translate-y-0 disabled:active:shadow-lift"
             >
-              {isSubmitting ? "Avançando..." : "Próxima Pergunta"}
-            </button>
-            <button
-              onclick={handleEndSession}
-              disabled={isSubmitting}
-              class="w-full py-4 rounded-xl border-2 border-ink bg-surface-raised text-danger text-xl font-bold
-                shadow-lift hover:bg-tomato-50 active:translate-y-[3px] active:shadow-none
-                transition-all disabled:opacity-40 disabled:active:translate-y-0 disabled:active:shadow-lift"
-            >
-              Encerrar Sessão
+              {isSubmitting ? "Avançando..." : "Avançar"}
             </button>
           {/if}
+        </div>
+
+        <!-- ── Phase: Drumroll (Rufem os tambores) ── -->
+      {:else if phase === "drumroll"}
+        <div class="flex flex-col items-center justify-center py-16 text-center animate-pop">
+          <div
+            class="w-24 h-24 mx-auto mb-6 rounded-full border-[3px] border-ink shadow-lift bg-mango-100 flex items-center justify-center text-6xl animate-pulse-soft"
+          >
+            🥁
+          </div>
+          <h2 class="font-display text-5xl font-extrabold text-mango-700 mb-3">
+            Rufem os tambores!
+          </h2>
+          <p class="text-lg text-ink-faint mb-10">
+            A última pergunta foi respondida. Vamos ver o placar final...
+          </p>
+
+          <button
+            onclick={handleAdvance}
+            disabled={isSubmitting}
+            class="w-full max-w-md py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
+              shadow-lift hover:bg-primary-hover active:bg-coral-800 active:translate-y-[3px] active:shadow-none
+              transition-all disabled:opacity-40 disabled:active:translate-y-0 disabled:active:shadow-lift"
+          >
+            {isSubmitting ? "Avançando..." : "Avançar"}
+          </button>
         </div>
 
         <!-- ── Phase: Ended ── -->

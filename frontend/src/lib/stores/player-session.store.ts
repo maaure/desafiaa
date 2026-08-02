@@ -4,7 +4,8 @@ import { createPlayerSocket } from "$lib/game/socket-player";
 import { setLeaderboard, resetLeaderboard } from "$lib/stores/leaderboard.store";
 import type { LeaderboardEntry } from "$lib/api/sessions/sessions.types";
 
-export type PlayerPhase = "join" | "lobby" | "question" | "feedback" | "leaderboard" | "ended";
+export type PlayerPhase =
+  "join" | "lobby" | "question" | "feedback" | "leaderboard" | "drumroll" | "ended";
 
 interface QuestionData {
   questionIndex: number;
@@ -212,6 +213,11 @@ function createPlayerSessionStore() {
           ? s.lastResult
           : { isCorrect: false, pointsEarned: 0, totalScore: s.totalScore },
       }));
+    });
+
+    socket.on("game:drumroll", () => {
+      stopCountdown();
+      state.update((s) => ({ ...s, phase: "drumroll" }));
     });
 
     socket.on("game:leaderboard:show", (payload: { rankings: LeaderboardEntry[] }) => {

@@ -1,6 +1,6 @@
 /** Fabrica de chaves Redis. Centraliza o formato para evitar erros de digitacao. */
 export const keys = {
-  /** Status da sessao: "lobby" | "playing" | "finished" */
+  /** Status da sessao: "lobby" | "playing" | "leaderboard" | "drumroll" | "finished" */
   sessionStatus: (pin: string) => `pin:${pin}:status` as const,
 
   /** Config da sessao: { quiz_id, time_limit_seconds, current_question_index } */
