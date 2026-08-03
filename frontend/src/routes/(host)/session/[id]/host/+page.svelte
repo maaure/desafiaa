@@ -150,7 +150,7 @@
 <div class="min-h-screen bg-surface text-ink flex flex-col">
   <!-- ══ HUD — sempre visível: fase · PIN · jogadores · timer · conexão ══ -->
   <header class="sticky top-0 z-40 bg-surface-raised border-b-2 border-ink shrink-0">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3 sm:gap-5">
+    <div class="px-4 sm:px-8 py-3 flex items-center gap-3 sm:gap-5">
       <button
         onclick={handleBackToDashboard}
         class="inline-flex items-center gap-1.5 text-base font-semibold text-ink-faint hover:text-ink transition-colors"
@@ -238,8 +238,8 @@
   </header>
 
   <!-- ══ Conteúdo ══ -->
-  <main class="flex-1 px-4 sm:px-6 py-8 sm:py-10">
-    <div class="max-w-5xl mx-auto">
+  <main class="flex-1 px-4 sm:px-8 py-8 sm:py-10">
+    <div>
       <!-- Error banner -->
       {#if error}
         <div

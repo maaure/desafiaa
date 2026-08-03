@@ -49,8 +49,8 @@
 
     {#if question.alternatives.length > 0}
       <div
-        class="grid gap-5 mt-12 {question.alternatives.length === 2
-          ? 'grid-cols-2'
+        class="grid gap-5 mt-12 {question.alternatives.length >= 2
+          ? 'grid-cols-1 sm:grid-cols-2'
           : 'grid-cols-1 max-w-xl mx-auto'}"
       >
         {#each question.alternatives as alt, i (alt.id)}
