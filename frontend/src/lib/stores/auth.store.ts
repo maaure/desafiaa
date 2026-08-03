@@ -44,6 +44,23 @@ function createAuthStore() {
     }
   }
 
+  /** Login social — envia o ID token do Google ao backend, que valida e cria/víncula a conta */
+  async function loginWithGoogle(credential: string): Promise<boolean> {
+    error.set(null);
+    loading.set(true);
+    try {
+      const result = await authRequests.googleLogin(credential);
+      setAccessToken(result.accessToken);
+      user.set(result.user);
+      return true;
+    } catch (err) {
+      error.set(err instanceof ApiError ? err.message : "Erro ao entrar com Google");
+      return false;
+    } finally {
+      loading.set(false);
+    }
+  }
+
   async function logout() {
     await authRequests.logout().catch(() => {});
     removeAccessToken();
@@ -70,6 +87,7 @@ function createAuthStore() {
     error: { subscribe: error.subscribe },
     login,
     register,
+    loginWithGoogle,
     logout,
     tryRefresh,
   };

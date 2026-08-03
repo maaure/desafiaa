@@ -6,6 +6,7 @@
   import { Gamepad2 } from "@lucide/svelte";
   import Button from "$lib/components/ui/Button.svelte";
   import Input from "$lib/components/ui/Input.svelte";
+  import GoogleLoginButton from "$lib/components/ui/GoogleLoginButton.svelte";
 
   let name = $state("");
   let email = $state("");
@@ -119,6 +120,16 @@
         {loading ? "Criando conta..." : "Criar conta"}
       </Button>
     </form>
+
+    <!-- Divisor -->
+    <div class="flex items-center gap-3 my-5">
+      <div class="flex-1 h-px bg-ink/20"></div>
+      <span class="text-xs font-semibold uppercase tracking-widest text-ink-faint">ou</span>
+      <div class="flex-1 h-px bg-ink/20"></div>
+    </div>
+
+    <!-- Registro social -->
+    <GoogleLoginButton />
 
     <p class="mt-6 text-center text-sm text-ink-faint">
       Já tem conta? <a

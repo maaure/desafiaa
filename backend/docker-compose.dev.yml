@@ -44,6 +44,7 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-secret-change-in-production-minimum-32-chars!!
       JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production-32-chars!!
+      GOOGLE_CLIENT_ID: 434589707255-q6mo74fgdpfbgkl9tf217e25g1v16ibg.apps.googleusercontent.com
       HOST: "0.0.0.0"
       PORT: "3000"
       UPLOAD_DIR: /app/uploads

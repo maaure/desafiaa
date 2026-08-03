@@ -11,10 +11,15 @@ export interface LoginInput {
   password: string;
 }
 
+export interface GoogleLoginInput {
+  credential: string;
+}
+
 export interface UserResponse {
   id: string;
   name: string;
   email: string;
+  avatarUrl: string | null;
   createdAt: string;
 }
 

@@ -11,10 +11,16 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const googleLoginSchema = z.object({
+  // ID token emitido pelo Google Identity Services (GIS)
+  credential: z.string().min(1),
+});
+
 export const userResponseSchema = z.object({
   id: z.string().uuid(),
   name: z.string(),
   email: z.string().email(),
+  avatarUrl: z.string().nullable(),
   createdAt: z.string(),
 });
 
@@ -24,4 +30,10 @@ export const authResponseSchema = z.object({
 });
 
 // Tipos re-exportados de auth.types.ts
-export type { RegisterInput, LoginInput, UserResponse, AuthTokens } from "./auth.types";
+export type {
+  RegisterInput,
+  LoginInput,
+  GoogleLoginInput,
+  UserResponse,
+  AuthTokens,
+} from "./auth.types";

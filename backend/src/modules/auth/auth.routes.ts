@@ -1,6 +1,12 @@
 import { FastifyInstance } from "fastify";
 import { authService } from "./auth.service";
-import { registerSchema, loginSchema, userResponseSchema, authResponseSchema } from "./auth.schema";
+import {
+  registerSchema,
+  loginSchema,
+  googleLoginSchema,
+  userResponseSchema,
+  authResponseSchema,
+} from "./auth.schema";
 import { authenticate } from "../../middleware/auth";
 import { zSchema } from "../../lib/swagger";
 
@@ -41,6 +47,31 @@ export async function authRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const input = request.body as any;
       const { user, accessToken, refreshToken } = await authService.login(input);
+
+      reply.setCookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/api/auth",
+        maxAge: 7 * 24 * 3600,
+      });
+
+      return reply.send({ user, accessToken });
+    },
+  );
+
+  app.post(
+    "/api/auth/google",
+    {
+      schema: {
+        tags: ["auth"],
+        body: zSchema(googleLoginSchema),
+        response: { 200: zSchema(authResponseSchema) },
+      },
+    },
+    async (request, reply) => {
+      const input = request.body as any;
+      const { user, accessToken, refreshToken } = await authService.googleLogin(input);
 
       reply.setCookie("refreshToken", refreshToken, {
         httpOnly: true,

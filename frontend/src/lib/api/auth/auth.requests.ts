@@ -8,6 +8,9 @@ export const authRequests = {
   login: (body: { email: string; password: string }) =>
     api.post<{ user: UserResponse; accessToken: string }>("/api/auth/login", body),
 
+  googleLogin: (credential: string) =>
+    api.post<{ user: UserResponse; accessToken: string }>("/api/auth/google", { credential }),
+
   refresh: () => api.post<{ accessToken: string }>("/api/auth/refresh"),
 
   me: () => api.get<{ user: UserResponse }>("/api/auth/me"),

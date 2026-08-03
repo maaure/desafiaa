@@ -21,6 +21,7 @@
 
   let { children } = $props();
   let isAuthenticated = $state(get(auth.isAuthenticated));
+  let user = $state(get(auth));
   let pathname = $state("");
   let mobileOpen = $state(false);
 
@@ -28,8 +29,20 @@
   const quizQuery = useQuizList();
   const activeQuery = useActiveSessions();
 
+  // Iniciais do nome para o fallback do avatar (sem foto, contas email/senha)
+  let initials = $derived.by(() => {
+    if (!user?.name) return "?";
+    return user.name
+      .split(" ")
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((w) => w[0].toUpperCase())
+      .join("");
+  });
+
   onMount(() => {
     const unsubAuth = auth.isAuthenticated.subscribe((v) => (isAuthenticated = v));
+    const unsubUser = auth.subscribe((u) => (user = u));
     const unsubPage = page.subscribe((p) => {
       pathname = p.url.pathname;
       mobileOpen = false;
@@ -43,6 +56,7 @@
 
     return () => {
       unsubAuth();
+      unsubUser();
       unsubPage();
     };
   });
@@ -206,8 +220,30 @@
         {/if}
       </nav>
 
-      <!-- User footer -->
-      <div class="border-t-2 border-ink px-4 py-4">
+      <!-- User footer — identidade + sair -->
+      <div class="border-t-2 border-ink px-4 py-4 space-y-1">
+        {#if user}
+          <div class="flex items-center gap-3 px-3 py-2" title={user.email}>
+            {#if user.avatarUrl}
+              <img
+                src={user.avatarUrl}
+                alt={`Foto de ${user.name}`}
+                class="w-9 h-9 shrink-0 rounded-full border-2 border-ink bg-sand-100 object-cover shadow-soft"
+              />
+            {:else}
+              <span
+                class="w-9 h-9 shrink-0 rounded-full border-2 border-ink bg-secondary text-white flex items-center justify-center
+                text-sm font-bold shadow-soft"
+              >
+                {initials}
+              </span>
+            {/if}
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-bold text-ink truncate">{user.name}</p>
+              <p class="text-xs text-ink-faint truncate">{user.email}</p>
+            </div>
+          </div>
+        {/if}
         <button
           onclick={handleLogout}
           class="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-base font-semibold text-ink-soft hover:bg-tomato-50 hover:text-danger transition-colors"

@@ -8,6 +8,8 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(32),
   PORT: z.coerce.number().int().default(3000),
   HOST: z.string().default("0.0.0.0"),
+  // OAuth do Google — obrigatório para login social
+  GOOGLE_CLIENT_ID: z.string().min(1),
 });
 
 export const env = envSchema.parse(process.env);
