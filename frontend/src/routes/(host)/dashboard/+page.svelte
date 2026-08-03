@@ -37,6 +37,7 @@
 
   $effect(() => {
     if (deleteQuiz.isSuccess) toast.success("Quiz excluído");
+    if (deleteQuiz.isError) toast.error("Não foi possível excluir o quiz — tente novamente");
   });
 
   let isCreating = $state(get(hostSession.creatingSession));

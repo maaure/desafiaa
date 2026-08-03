@@ -113,10 +113,12 @@ export const quizService = {
   },
 
   /** Leitura de quiz público — sem checagem de posse */
-  async getPublicById(quizId: string): Promise<QuizFull & { authorName: string }> {
+  async getPublicById(
+    quizId: string,
+  ): Promise<QuizFull & { authorId: string; authorName: string }> {
     const quiz = await quizRepo.getPublicWithQuestions(quizId);
     if (!quiz) throw new NotFoundError("Quiz");
-    return { ...toFull(quiz), authorName: quiz.author.name };
+    return { ...toFull(quiz), authorId: quiz.authorId, authorName: quiz.author.name };
   },
 
   /**

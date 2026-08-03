@@ -40,7 +40,8 @@ export const quizRequests = {
       `/api/quizzes/public?search=${encodeURIComponent(search)}&page=${page}`,
     ),
 
-  getPublic: (id: string) => api.get<Quiz & { authorName: string }>(`/api/quizzes/public/${id}`),
+  getPublic: (id: string) =>
+    api.get<Quiz & { authorId: string; authorName: string }>(`/api/quizzes/public/${id}`),
 
   remove: (id: string) => api.delete<void>(`/api/quizzes/${id}`),
 

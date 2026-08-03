@@ -83,7 +83,7 @@ export const gameSessions = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     quizId: uuid("quiz_id")
-      .references(() => quizzes.id)
+      .references(() => quizzes.id, { onDelete: "cascade" })
       .notNull(),
     hostId: uuid("host_id")
       .references(() => users.id)

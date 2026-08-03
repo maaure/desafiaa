@@ -6,6 +6,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { hostSession } from "$lib/stores/host-session.store";
+  import { auth } from "$lib/stores/auth.store";
   import { toast } from "$lib/stores/toast.store";
   import { usePublicQuiz } from "$lib/api/quizzes/quizzes.queries";
   import { useSaveQuiz } from "$lib/api/quizzes/quizzes.mutations";
@@ -20,6 +21,8 @@
   let quizError = $derived<string | null>(
     quizQuery.error ? "Quiz não encontrado ou não está mais público" : null,
   );
+  // Seu próprio quiz não precisa de cópia — o botão Copiar só aparece para os outros
+  let isMine = $derived(Boolean(quiz && $auth && quiz.authorId === $auth.id));
 
   const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
@@ -141,24 +144,26 @@
         {/if}
       </button>
 
-      <button
-        onclick={handleCopyToMine}
-        disabled={isCopying}
-        class="mt-3 w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-ink
-          bg-surface-raised text-ocean-800 text-base font-bold shadow-soft hover:bg-ocean-50
-          active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-        title="Cria uma cópia sua para editar e adaptar"
-      >
-        {#if isCopying}
-          <div
-            class="w-4 h-4 border-2 border-ocean-300 border-t-ocean-600 rounded-full animate-spin"
-          ></div>
-          Copiando...
-        {:else}
-          <Copy class="w-4 h-4" />
-          Copiar para meus quizzes
-        {/if}
-      </button>
+      {#if !isMine}
+        <button
+          onclick={handleCopyToMine}
+          disabled={isCopying}
+          class="mt-3 w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-ink
+            bg-surface-raised text-ocean-800 text-base font-bold shadow-soft hover:bg-ocean-50
+            active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          title="Cria uma cópia sua para editar e adaptar"
+        >
+          {#if isCopying}
+            <div
+              class="w-4 h-4 border-2 border-ocean-300 border-t-ocean-600 rounded-full animate-spin"
+            ></div>
+            Copiando...
+          {:else}
+            <Copy class="w-4 h-4" />
+            Copiar para meus quizzes
+          {/if}
+        </button>
+      {/if}
     </div>
 
     <!-- Questions -->

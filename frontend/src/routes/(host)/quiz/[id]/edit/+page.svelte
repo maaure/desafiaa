@@ -268,7 +268,7 @@
               </p>
               <p class="text-xs text-ink-faint">
                 {quiz.isPublic
-                  ? "Qualquer pessoa encontra este quiz na listagem pública"
+                  ? "Qualquer pessoa encontra este quiz na listagem pública (após publicado)"
                   : "Só você vê este quiz. Torne-o público para compartilhar com todos."}
               </p>
             </div>

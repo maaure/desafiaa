@@ -46,7 +46,11 @@ export const quizRepo = {
   /** Quiz público completo (leitura para qualquer usuário) */
   async getPublicWithQuestions(quizId: string) {
     return db.query.quizzes.findFirst({
-      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.isPublic, true)),
+      where: and(
+        eq(schema.quizzes.id, quizId),
+        eq(schema.quizzes.isPublic, true),
+        eq(schema.quizzes.isPublished, true),
+      ),
       with: {
         author: true,
         questions: {
@@ -65,13 +69,23 @@ export const quizRepo = {
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(schema.quizzes)
-      .where(and(eq(schema.quizzes.isPublic, true), searchFilter(search)));
+      .where(
+        and(
+          eq(schema.quizzes.isPublic, true),
+          eq(schema.quizzes.isPublished, true),
+          searchFilter(search),
+        ),
+      );
     return count;
   },
 
   async listPublic(limit: number, offset: number, search: string) {
     return db.query.quizzes.findMany({
-      where: and(eq(schema.quizzes.isPublic, true), searchFilter(search)),
+      where: and(
+        eq(schema.quizzes.isPublic, true),
+        eq(schema.quizzes.isPublished, true),
+        searchFilter(search),
+      ),
       with: { author: true, questions: true },
       orderBy: (q, { desc }) => [desc(q.createdAt)],
       limit,

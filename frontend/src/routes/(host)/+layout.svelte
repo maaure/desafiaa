@@ -1,15 +1,5 @@
 <script lang="ts">
-  import {
-    BarChart3,
-    Globe,
-    LayoutDashboard,
-    LogOut,
-    Menu,
-    Pencil,
-    Plus,
-    Radio,
-    X,
-  } from "@lucide/svelte";
+  import { Globe, LayoutDashboard, LogOut, Menu, Plus, Radio, X } from "@lucide/svelte";
   import { auth } from "$lib/stores/auth.store";
   import { useQuizList } from "$lib/api/quizzes/quizzes.queries";
   import { useActiveSessions } from "$lib/api/sessions/sessions.queries";
@@ -137,12 +127,12 @@
           </a>
           <a
             href={resolve("/quiz/new")}
-            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+            class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-semibold transition-colors
               {isActive('/quiz/new')
               ? 'bg-ocean-500 text-white shadow-soft'
-              : 'text-ink-faint hover:bg-sand-100 hover:text-ink-soft'}"
+              : 'text-ink-soft hover:bg-sand-100 hover:text-ink-soft'}"
           >
-            <Plus class="w-4 h-4 shrink-0" />
+            <Plus class="w-5 h-5 shrink-0" />
             Novo Quiz
           </a>
         </div>
@@ -189,35 +179,6 @@
             Quizzes Públicos
           </a>
         </div>
-
-        <!-- Quiz em contexto — atalhos de edição/relatório (fade-in ao aparecer) -->
-        {#if currentQuizId}
-          <div class="animate-fade-in">
-            <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">
-              Quiz Atual
-            </p>
-            <a
-              href={resolve(`/quiz/${currentQuizId}/edit`)}
-              class="flex items-center gap-3 px-3 py-3 mb-1 rounded-xl text-base font-semibold transition-colors
-                {isActive(`/quiz/${currentQuizId}/edit`)
-                ? 'bg-ocean-500 text-white shadow-soft'
-                : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
-            >
-              <Pencil class="w-5 h-5 shrink-0" />
-              Editar
-            </a>
-            <a
-              href={resolve(`/quiz/${currentQuizId}/report`)}
-              class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-semibold transition-colors
-                {isActive(`/quiz/${currentQuizId}/report`)
-                ? 'bg-ocean-500 text-white shadow-soft'
-                : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
-            >
-              <BarChart3 class="w-5 h-5 shrink-0" />
-              Relatório
-            </a>
-          </div>
-        {/if}
       </nav>
 
       <!-- User footer — identidade + sair -->
