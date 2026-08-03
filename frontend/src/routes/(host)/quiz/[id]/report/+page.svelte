@@ -208,10 +208,10 @@
                       <span class="text-sm text-ink-soft tabular-nums">{s.playerCount}</span>
                     </td>
                     <td class="px-5 py-3">
-                      <span class="text-sm font-medium text-ink">{s.winner ?? "—"}</span>
+                      <span class="text-sm font-medium text-ink">{s.winner ?? "-"}</span>
                     </td>
                     <td class="px-5 py-3 text-right">
-                      <span class="text-sm text-ink-soft tabular-nums">{s.winnerScore ?? "—"}</span>
+                      <span class="text-sm text-ink-soft tabular-nums">{s.winnerScore ?? "-"}</span>
                     </td>
                     <td class="px-5 py-3">
                       <span class="text-xs text-ink-faint">{formatDate(s.startedAt)}</span>

@@ -70,7 +70,7 @@
       toast.success("Quiz copiado para seus quizzes");
       goto(resolve(`/quiz/${saved.id}/edit`));
     } catch {
-      toast.error("Não foi possível copiar o quiz — tente novamente");
+      toast.error("Não foi possível copiar o quiz. Tente novamente");
       isCopying = false;
     }
   }

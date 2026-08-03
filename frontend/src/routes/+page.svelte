@@ -14,6 +14,10 @@
     Pencil,
     Sparkles,
     Gamepad2,
+    GraduationCap,
+    Presentation,
+    Briefcase,
+    PartyPopper,
   } from "@lucide/svelte";
 
   // ── As quatro cores de resposta — as mesmas que o Player vê no jogo ──
@@ -29,19 +33,19 @@
     {
       icon: Pencil,
       title: "Crie seu quiz",
-      desc: "Monte questionários com perguntas de múltipla escolha ou verdadeiro/falso. Defina pontuações e gabaritos com um editor rápido e intuitivo.",
+      desc: "Perguntas de múltipla escolha ou verdadeiro ou falso, prontas em minutos. Revisar a matéria, testar a turma ou só brincar? Você decide.",
       color: "coral" as const,
     },
     {
       icon: Share2,
       title: "Compartilhe o PIN",
-      desc: "Ao iniciar uma sessão, um PIN de 6 dígitos é gerado. Compartilhe com seus participantes e veja todos entrarem no lobby em tempo real.",
+      desc: "Abra a sessão e mostre o PIN para a galera. Cada um entra pelo celular, sem cadastro e sem instalar nada.",
       color: "mango" as const,
     },
     {
       icon: Zap,
       title: "Jogue ao vivo",
-      desc: "Avance as perguntas, acompanhe as respostas chegando e veja o ranking se formar. Ao final, o pódio revela os vencedores.",
+      desc: "As perguntas aparecem para todo mundo ao mesmo tempo. Quem responde mais rápido soma mais pontos, e o pódio coroa o campeão.",
       color: "leaf" as const,
     },
   ];
@@ -72,26 +76,26 @@
   const hostFeatures = [
     {
       icon: FileQuestion,
-      title: "Editor intuitivo de quizzes",
-      desc: "Crie perguntas de múltipla escolha ou verdadeiro/falso com gabarito e pontuação personalizada em minutos.",
+      title: "Crie seu quiz em minutos",
+      desc: "Perguntas de múltipla escolha ou verdadeiro ou falso com gabarito. Simples assim: do zero ao jogo pronto na hora.",
       color: "coral" as const,
     },
     {
       icon: Users,
-      title: "Controle total da sessão",
-      desc: "Abra o lobby, veja os participantes chegando em tempo real e avance as perguntas no seu ritmo.",
+      title: "Você no comando",
+      desc: "Veja a plateia chegando ao vivo e avance as perguntas no seu ritmo. A energia do jogo está nas suas mãos.",
       color: "mango" as const,
     },
     {
       icon: Trophy,
-      title: "Leaderboard em tempo real",
-      desc: "Ranking atualizado a cada pergunta. Destaque visual para mudanças de posição e pódio final completo.",
+      title: "Competição de verdade",
+      desc: "O ranking muda a cada resposta e esquenta o clima. No final, o pódio coroa os melhores da noite.",
       color: "leaf" as const,
     },
     {
       icon: BarChart3,
-      title: "Relatórios detalhados",
-      desc: "Taxa de acerto por pergunta, tempo médio de resposta, questões mais difíceis e histórico de sessões.",
+      title: "Você aprende com o jogo",
+      desc: "Ao final, veja como cada pergunta foi respondida. O jeito mais leve de descobrir o que ninguém dominou.",
       color: "ocean" as const,
     },
   ];
@@ -99,42 +103,63 @@
   const playerFeatures = [
     {
       icon: Play,
-      title: "Entre com um PIN de 6 dígitos",
-      desc: "Sem cadastro, sem instalar nada. Acesse pelo navegador do celular ou computador e participe na hora.",
+      title: "Entrar é só digitar o PIN",
+      desc: "Sem cadastro, sem instalar nada. Abre o navegador do celular e pronto: você está no jogo.",
       color: "coral" as const,
     },
     {
       icon: Zap,
-      title: "Respostas em tempo real",
-      desc: "As perguntas aparecem simultaneamente para todos. Quanto mais rápido você responde, mais pontos ganha.",
+      title: "Velocidade vale pontos",
+      desc: "As perguntas chegam para todo mundo ao mesmo tempo. Quanto antes você responder, mais pontos embolsa.",
       color: "mango" as const,
     },
     {
       icon: Timer,
-      title: "Feedback imediato",
-      desc: "Veja na hora se acertou ou errou, quantos pontos ganhou e sua pontuação total acumulada na partida.",
+      title: "Tensão e resposta na hora",
+      desc: "Acertou ou errou, você vê na hora quanto pontuou e onde está no ranking. A disputa nunca para.",
       color: "leaf" as const,
     },
     {
       icon: ShieldCheck,
-      title: "Reconexão automática",
-      desc: "Perdeu a conexão? Seus pontos e apelido estão salvos. Reconecte em até 30 segundos e continue jogando.",
+      title: "Conexão caiu? Sem drama",
+      desc: "Seus pontos e seu apelido ficam salvos. É só reconectar e voltar para a disputa.",
       color: "ocean" as const,
     },
   ];
 
-  const stats = [
-    { value: "500", label: "Participantes simultâneos por sessão" },
-    { value: "6", label: "Dígitos do PIN — simples e rápido de compartilhar" },
-    { value: "< 500ms", label: "Latência de resposta — jogo fluido e sincronizado" },
+  const audiences = [
+    {
+      icon: GraduationCap,
+      title: "Professores",
+      desc: "Revisão de prova e gincana de conteúdo: a turma sai da aula jogando e aprendendo.",
+      color: "coral" as const,
+    },
+    {
+      icon: Presentation,
+      title: "Apresentadores",
+      desc: "Esquente a plateia, quebre o gelo e mantenha todo mundo ligado no que você tem a dizer.",
+      color: "mango" as const,
+    },
+    {
+      icon: Briefcase,
+      title: "Empresas",
+      desc: "Treinamento e integração com clima de competição. Todo mundo participa, ninguém dorme no ponto.",
+      color: "leaf" as const,
+    },
+    {
+      icon: PartyPopper,
+      title: "Encontros",
+      desc: "Happy hour, aniversário ou a noite de domingo: qualquer reunião vira um game show entre amigos.",
+      color: "ocean" as const,
+    },
   ];
 </script>
 
 <svelte:head>
-  <title>Desafia — A maneira mais divertida de engajar qualquer audiência</title>
+  <title>Desafia: sua aula, reunião ou festa viram um game show</title>
   <meta
     name="description"
-    content="Plataforma de quizzes interativos em tempo real. Crie questionários, compartilhe um PIN e veja todos competirem ao vivo — como um game show, na sua sala."
+    content="Crie quizzes em minutos e desafie sua plateia a jogar ao vivo pelo celular. Sem instalar nada, professores, apresentadores e amigos já estão jogando."
   />
 </svelte:head>
 
@@ -179,6 +204,12 @@
         Entrar em jogo
       </a>
       <a
+        href={resolve("/login")}
+        class="hidden md:inline-flex px-4 py-2 text-sm font-semibold text-ink-soft hover:text-ink hover:bg-sand-100 rounded-lg transition-colors"
+      >
+        Entrar
+      </a>
+      <a
         href={resolve("/register")}
         class="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 text-sm font-bold
         rounded-lg border-2 border-ink shadow-soft hover:bg-primary-hover active:bg-coral-800
@@ -209,23 +240,19 @@
       >
         <Sparkles class="w-3.5 h-3.5 text-ocean-500" />
         <span class="text-xs font-bold text-ocean-700 tracking-wide uppercase">
-          Plataforma de quizzes em tempo real
+          Quizzes ao vivo, game show garantido
         </span>
       </div>
 
       <h1
         class="font-display text-4xl lg:text-5xl xl:text-6xl font-extrabold text-ink leading-[1.06] tracking-tight"
       >
-        A maneira mais
-        <span class="text-primary">divertida</span>
-        de engajar qualquer audiência
+        Sua aula, sua reunião ou sua festa viram um <span class="text-primary">game show</span>
       </h1>
 
       <p class="mt-6 text-lg text-ink-soft leading-relaxed max-w-xl">
-        Crie quizzes interativos em minutos, compartilhe um PIN de 6 dígitos e veja dezenas de
-        pessoas competirem em tempo real — <strong class="text-ink"
-          >como um game show, na sua sala.</strong
-        >
+        Crie perguntas em minutos e desafie sua plateia a jogar ao vivo pelo celular.
+        <strong class="text-ink">Todo mundo participa, ninguém fica de fora.</strong>
       </p>
 
       <div class="mt-10 flex flex-col sm:flex-row gap-3">
@@ -250,7 +277,7 @@
       </div>
 
       <p class="mt-6 text-sm text-ink-faint">
-        Sem compromisso. Crie sua conta e comece a usar em menos de 2 minutos.
+        Grátis para começar · Sem instalar nada · Funciona em qualquer celular
       </p>
     </div>
 
@@ -301,7 +328,7 @@
     <div class="text-center mb-16">
       <h2 class="font-display text-3xl font-extrabold text-ink tracking-tight">Como funciona</h2>
       <p class="mt-4 text-lg text-ink-soft max-w-xl mx-auto">
-        Do quiz pronto ao pódio final em três passos simples.
+        Pronto para jogar em três passos simples.
       </p>
     </div>
 
@@ -342,10 +369,10 @@
   <div class="mx-auto max-w-7xl px-6 py-24">
     <div class="text-center mb-16">
       <h2 class="font-display text-3xl font-extrabold text-ink tracking-tight">
-        Tudo que você precisa para engajar
+        Duas formas de jogar, uma só diversão
       </h2>
       <p class="mt-4 text-lg text-ink-soft max-w-xl mx-auto">
-        Ferramentas pensadas tanto para quem apresenta quanto para quem participa.
+        Tudo para quem apresenta e para quem joga, em um só lugar.
       </p>
     </div>
 
@@ -358,7 +385,7 @@
           >
             <Trophy class="w-5 h-5 text-white" />
           </div>
-          <h3 class="font-display text-xl font-bold text-ink">Para Apresentadores</h3>
+          <h3 class="font-display text-xl font-bold text-ink">Para quem apresenta</h3>
         </div>
 
         <div class="space-y-4">
@@ -389,7 +416,7 @@
           >
             <Users class="w-5 h-5 text-white" />
           </div>
-          <h3 class="font-display text-xl font-bold text-ink">Para Participantes</h3>
+          <h3 class="font-display text-xl font-bold text-ink">Para quem joga</h3>
         </div>
 
         <div class="space-y-4">
@@ -416,7 +443,7 @@
 </section>
 
 <!-- ════════════════════════════════════════════ -->
-<!--  STATS                                     -->
+<!--  PARA QUEM                                   -->
 <!-- ════════════════════════════════════════════ -->
 <section class="bg-ocean-950 border-y-[3px] border-ink relative overflow-hidden">
   <!-- Orbes decorativas -->
@@ -424,15 +451,26 @@
   <div class="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-coral-400/10 blur-3xl"></div>
 
   <div class="relative mx-auto max-w-7xl px-6 py-20">
-    <div class="grid sm:grid-cols-3 gap-4">
-      {#each stats as stat (stat.label)}
-        <div class="bg-ocean-900 border-2 border-ink rounded-2xl p-10 text-center shadow-soft">
-          <div class="font-display text-5xl font-extrabold text-white tracking-tight mb-3">
-            {stat.value}
+    <div class="text-center mb-14">
+      <h2 class="font-display text-3xl font-extrabold text-white tracking-tight">
+        Feito para qualquer ocasião
+      </h2>
+      <p class="mt-4 text-lg text-ocean-200 max-w-xl mx-auto">
+        Se tem plateia, tem jogo. Escolha o seu cenário.
+      </p>
+    </div>
+
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {#each audiences as audience (audience.title)}
+        <div class="bg-ocean-900 border-2 border-ink rounded-2xl p-6 text-center shadow-soft">
+          <div
+            class="w-12 h-12 mx-auto flex items-center justify-center {colorMap[audience.color]
+              .light} border-2 border-ink rounded-lg mb-4"
+          >
+            <audience.icon class="w-6 h-6 {colorMap[audience.color].text}" />
           </div>
-          <p class="text-sm text-ocean-200 leading-relaxed max-w-[200px] mx-auto">
-            {stat.label}
-          </p>
+          <h3 class="font-display text-lg font-bold text-white mb-2">{audience.title}</h3>
+          <p class="text-sm text-ocean-200 leading-relaxed">{audience.desc}</p>
         </div>
       {/each}
     </div>
@@ -445,11 +483,11 @@
 <section class="bg-surface-raised border-t border-line relative overflow-hidden">
   <div class="mx-auto max-w-7xl px-6 py-24 text-center relative">
     <h2 class="font-display text-3xl lg:text-4xl font-extrabold text-ink tracking-tight">
-      Pronto para transformar sua audiência
-      <span class="text-primary">em competidores?</span>
+      Pronto para transformar sua próxima reunião
+      <span class="text-primary">em uma competição?</span>
     </h2>
     <p class="mt-4 text-lg text-ink-soft max-w-lg mx-auto">
-      Crie sua conta gratuita, monte seu primeiro quiz e veja o engajamento acontecer ao vivo.
+      Crie sua conta grátis, monte seu primeiro quiz em minutos e veja todo mundo entrar no jogo.
     </p>
     <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
       <a
@@ -471,6 +509,15 @@
         Entrar em um jogo
       </a>
     </div>
+
+    <p class="mt-8 text-sm text-ink-faint">
+      <a
+        href={resolve("/login")}
+        class="font-semibold text-ink-soft hover:text-ink underline underline-offset-4 transition-colors"
+      >
+        Já tem conta? Entrar
+      </a>
+    </p>
   </div>
 </section>
 
@@ -494,7 +541,7 @@
 
     <div class="flex items-center gap-8 text-sm text-ink-faint">
       <a href={resolve("/login")} class="hover:text-ink-soft transition-colors font-medium">
-        Acessar painel
+        Entrar
       </a>
       <a href={resolve("/register")} class="hover:text-ink-soft transition-colors font-medium">
         Criar conta

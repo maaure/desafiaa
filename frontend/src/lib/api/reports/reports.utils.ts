@@ -10,7 +10,7 @@ export function accuracyColor(rate: number): string {
 }
 
 export function formatDate(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return new Date(iso).toLocaleString("pt-BR");
 }
 

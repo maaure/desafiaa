@@ -40,7 +40,7 @@
       id="title"
       type="text"
       bind:value={title}
-      placeholder="Ex: Revisão de História — Brasil Colonial"
+      placeholder="Ex: Revisão de História (Brasil Colonial)"
       autofocus
       class="w-full px-4 py-2.5 rounded-lg border-2 border-ink bg-surface-raised shadow-soft text-sm text-ink
         placeholder:text-ink-faint focus:border-ocean-500

@@ -92,7 +92,7 @@
       confirmLeave = false;
       goto(url);
     } catch {
-      toast.error("Não foi possível salvar — verifique os campos e tente novamente");
+      toast.error("Não foi possível salvar. Verifique os campos e tente novamente");
       confirmLeave = false;
     }
   }
@@ -132,7 +132,7 @@
         goto(resolve(`/quiz/${saved.id}/edit`));
       }
     } catch {
-      toast.error("Não foi possível salvar — verifique os campos e tente novamente");
+      toast.error("Não foi possível salvar. Verifique os campos e tente novamente");
     }
   }
 
@@ -193,7 +193,7 @@
         <div>
           <label for="desc" class="block text-sm font-semibold text-ink-soft mb-1.5">
             Descrição
-            <span class="text-ink-faint font-normal">— opcional</span>
+            <span class="text-ink-faint font-normal">opcional</span>
           </label>
           <textarea
             id="desc"
