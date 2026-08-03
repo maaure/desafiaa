@@ -1,5 +1,15 @@
 <script lang="ts">
-  import { BarChart3, LayoutDashboard, LogOut, Menu, Pencil, Plus, Radio, X } from "@lucide/svelte";
+  import {
+    BarChart3,
+    Globe,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Pencil,
+    Plus,
+    Radio,
+    X,
+  } from "@lucide/svelte";
   import { auth } from "$lib/stores/auth.store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -114,6 +124,18 @@
         >
           <Radio class="w-5 h-5 shrink-0" />
           Sessões ativas
+        </a>
+
+        <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">Explorar</p>
+        <a
+          href={resolve("/quizzes/public")}
+          class="flex items-center gap-3 px-3 py-3 mb-5 rounded-xl text-base font-semibold transition-colors
+            {isActive('/quizzes/public')
+            ? 'bg-ocean-500 text-white shadow-soft'
+            : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
+        >
+          <Globe class="w-5 h-5 shrink-0" />
+          Quizzes Públicos
         </a>
 
         {#if currentQuizId}

@@ -20,8 +20,9 @@ export const sessionService = {
   async create(quizId: string, hostId: string): Promise<SessionResponse> {
     const quiz = await sessionRepo.getQuizOwnedBy(quizId, hostId);
     if (!quiz) throw new NotFoundError("Quiz");
-    if (quiz.authorId !== hostId) throw new NotFoundError("Quiz");
-    if (!quiz.isPublished) throw new NotFoundError("Quiz não publicado");
+    // Público: qualquer usuário aplica. Privado: só o dono e se publicado.
+    if (!quiz.isPublic && quiz.authorId !== hostId) throw new NotFoundError("Quiz");
+    if (!quiz.isPublic && !quiz.isPublished) throw new NotFoundError("Quiz não publicado");
 
     const pin = await ensureUniquePin();
 

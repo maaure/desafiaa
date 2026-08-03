@@ -25,6 +25,7 @@ export interface QuizEntity {
   title: string;
   description: string | null;
   isPublished: boolean;
+  isPublic: boolean;
   authorId: string;
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +36,7 @@ export interface QuizListItem {
   title: string;
   description: string | null;
   isPublished: boolean;
+  isPublic: boolean;
   questionCount: number;
   createdAt: string;
 }
@@ -44,8 +46,20 @@ export interface QuizFull {
   title: string;
   description: string | null;
   isPublished: boolean;
+  isPublic: boolean;
   createdAt: string;
   questions: QuestionFull[];
+}
+
+/** Item da listagem pública — inclui o autor */
+export interface PublicQuizListItem {
+  id: string;
+  title: string;
+  description: string | null;
+  isPublished: boolean;
+  questionCount: number;
+  authorName: string;
+  createdAt: string;
 }
 
 export interface QuestionFull {

@@ -1,9 +1,12 @@
+import { and, eq, inArray } from "drizzle-orm";
 import { NotFoundError } from "../../shared/errors";
+import { db, schema } from "../../db";
 import { quizRepo } from "./quiz.repository";
-import type { CreateQuizInput, UpdateQuizInput } from "./quiz.schema";
+import type { SaveQuizInput, UpdateQuizInput } from "./quiz.schema";
 import type {
   QuizListItem,
   QuizFull,
+  PublicQuizListItem,
   QuestionEntity,
   AlternativeEntity,
   CreateQuestionInput,
@@ -45,7 +48,29 @@ export const quizService = {
       title: q.title,
       description: q.description,
       isPublished: q.isPublished,
+      isPublic: q.isPublic,
       questionCount: q.questions.length,
+      createdAt: q.createdAt.toISOString(),
+    }));
+
+    return { data, total, page, limit };
+  },
+
+  /** Quizzes públicos com busca por título + descrição */
+  async listPublic(page = 1, limit = 20, search = "") {
+    const offset = (page - 1) * limit;
+    const [total, quizzes] = await Promise.all([
+      quizRepo.countPublic(search),
+      quizRepo.listPublic(limit, offset, search),
+    ]);
+
+    const data: PublicQuizListItem[] = quizzes.map((q) => ({
+      id: q.id,
+      title: q.title,
+      description: q.description,
+      isPublished: q.isPublished,
+      questionCount: q.questions.length,
+      authorName: q.author.name,
       createdAt: q.createdAt.toISOString(),
     }));
 
@@ -61,6 +86,7 @@ export const quizService = {
       title: quiz.title,
       description: quiz.description,
       isPublished: quiz.isPublished,
+      isPublic: quiz.isPublic,
       createdAt: quiz.createdAt.toISOString(),
       questions: quiz.questions.map((q) => ({
         id: q.id,
@@ -80,13 +106,151 @@ export const quizService = {
     };
   },
 
-  async create(input: CreateQuizInput, userId: string) {
-    const quiz = await quizRepo.insertOne({
-      title: input.title,
-      description: input.description ?? null,
-      authorId: userId,
+  /**
+   * Upsert completo em uma única transação: cria ou edita o quiz e sincroniza
+   * perguntas/alternativas (atualiza as que vieram com id, cria as novas e
+   * remove as que saíram do documento).
+   */
+  async saveFull(input: SaveQuizInput, userId: string): Promise<QuizFull> {
+    const quizId = await db.transaction(async (tx) => {
+      let quizId: string;
+
+      if (input.id) {
+        const quiz = await tx.query.quizzes.findFirst({
+          where: and(eq(schema.quizzes.id, input.id), eq(schema.quizzes.authorId, userId)),
+        });
+        if (!quiz) throw new NotFoundError("Quiz");
+        quizId = quiz.id;
+        await tx
+          .update(schema.quizzes)
+          .set({
+            title: input.title,
+            description: input.description ?? null,
+            isPublished: input.isPublished ?? quiz.isPublished,
+            isPublic: input.isPublic ?? quiz.isPublic,
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.quizzes.id, quizId));
+      } else {
+        const [quiz] = await tx
+          .insert(schema.quizzes)
+          .values({
+            title: input.title,
+            description: input.description ?? null,
+            isPublished: input.isPublished ?? false,
+            isPublic: input.isPublic ?? false,
+            authorId: userId,
+          })
+          .returning();
+        quizId = quiz.id;
+      }
+
+      // Estado anterior — usado para calcular remoções
+      const existingQuestions = await tx.query.questions.findMany({
+        where: eq(schema.questions.quizId, quizId),
+      });
+      const existingAlts = existingQuestions.length
+        ? await tx.query.alternatives.findMany({
+            where: inArray(
+              schema.alternatives.questionId,
+              existingQuestions.map((q) => q.id),
+            ),
+          })
+        : [];
+      const keptQuestionIds = new Set<string>();
+      const keptAltIds = new Set<string>();
+
+      for (let qi = 0; qi < input.questions.length; qi++) {
+        const q = input.questions[qi];
+        let questionId: string;
+
+        if (q.id) {
+          questionId = q.id;
+          keptQuestionIds.add(questionId);
+          await tx
+            .update(schema.questions)
+            .set({
+              text: q.text,
+              questionType: q.questionType,
+              basePoints: q.basePoints ?? 1000,
+              imageUrl: q.imageUrl ?? null,
+              sortOrder: qi,
+            })
+            .where(eq(schema.questions.id, questionId));
+        } else {
+          const [created] = await tx
+            .insert(schema.questions)
+            .values({
+              quizId,
+              text: q.text,
+              questionType: q.questionType,
+              basePoints: q.basePoints ?? 1000,
+              imageUrl: q.imageUrl ?? null,
+              sortOrder: qi,
+            })
+            .returning();
+          questionId = created.id;
+        }
+
+        // Uma correta por pergunta: limpa a marcação e aplica a do payload
+        await tx
+          .update(schema.alternatives)
+          .set({ isCorrect: false })
+          .where(eq(schema.alternatives.questionId, questionId));
+
+        for (let ai = 0; ai < q.alternatives.length; ai++) {
+          const alt = q.alternatives[ai];
+          if (alt.id) {
+            keptAltIds.add(alt.id);
+            await tx
+              .update(schema.alternatives)
+              .set({
+                text: alt.text,
+                imageUrl: alt.imageUrl ?? null,
+                isCorrect: alt.isCorrect,
+                sortOrder: ai,
+              })
+              .where(eq(schema.alternatives.id, alt.id));
+          } else {
+            await tx.insert(schema.alternatives).values({
+              questionId,
+              text: alt.text,
+              imageUrl: alt.imageUrl ?? null,
+              isCorrect: alt.isCorrect,
+              sortOrder: ai,
+            });
+          }
+        }
+
+        // Alternativas que saíram do documento
+        const removedAlts = existingAlts.filter(
+          (a) => a.questionId === questionId && !keptAltIds.has(a.id),
+        );
+        if (removedAlts.length) {
+          await tx.delete(schema.alternatives).where(
+            inArray(
+              schema.alternatives.id,
+              removedAlts.map((a) => a.id),
+            ),
+          );
+        }
+      }
+
+      // Perguntas que saíram do documento (cascade apaga as alternativas)
+      const removedQuestions = existingQuestions.filter((q) => !keptQuestionIds.has(q.id));
+      if (removedQuestions.length) {
+        await tx.delete(schema.questions).where(
+          inArray(
+            schema.questions.id,
+            removedQuestions.map((q) => q.id),
+          ),
+        );
+      }
+
+      return quizId;
     });
-    return { id: quiz.id, title: quiz.title };
+
+    return this.getById(quizId, userId);
   },
 
   async update(quizId: string, userId: string, input: UpdateQuizInput) {

@@ -1,6 +1,12 @@
-import { eq, and, asc, desc, sql } from "drizzle-orm";
+import { eq, and, asc, desc, sql, ilike, or } from "drizzle-orm";
 import { db, schema } from "../../db";
 import type { UpdateQuestionInput, UpdateAlternativeInput } from "./quiz.types";
+
+// Busca por título + descrição (usada na listagem pública)
+function searchFilter(search: string) {
+  const pattern = `%${search}%`;
+  return or(ilike(schema.quizzes.title, pattern), ilike(schema.quizzes.description, pattern));
+}
 
 export const quizRepo = {
   // ── Quizzes ───────────────────────────────────────────────────
@@ -37,15 +43,30 @@ export const quizRepo = {
     });
   },
 
+  // ── Públicos ─────────────────────────────────────────────────
+
+  async countPublic(search: string) {
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(schema.quizzes)
+      .where(and(eq(schema.quizzes.isPublic, true), searchFilter(search)));
+    return count;
+  },
+
+  async listPublic(limit: number, offset: number, search: string) {
+    return db.query.quizzes.findMany({
+      where: and(eq(schema.quizzes.isPublic, true), searchFilter(search)),
+      with: { author: true, questions: true },
+      orderBy: (q, { desc }) => [desc(q.createdAt)],
+      limit,
+      offset,
+    });
+  },
+
   async getOwnedBy(quizId: string, userId: string) {
     return db.query.quizzes.findFirst({
       where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, userId)),
     });
-  },
-
-  async insertOne(data: { title: string; description: string | null; authorId: string }) {
-    const [quiz] = await db.insert(schema.quizzes).values(data).returning();
-    return quiz;
   },
 
   async updateOne(quizId: string, data: Record<string, unknown>) {

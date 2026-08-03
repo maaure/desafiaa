@@ -6,6 +6,7 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
+  import { toast } from "$lib/stores/toast.store";
   import { useQuiz } from "$lib/api/quizzes/quizzes.queries";
   import { useSaveQuiz } from "$lib/api/quizzes/quizzes.mutations";
   import { validateQuiz } from "$lib/api/quizzes/quizzes.utils";
@@ -16,7 +17,6 @@
   let quiz = $state<Quiz | null>(get(quizEditor));
   let validationErrors = $state<Record<string, string>>({});
   let isLoading = $state(true);
-  let saveSuccess = $state(false);
 
   // Query alimenta o draft do editor (estado local); o save é mutation composta
   const quizQuery = useQuiz(quizId && quizId !== "new" ? quizId : "");
@@ -47,6 +47,8 @@
       quizEditor.setQuiz(quizQuery.data);
       isLoading = false;
     } else if (quizQuery.isError) {
+      // Não é seu quiz (ou não existe) — descarta draft de outra sessão de edição
+      quizEditor.clear();
       isLoading = false;
     }
   });
@@ -60,12 +62,15 @@
       return;
     }
     validationErrors = {};
-    saveSuccess = false;
-    const saved = await saveQuiz.mutateAsync(draft);
-    quizEditor.setQuiz(saved);
-    saveSuccess = true;
-    if (quizId === "new" && saved.id) {
-      goto(resolve(`/quiz/${saved.id}/edit`));
+    try {
+      const saved = await saveQuiz.mutateAsync(draft);
+      quizEditor.setQuiz(saved);
+      toast.success("Questionário salvo com sucesso");
+      if (quizId === "new" && saved.id) {
+        goto(resolve(`/quiz/${saved.id}/edit`));
+      }
+    } catch {
+      toast.error("Não foi possível salvar — verifique os campos e tente novamente");
     }
   }
 
@@ -180,6 +185,39 @@
             </div>
           </button>
         </div>
+
+        <!-- Public toggle -->
+        <div class="pt-3 border-t-2 border-ink">
+          <button
+            onclick={() => quizEditor.togglePublic()}
+            class="inline-flex items-center gap-3 group"
+            type="button"
+          >
+            <span class="relative inline-flex items-center cursor-pointer">
+              <span
+                class="block w-10 h-5.5 rounded-full border-2 border-ink transition-colors duration-200"
+                class:bg-ocean-500={quiz.isPublic}
+                class:bg-sand-300={!quiz.isPublic}
+              >
+                <span
+                  class="absolute top-0.5 left-0.5 w-4.5 h-4.5 rounded-full bg-white border border-ink shadow-soft transition-transform duration-200"
+                  class:translate-x-[18px]={quiz.isPublic}
+                  class:translate-x-0={!quiz.isPublic}
+                ></span>
+              </span>
+            </span>
+            <div class="text-left">
+              <p class="text-sm font-semibold text-ink-soft">
+                {quiz.isPublic ? "Público" : "Privado"}
+              </p>
+              <p class="text-xs text-ink-faint">
+                {quiz.isPublic
+                  ? "Qualquer pessoa encontra este quiz na listagem pública"
+                  : "Só você vê este quiz. Torne-o público para compartilhar com todos."}
+              </p>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -192,16 +230,6 @@
             <li class="text-sm text-tomato-600">{msg}</li>
           {/each}
         </ul>
-      </div>
-    {/if}
-
-    <!-- Save success -->
-    {#if saveSuccess}
-      <div
-        class="rounded-lg border border-leaf-200 bg-leaf-50 px-4 py-3 mb-6 flex items-center gap-2 animate-fade-in"
-      >
-        <CheckCircle class="w-4 h-4 text-leaf-600 shrink-0" />
-        <span class="text-sm font-medium text-leaf-700">Questionário salvo com sucesso</span>
       </div>
     {/if}
 

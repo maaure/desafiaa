@@ -22,12 +22,18 @@ function createQuizEditorStore() {
       quiz.set(data);
     },
 
+    /** Descarta o draft (ex.: quiz não encontrado / sem permissão) */
+    clear() {
+      quiz.set(null);
+    },
+
     initNew(title: string) {
       quiz.set({
         id: "",
         title,
         description: null,
         isPublished: false,
+        isPublic: false,
         createdAt: "",
         questions: [],
       });
@@ -43,6 +49,10 @@ function createQuizEditorStore() {
 
     togglePublished() {
       quiz.update((q) => (q ? { ...q, isPublished: !q.isPublished } : q));
+    },
+
+    togglePublic() {
+      quiz.update((q) => (q ? { ...q, isPublic: !q.isPublic } : q));
     },
 
     addQuestion(type: "multiple_choice" | "true_false") {

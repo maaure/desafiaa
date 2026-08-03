@@ -1,7 +1,7 @@
 // src/modules/quiz/quiz.routes.ts
 import { FastifyInstance } from "fastify";
 import { quizService } from "./quiz.service";
-import { createQuizSchema, updateQuizSchema } from "./quiz.schema";
+import { saveQuizSchema, updateQuizSchema } from "./quiz.schema";
 import { authenticate } from "../../middleware/auth";
 import { zSchema } from "../../lib/swagger";
 import { z } from "zod";
@@ -35,6 +35,22 @@ export async function quizRoutes(app: FastifyInstance) {
     },
   );
 
+  // Listagem pública com busca — rota estática vence o :id na árvore do Fastify
+  app.get(
+    "/api/quizzes/public",
+    {
+      schema: { tags: ["quizzes"] },
+    },
+    async (request) => {
+      const { page, limit, search } = request.query as any;
+      return quizService.listPublic(
+        Number(page) || 1,
+        Number(limit) || 20,
+        String(search ?? "").trim(),
+      );
+    },
+  );
+
   app.get<{ Params: { id: string } }>(
     "/api/quizzes/:id",
     {
@@ -45,15 +61,16 @@ export async function quizRoutes(app: FastifyInstance) {
     },
   );
 
+  // Upsert único: id no body = edição, ausente = criação (quiz + perguntas + alternativas)
   app.post(
     "/api/quizzes",
     {
-      schema: { tags: ["quizzes"], body: zSchema(createQuizSchema) },
+      schema: { tags: ["quizzes"], body: zSchema(saveQuizSchema) },
     },
     async (request, reply) => {
       const input = request.body as any;
-      const quiz = await quizService.create(input, (request as any).userId);
-      return reply.status(201).send(quiz);
+      const quiz = await quizService.saveFull(input, (request as any).userId);
+      return reply.status(input.id ? 200 : 201).send(quiz);
     },
   );
 

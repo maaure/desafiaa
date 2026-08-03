@@ -1,5 +1,5 @@
 import { api } from "$lib/api/client";
-import type { QuizListItem } from "./quizzes.types";
+import type { PublicQuizListItem, Quiz, QuizListItem, QuizSavePayload } from "./quizzes.types";
 
 export const quizRequests = {
   list: (page = 1) =>
@@ -13,6 +13,7 @@ export const quizRequests = {
       title: string;
       description: string | null;
       isPublished: boolean;
+      isPublic: boolean;
       createdAt: string;
       questions: Array<{
         id: string;
@@ -31,13 +32,13 @@ export const quizRequests = {
       }>;
     }>(`/api/quizzes/${id}`),
 
-  create: (body: { title: string; description?: string }) =>
-    api.post<{ id: string; title: string }>("/api/quizzes", body),
+  // Upsert único: id no payload = edição, ausente = criação
+  save: (body: QuizSavePayload) => api.post<Quiz>("/api/quizzes", body),
 
-  update: (
-    id: string,
-    body: { title?: string; description?: string | null; isPublished?: boolean },
-  ) => api.put<{ id: string; title: string; isPublished: boolean }>(`/api/quizzes/${id}`, body),
+  listPublic: (search: string, page = 1) =>
+    api.get<{ data: PublicQuizListItem[]; total: number; page: number; limit: number }>(
+      `/api/quizzes/public?search=${encodeURIComponent(search)}&page=${page}`,
+    ),
 
   remove: (id: string) => api.delete<void>(`/api/quizzes/${id}`),
 
@@ -47,49 +48,4 @@ export const quizRequests = {
     formData.append("file", file);
     return api.upload<{ url: string }>("/api/upload", formData);
   },
-
-  // Questions
-  addQuestion: (
-    quizId: string,
-    body: {
-      text: string;
-      imageUrl?: string | null;
-      questionType: "multiple_choice" | "true_false";
-      basePoints?: number;
-    },
-  ) =>
-    api.post<{ id: string; text: string; sortOrder: number }>(
-      `/api/quizzes/${quizId}/questions`,
-      body,
-    ),
-
-  updateQuestion: (
-    id: string,
-    body: { text?: string; imageUrl?: string | null; basePoints?: number },
-  ) => api.put<{ id: string }>(`/api/questions/${id}`, body),
-
-  deleteQuestion: (id: string) => api.delete<void>(`/api/questions/${id}`),
-
-  reorderQuestion: (id: string, sortOrder: number) =>
-    api.put<{ id: string; sortOrder: number }>(`/api/questions/${id}/order`, { sortOrder }),
-
-  // Alternatives
-  addAlternative: (
-    questionId: string,
-    body: { text: string; imageUrl?: string | null; isCorrect?: boolean },
-  ) =>
-    api.post<{ id: string; text: string; sortOrder: number; isCorrect: boolean }>(
-      `/api/questions/${questionId}/alternatives`,
-      body,
-    ),
-
-  updateAlternative: (
-    id: string,
-    body: { text?: string; imageUrl?: string | null; isCorrect?: boolean },
-  ) => api.put<{ id: string; isCorrect: boolean }>(`/api/alternatives/${id}`, body),
-
-  deleteAlternative: (id: string) => api.delete<void>(`/api/alternatives/${id}`),
-
-  markCorrect: (id: string) =>
-    api.put<{ id: string; isCorrect: boolean }>(`/api/alternatives/${id}/correct`),
 };

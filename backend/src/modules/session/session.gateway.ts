@@ -39,9 +39,10 @@ export function registerHostGateway(io: Namespace) {
 
     socket.on("host:session:create", async ({ quizId }: { quizId: string }) => {
       const quiz = await db.query.quizzes.findFirst({
-        where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.authorId, socket.data.userId)),
+        where: eq(schema.quizzes.id, quizId),
       });
-      if (!quiz) {
+      // Qualquer usuário pode aplicar um quiz público; privado só o dono
+      if (!quiz || (quiz.authorId !== socket.data.userId && !quiz.isPublic)) {
         socket.emit("error", { message: "Quiz não encontrado" });
         return;
       }

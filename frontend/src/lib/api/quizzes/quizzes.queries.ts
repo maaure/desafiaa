@@ -25,3 +25,12 @@ export function useQuiz(id: string) {
     enabled: !!id,
   }));
 }
+
+export function usePublicQuizzes(getSearch: () => string) {
+  return createQuery(() => ({
+    // getSearch() é lido dentro da função de options — reativo no runes mode
+    queryKey: ["quizzes", "public", getSearch()],
+    queryFn: () => quizRequests.listPublic(getSearch()),
+    placeholderData: (previous) => previous, // mantém a lista visível durante novas buscas
+  }));
+}

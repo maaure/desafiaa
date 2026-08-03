@@ -32,6 +32,7 @@ export const quizzes = pgTable(
     title: varchar("title", { length: 200 }).notNull(),
     description: text("description"),
     isPublished: boolean("is_published").default(false).notNull(),
+    isPublic: boolean("is_public").default(false).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
