@@ -1,12 +1,16 @@
 <script lang="ts">
-  import { ArrowLeft, CheckCircle, Play, User } from "@lucide/svelte";
+  import { CheckCircle, Copy, Play, User } from "@lucide/svelte";
   import { onMount } from "svelte";
+  import { get } from "svelte/store";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { hostSession } from "$lib/stores/host-session.store";
   import { toast } from "$lib/stores/toast.store";
   import { usePublicQuiz } from "$lib/api/quizzes/quizzes.queries";
+  import { useSaveQuiz } from "$lib/api/quizzes/quizzes.mutations";
+  import Breadcrumb from "$lib/components/ui/Breadcrumb.svelte";
+  import PageSpinner from "$lib/components/ui/PageSpinner.svelte";
 
   let quizId = $page.params.id;
   const quizQuery = usePublicQuiz(quizId ?? "");
@@ -19,18 +23,53 @@
 
   const LETTERS = ["A", "B", "C", "D", "E", "F"];
 
+  let isCreating = $state(get(hostSession.creatingSession));
+
   onMount(() => {
-    return hostSession.error.subscribe((v) => {
-      if (v) toast.error(v);
-    });
+    const unsubs = [
+      hostSession.error.subscribe((v) => {
+        if (v) toast.error(v);
+      }),
+      hostSession.creatingSession.subscribe((v) => (isCreating = v)),
+    ];
+    return () => unsubs.forEach((fn) => fn());
   });
 
   // Aplicar = iniciar sessão com o quiz público (não vira seu quiz)
   function handleApply() {
-    if (!quiz) return;
+    if (!quiz || isCreating) return;
     hostSession.clearError();
     hostSession.connect();
     hostSession.createSession(quiz.id);
+  }
+
+  // Copiar = criar clone próprio (ids zerados → upsert cria tudo novo)
+  const saveQuiz = useSaveQuiz();
+  let isCopying = $state(false);
+
+  async function handleCopyToMine() {
+    if (!quiz || isCopying) return;
+    isCopying = true;
+    try {
+      const saved = await saveQuiz.mutateAsync({
+        id: "",
+        title: `${quiz.title} (cópia)`,
+        description: quiz.description,
+        isPublished: false,
+        isPublic: false,
+        createdAt: quiz.createdAt,
+        questions: quiz.questions.map((q) => ({
+          ...q,
+          id: "",
+          alternatives: q.alternatives.map((a) => ({ ...a, id: "" })),
+        })),
+      });
+      toast.success("Quiz copiado para seus quizzes");
+      goto(resolve(`/quiz/${saved.id}/edit`));
+    } catch {
+      toast.error("Não foi possível copiar o quiz — tente novamente");
+      isCopying = false;
+    }
   }
 
   $effect(() => {
@@ -41,25 +80,28 @@
 </script>
 
 <div class="px-4 sm:px-8 py-8 sm:py-10 max-w-3xl">
-  <!-- Back -->
-  <a
-    href={resolve("/quizzes/public")}
-    class="inline-flex items-center gap-1.5 text-sm text-ink-faint hover:text-ink-soft transition-colors mb-6"
-  >
-    <ArrowLeft class="w-4 h-4" />
-    Quizzes Públicos
-  </a>
+  <!-- Trilha: Quizzes Públicos > Quiz -->
+  <Breadcrumb
+    items={[
+      { label: "Quizzes Públicos", href: "/quizzes/public" },
+      { label: quiz?.title ?? "Quiz" },
+    ]}
+  />
 
   {#if isLoading}
-    <div class="flex items-center justify-center py-20">
-      <div
-        class="w-8 h-8 border-2 border-sand-200 border-t-ocean-500 rounded-full animate-spin"
-      ></div>
-      <span class="ml-3 text-sm text-ink-faint">Carregando...</span>
-    </div>
+    <PageSpinner />
   {:else if quizError || !quiz}
-    <div class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700">
-      {quizError}
+    <div
+      class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700 flex items-center justify-between"
+    >
+      <span>{quizError}</span>
+      <button
+        onclick={() => quizQuery.refetch()}
+        class="ml-3 shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-tomato-300 font-semibold
+          text-tomato-700 hover:bg-tomato-100 transition-colors"
+      >
+        Tentar novamente
+      </button>
     </div>
   {:else}
     <!-- Header -->
@@ -83,12 +125,39 @@
 
       <button
         onclick={handleApply}
+        disabled={isCreating}
         class="mt-5 w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-ink
           bg-primary text-white text-lg font-bold shadow-lift hover:bg-primary-hover active:bg-coral-800
-          active:translate-y-[2px] active:shadow-none transition-all"
+          active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        <Play class="w-5 h-5" />
-        Aplicar este quiz
+        {#if isCreating}
+          <div
+            class="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"
+          ></div>
+          Criando sessão...
+        {:else}
+          <Play class="w-5 h-5" />
+          Aplicar este quiz
+        {/if}
+      </button>
+
+      <button
+        onclick={handleCopyToMine}
+        disabled={isCopying}
+        class="mt-3 w-full inline-flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-ink
+          bg-surface-raised text-ocean-800 text-base font-bold shadow-soft hover:bg-ocean-50
+          active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+        title="Cria uma cópia sua para editar e adaptar"
+      >
+        {#if isCopying}
+          <div
+            class="w-4 h-4 border-2 border-ocean-300 border-t-ocean-600 rounded-full animate-spin"
+          ></div>
+          Copiando...
+        {:else}
+          <Copy class="w-4 h-4" />
+          Copiar para meus quizzes
+        {/if}
       </button>
     </div>
 

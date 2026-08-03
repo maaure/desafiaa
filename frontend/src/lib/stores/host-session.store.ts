@@ -36,6 +36,8 @@ interface HostSessionState {
   countdown: number;
   /** Lobby já aberto (tempo configurado) — restaurado no rejoin */
   lobbyStarted: boolean;
+  /** Criando/reconectando sessão — feedback de loading nos botões de ação */
+  creatingSession: boolean;
 }
 
 function createHostSessionStore() {
@@ -58,6 +60,7 @@ function createHostSessionStore() {
     isSubmitting: false,
     countdown: 0,
     lobbyStarted: false,
+    creatingSession: false,
   });
 
   let socket: Socket | null = null;
@@ -123,6 +126,7 @@ function createHostSessionStore() {
         phase: "lobby",
         pin: payload.pin,
         sessionId: payload.sessionId,
+        creatingSession: false,
       }));
       queryClient.invalidateQueries({ queryKey: ACTIVE_SESSIONS_KEY });
     });
@@ -198,6 +202,7 @@ function createHostSessionStore() {
           questionsExhausted: payload.questionsExhausted,
           lobbyStarted: payload.lobbyStarted,
           isSubmitting: false,
+          creatingSession: false,
           error: null,
         }));
         if (payload.status === "playing" && payload.countdown != null) {
@@ -294,7 +299,12 @@ function createHostSessionStore() {
         createSession(fallbackQuizId);
         return;
       }
-      state.update((s) => ({ ...s, error: payload.message, isSubmitting: false }));
+      state.update((s) => ({
+        ...s,
+        error: payload.message,
+        isSubmitting: false,
+        creatingSession: false,
+      }));
     });
   }
 
@@ -318,6 +328,7 @@ function createHostSessionStore() {
       pin: null,
       sessionId: null,
       quizId,
+      creatingSession: true,
       error: null,
       playerCount: 0,
       nicknames: [],
@@ -358,6 +369,7 @@ function createHostSessionStore() {
       quizId: fallbackQuizId ?? s.quizId,
       error: null,
       isSubmitting: false,
+      creatingSession: true,
     }));
     if (socket?.connected) {
       socket.emit("host:session:rejoin", { sessionId });
@@ -417,6 +429,7 @@ function createHostSessionStore() {
       isSubmitting: false,
       countdown: 0,
       lobbyStarted: false,
+      creatingSession: false,
     });
   }
 
@@ -440,6 +453,7 @@ function createHostSessionStore() {
     isSubmitting: derived(state, ($s) => $s.isSubmitting),
     countdown: derived(state, ($s) => $s.countdown),
     lobbyStarted: derived(state, ($s) => $s.lobbyStarted),
+    creatingSession: derived(state, ($s) => $s.creatingSession),
 
     connect,
     disconnect,

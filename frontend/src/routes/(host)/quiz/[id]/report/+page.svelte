@@ -1,13 +1,18 @@
 <script lang="ts">
-  import { ArrowLeft, BarChart3 } from "@lucide/svelte";
+  import { BarChart3 } from "@lucide/svelte";
   import { page } from "$app/stores";
-  import { resolve } from "$app/paths";
+  import QuizTabs from "$lib/components/ui/QuizTabs.svelte";
+  import Breadcrumb from "$lib/components/ui/Breadcrumb.svelte";
+  import PageSpinner from "$lib/components/ui/PageSpinner.svelte";
+  import { useQuiz } from "$lib/api/quizzes/quizzes.queries";
   import { useQuizReport, useQuizSessions } from "$lib/api/reports/reports.queries";
   import { formatMs, statusLabel, formatDate, accuracyColor } from "$lib/api/reports/reports.utils";
   import type { QuizReportItem, SessionSummary } from "$lib/api/reports/reports.types";
 
   let quizId = $page.params.id;
 
+  // Título do quiz para a trilha — cache do editor, sem fetch extra quando veio dele
+  const quizQuery = useQuiz(quizId ?? "");
   const reportQuery = useQuizReport(quizId ?? "");
   const sessionsQuery = useQuizSessions(quizId ?? "");
 
@@ -20,14 +25,17 @@
 </script>
 
 <div class="px-4 sm:px-8 py-8 sm:py-10 max-w-5xl">
-  <!-- Back + title -->
-  <a
-    href={resolve(`/quiz/${quizId}/edit`)}
-    class="inline-flex items-center gap-1.5 text-sm text-ink-faint hover:text-ink-soft transition-colors mb-6"
-  >
-    <ArrowLeft class="w-4 h-4" />
-    Voltar ao Editor
-  </a>
+  <!-- Trilha: Meus Quizzes > Quiz > Relatório (título leva ao editor) -->
+  <Breadcrumb
+    items={[
+      { label: "Meus Quizzes", href: "/dashboard" },
+      { label: quizQuery.data?.title ?? "Quiz", href: `/quiz/${quizId}/edit` },
+      { label: "Relatório" },
+    ]}
+  />
+
+  <!-- Tabs irmãs: Editar ⇄ Relatório -->
+  <QuizTabs />
 
   <h1 class="font-display text-2xl font-extrabold text-ink tracking-tight mb-2">
     Relatório do Quiz
@@ -36,17 +44,24 @@
 
   <!-- Loading -->
   {#if loading}
-    <div class="flex items-center justify-center py-20">
-      <div
-        class="w-8 h-8 border-2 border-sand-200 border-t-ocean-500 rounded-full animate-spin"
-      ></div>
-      <span class="ml-3 text-sm text-ink-faint">Carregando relatório...</span>
-    </div>
+    <PageSpinner label="Carregando relatório..." />
 
     <!-- Error -->
   {:else if storeError}
-    <div class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700">
-      {storeError}
+    <div
+      class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700 flex items-center justify-between"
+    >
+      <span>{storeError}</span>
+      <button
+        onclick={() => {
+          reportQuery.refetch();
+          sessionsQuery.refetch();
+        }}
+        class="ml-3 shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-tomato-300 font-semibold
+          text-tomato-700 hover:bg-tomato-100 transition-colors"
+      >
+        Tentar novamente
+      </button>
     </div>
 
     <!-- Empty -->

@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { ArrowLeft, ArrowRight } from "@lucide/svelte";
+  import { ArrowRight } from "@lucide/svelte";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import Breadcrumb from "$lib/components/ui/Breadcrumb.svelte";
 
   let title = $state("");
   let error = $state<string | null>(null);
@@ -20,14 +21,10 @@
 </script>
 
 <div class="px-8 py-8 max-w-2xl">
-  <!-- Back -->
-  <a
-    href={resolve("/dashboard")}
-    class="inline-flex items-center gap-1.5 text-sm text-ink-faint hover:text-ink-soft transition-colors mb-6"
-  >
-    <ArrowLeft class="w-4 h-4" />
-    Dashboard
-  </a>
+  <!-- Trilha: Meus Quizzes > Novo Questionário -->
+  <Breadcrumb
+    items={[{ label: "Meus Quizzes", href: "/dashboard" }, { label: "Novo Questionário" }]}
+  />
 
   <h1 class="font-display text-2xl font-extrabold text-ink tracking-tight mb-2">
     Novo Questionário

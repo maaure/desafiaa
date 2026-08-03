@@ -1,11 +1,13 @@
 <script lang="ts">
   import { Eye, Globe, MessageCircleMore, Play, Search, User, X } from "@lucide/svelte";
   import { onMount } from "svelte";
+  import { get } from "svelte/store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { hostSession } from "$lib/stores/host-session.store";
   import { toast } from "$lib/stores/toast.store";
   import { usePublicQuizzes } from "$lib/api/quizzes/quizzes.queries";
+  import PageSpinner from "$lib/components/ui/PageSpinner.svelte";
   import type { PublicQuizListItem } from "$lib/api/quizzes/quizzes.types";
 
   // Busca com debounce de 300ms — a query é por termo (cache do TanStack).
@@ -35,14 +37,21 @@
     return `há ${Math.floor(mins / 60)}h`;
   }
 
+  // Aplicar = iniciar sessão com o quiz público (não vira seu quiz)
+  let isCreating = $state(get(hostSession.creatingSession));
+
   onMount(() => {
-    return hostSession.error.subscribe((v) => {
-      if (v) toast.error(v);
-    });
+    const unsubs = [
+      hostSession.error.subscribe((v) => {
+        if (v) toast.error(v);
+      }),
+      hostSession.creatingSession.subscribe((v) => (isCreating = v)),
+    ];
+    return () => unsubs.forEach((fn) => fn());
   });
 
-  // Aplicar = iniciar sessão com o quiz público (não vira seu quiz)
   function handleApply(quizId: string) {
+    if (isCreating) return;
     hostSession.clearError();
     hostSession.connect();
     hostSession.createSession(quizId);
@@ -88,16 +97,20 @@
   </div>
 
   {#if listError}
-    <div class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700">
-      {listError}
+    <div
+      class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700 flex items-center justify-between"
+    >
+      <span>{listError}</span>
+      <button
+        onclick={() => publicQuery.refetch()}
+        class="ml-3 shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-tomato-300 font-semibold
+          text-tomato-700 hover:bg-tomato-100 transition-colors"
+      >
+        Tentar novamente
+      </button>
     </div>
   {:else if isLoading}
-    <div class="flex items-center justify-center py-20">
-      <div
-        class="w-8 h-8 border-2 border-sand-200 border-t-ocean-500 rounded-full animate-spin"
-      ></div>
-      <span class="ml-3 text-sm text-ink-faint">Carregando...</span>
-    </div>
+    <PageSpinner />
   {:else if quizzes.length === 0}
     <div class="text-center py-16">
       <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-sand-100 flex items-center justify-center">
@@ -170,13 +183,21 @@
             </a>
             <button
               onclick={() => handleApply(quiz.id)}
+              disabled={isCreating}
               class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg border-2 border-ink
                 text-sm font-bold text-white bg-primary shadow-soft hover:bg-primary-hover active:bg-coral-800
-                active:translate-y-[2px] active:shadow-none transition-all"
+                active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               title="Iniciar uma sessão com este quiz"
             >
-              <Play class="w-4 h-4" />
-              Aplicar
+              {#if isCreating}
+                <div
+                  class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                ></div>
+                Criando...
+              {:else}
+                <Play class="w-4 h-4" />
+                Aplicar
+              {/if}
             </button>
           </div>
         </div>

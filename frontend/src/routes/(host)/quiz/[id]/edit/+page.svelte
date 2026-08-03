@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { ArrowLeft, CheckCircle, CircleHelp, Tag } from "@lucide/svelte";
+  import { CheckCircle, CircleHelp, Tag } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { page } from "$app/stores";
-  import { goto } from "$app/navigation";
+  import { beforeNavigate, goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import { toast } from "$lib/stores/toast.store";
@@ -11,6 +11,10 @@
   import { useSaveQuiz } from "$lib/api/quizzes/quizzes.mutations";
   import { validateQuiz } from "$lib/api/quizzes/quizzes.utils";
   import QuestionEditor from "$lib/components/quiz/QuestionEditor.svelte";
+  import ConfirmDialog from "$lib/components/ui/ConfirmDialog.svelte";
+  import QuizTabs from "$lib/components/ui/QuizTabs.svelte";
+  import Breadcrumb from "$lib/components/ui/Breadcrumb.svelte";
+  import PageSpinner from "$lib/components/ui/PageSpinner.svelte";
   import type { Quiz } from "$lib/api/quizzes/quizzes.types";
 
   let quizId = $page.params.id;
@@ -28,8 +32,23 @@
     return saveError ? { ...validationErrors, save: saveError } : validationErrors;
   });
 
+  // Guarda de alterações não salvas — bloqueia saída e oferece Salvar/Descartar/Cancelar
+  let isDirty = $state(false);
+  let confirmLeave = $state(false);
+  let pendingNavUrl: string | null = null;
+
   onMount(() => {
-    const unsub = quizEditor.subscribe((v) => (quiz = v));
+    const unsubQuiz = quizEditor.subscribe((v) => (quiz = v));
+    const unsubDirty = quizEditor.isDirty.subscribe((v) => (isDirty = v));
+
+    // Fechar aba / refresh com alterações não salvas → aviso do navegador
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
 
     if (quizId === "new") {
       if (!get(quizEditor)) {
@@ -39,8 +58,51 @@
       isLoading = false;
     }
 
-    return () => unsub();
+    return () => {
+      unsubQuiz();
+      unsubDirty();
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   });
+
+  beforeNavigate((nav) => {
+    if (!isDirty || !nav.to?.url) return;
+    nav.cancel();
+    pendingNavUrl = `${nav.to.url.pathname}${nav.to.url.search}`;
+    confirmLeave = true;
+  });
+
+  // Salvar e navegar para onde o usuário ia — validação falha mantém na página
+  async function handleSaveAndLeave() {
+    const draft = get(quizEditor);
+    if (!draft) return;
+    const ve = validateQuiz(draft);
+    if (Object.keys(ve).length > 0) {
+      validationErrors = ve;
+      confirmLeave = false;
+      return;
+    }
+    validationErrors = {};
+    try {
+      const saved = await saveQuiz.mutateAsync(draft);
+      quizEditor.setQuiz(saved);
+      toast.success("Questionário salvo com sucesso");
+      const url = pendingNavUrl ?? resolve("/dashboard");
+      pendingNavUrl = null;
+      confirmLeave = false;
+      goto(url);
+    } catch {
+      toast.error("Não foi possível salvar — verifique os campos e tente novamente");
+      confirmLeave = false;
+    }
+  }
+
+  function handleDiscardAndLeave() {
+    const url = pendingNavUrl ?? resolve("/dashboard");
+    pendingNavUrl = null;
+    confirmLeave = false;
+    goto(url);
+  }
 
   $effect(() => {
     if (quizQuery.data) {
@@ -80,23 +142,17 @@
 </script>
 
 <div class="px-4 sm:px-8 py-8 sm:py-10 max-w-4xl">
-  <!-- Back -->
-  <a
-    href={resolve("/dashboard")}
-    class="inline-flex items-center gap-1.5 text-sm text-ink-faint hover:text-ink-soft transition-colors mb-6"
-  >
-    <ArrowLeft class="w-4 h-4" />
-    Dashboard
-  </a>
+  <!-- Trilha: Meus Quizzes > Quiz (tabs mostram Editar/Relatório) -->
+  <Breadcrumb
+    items={[{ label: "Meus Quizzes", href: "/dashboard" }, { label: quiz?.title ?? "Quiz" }]}
+  />
+
+  <!-- Tabs irmãs: Editar ⇄ Relatório -->
+  <QuizTabs />
 
   <!-- Loading -->
   {#if isLoading}
-    <div class="flex items-center justify-center py-20">
-      <div
-        class="w-8 h-8 border-2 border-sand-200 border-t-ocean-500 rounded-full animate-spin"
-      ></div>
-      <span class="ml-3 text-sm text-ink-faint">Carregando...</span>
-    </div>
+    <PageSpinner />
 
     <!-- Not found -->
   {:else if !quiz}
@@ -318,3 +374,17 @@
     </div>
   {/if}
 </div>
+
+<!-- Alterações não salvas — decidir antes de sair -->
+<ConfirmDialog
+  open={confirmLeave}
+  title="Alterações não salvas"
+  message="Você tem alterações não salvas neste questionário. O que deseja fazer?"
+  confirmLabel="Descartar alterações"
+  middleLabel="Salvar e sair"
+  cancelLabel="Continuar editando"
+  variant="danger"
+  onconfirm={handleDiscardAndLeave}
+  onmiddle={handleSaveAndLeave}
+  oncancel={() => (confirmLeave = false)}
+/>

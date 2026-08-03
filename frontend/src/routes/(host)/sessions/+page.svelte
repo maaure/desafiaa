@@ -1,12 +1,14 @@
 <script lang="ts">
-  import { Power, Radio, RefreshCw, X } from "@lucide/svelte";
+  import { ArrowLeft, Power, Radio, RefreshCw, X } from "@lucide/svelte";
   import { useQueryClient } from "@tanstack/svelte-query";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { hostSession } from "$lib/stores/host-session.store";
+  import { toast } from "$lib/stores/toast.store";
   import { useActiveSessions, sessionKeys } from "$lib/api/sessions/sessions.queries";
+  import ConfirmDialog from "$lib/components/ui/ConfirmDialog.svelte";
   import type { ActiveSession } from "$lib/api/sessions/sessions.types";
 
   let sessionError = $state<string | null>(get(hostSession.error));
@@ -21,6 +23,9 @@
   let activeError = $derived<string | null>(
     activeQuery.error ? "Não foi possível carregar as sessões ativas" : null,
   );
+
+  // Confirmação de encerramento via ConfirmDialog (substitui o duplo-clique)
+  let confirmAbort = $state<ActiveSession | null>(null);
 
   onMount(() => {
     const unsub = hostSession.error.subscribe((v) => {
@@ -40,25 +45,18 @@
     hostSession.rejoinSession(id);
   }
 
-  // Dupla confirmação do encerramento (mesmo estilo da tela de jogo)
-  let confirmAbortId = $state<string | null>(null);
-  let abortTimer: ReturnType<typeof setTimeout> | null = null;
-
-  function handleAbort(id: string) {
-    if (confirmAbortId !== id) {
-      confirmAbortId = id;
-      if (abortTimer) clearTimeout(abortTimer);
-      abortTimer = setTimeout(() => (confirmAbortId = null), 5000);
-      return;
-    }
-    if (abortTimer) clearTimeout(abortTimer);
-    confirmAbortId = null;
+  // Encerramento pede confirmação explícita (ConfirmDialog)
+  function handleConfirmAbort() {
+    const s = confirmAbort;
+    if (!s) return;
+    confirmAbort = null;
     // Otimista: tira da listagem na hora; o ack do servidor invalida o cache
     queryClient.setQueryData<ActiveSession[]>(
       sessionKeys.active,
-      (old) => old?.filter((s) => s.id !== id) ?? [],
+      (old) => old?.filter((x) => x.id !== s.id) ?? [],
     );
-    hostSession.abortSession(id);
+    hostSession.abortSession(s.id);
+    toast.success("Sessão encerrada");
   }
 
   function timeAgo(iso: string): string {
@@ -76,6 +74,15 @@
 </script>
 
 <div class="px-4 sm:px-8 py-8 sm:py-10 max-w-5xl">
+  <!-- Back -->
+  <a
+    href={resolve("/dashboard")}
+    class="inline-flex items-center gap-1.5 text-sm text-ink-faint hover:text-ink-soft transition-colors mb-6"
+  >
+    <ArrowLeft class="w-4 h-4" />
+    Meus Quizzes
+  </a>
+
   <!-- Page header -->
   <div class="flex items-center justify-between mb-8">
     <div>
@@ -113,8 +120,17 @@
   {/if}
 
   {#if activeError}
-    <div class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700">
-      {activeError}
+    <div
+      class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700 flex items-center justify-between"
+    >
+      <span>{activeError}</span>
+      <button
+        onclick={() => queryClient.invalidateQueries({ queryKey: sessionKeys.active })}
+        class="ml-3 shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-tomato-300 font-semibold
+          text-tomato-700 hover:bg-tomato-100 transition-colors"
+      >
+        Tentar novamente
+      </button>
     </div>
   {:else if !activeLoading && activeSessions.length === 0}
     <div class="text-center py-16">
@@ -161,18 +177,14 @@
               Reconectar
             </button>
             <button
-              onclick={() => handleAbort(s.id)}
+              onclick={() => (confirmAbort = s)}
               class="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-lg border-2 border-ink
                 text-sm font-bold shadow-soft transition-all active:translate-y-[2px] active:shadow-none
-                {confirmAbortId === s.id
-                ? 'bg-tomato-600 text-white animate-pulse-soft'
-                : 'text-danger bg-surface-raised hover:bg-tomato-50'}"
-              title={confirmAbortId === s.id
-                ? "Clique novamente para confirmar o encerramento"
-                : "Encerrar sessão"}
+                text-danger bg-surface-raised hover:bg-tomato-50"
+              title="Encerrar sessão"
             >
               <Power class="w-4 h-4" />
-              {confirmAbortId === s.id ? "Confirmar encerrar?" : "Encerrar"}
+              Encerrar
             </button>
           </div>
         </div>
@@ -180,3 +192,16 @@
     </div>
   {/if}
 </div>
+
+<ConfirmDialog
+  open={confirmAbort !== null}
+  title="Encerrar sessão?"
+  message={confirmAbort
+    ? `A sessão "${confirmAbort.quizTitle}" (PIN ${confirmAbort.pin}) será encerrada e os jogadores desconectados. Essa ação não pode ser desfeita.`
+    : ""}
+  confirmLabel="Encerrar sessão"
+  cancelLabel="Cancelar"
+  variant="danger"
+  onconfirm={handleConfirmAbort}
+  oncancel={() => (confirmAbort = null)}
+/>

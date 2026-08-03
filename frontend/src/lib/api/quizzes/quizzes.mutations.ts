@@ -10,37 +10,40 @@ import type { Quiz, QuizSavePayload } from "./quizzes.types";
 
 const TEMP_ID_PREFIXES = ["temp_", "a_", "ta_", "tb_"];
 
+// id vazio também é "criar" — nunca envie id "" como update
 function isRealId(id: string): boolean {
-  return !TEMP_ID_PREFIXES.some((prefix) => id.startsWith(prefix));
+  return id !== "" && !TEMP_ID_PREFIXES.some((prefix) => id.startsWith(prefix));
+}
+
+/** Monta o payload do upsert — usado pela mutation e por quem cria clone (ex.: copiar quiz público) */
+export function buildSavePayload(draft: Quiz): QuizSavePayload {
+  return {
+    id: draft.id || undefined,
+    title: draft.title,
+    description: draft.description,
+    isPublished: draft.isPublished,
+    isPublic: draft.isPublic,
+    questions: draft.questions.map((q) => ({
+      ...(isRealId(q.id) ? { id: q.id } : {}),
+      text: q.text,
+      questionType: q.questionType,
+      basePoints: q.basePoints,
+      imageUrl: q.imageUrl,
+      alternatives: q.alternatives.map((a) => ({
+        ...(isRealId(a.id) ? { id: a.id } : {}),
+        text: a.text,
+        isCorrect: a.isCorrect,
+        imageUrl: a.imageUrl,
+      })),
+    })),
+  };
 }
 
 export function useSaveQuiz() {
   const qc = useQueryClient();
 
   return createMutation(() => ({
-    mutationFn: async (draft: Quiz): Promise<Quiz> => {
-      const payload: QuizSavePayload = {
-        id: draft.id || undefined,
-        title: draft.title,
-        description: draft.description,
-        isPublished: draft.isPublished,
-        isPublic: draft.isPublic,
-        questions: draft.questions.map((q) => ({
-          ...(isRealId(q.id) ? { id: q.id } : {}),
-          text: q.text,
-          questionType: q.questionType,
-          basePoints: q.basePoints,
-          imageUrl: q.imageUrl,
-          alternatives: q.alternatives.map((a) => ({
-            ...(isRealId(a.id) ? { id: a.id } : {}),
-            text: a.text,
-            isCorrect: a.isCorrect,
-            imageUrl: a.imageUrl,
-          })),
-        })),
-      };
-      return quizRequests.save(payload);
-    },
+    mutationFn: (draft: Quiz) => quizRequests.save(buildSavePayload(draft)),
     onSuccess: () => {
       // Refetch lista e detalhe — o editor volta a receber o estado real do servidor
       qc.invalidateQueries({ queryKey: quizKeys.all });

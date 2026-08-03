@@ -1,5 +1,15 @@
 <script lang="ts">
-  import { ArrowLeft, CheckCircle, Power, Projector, Trophy, Users, X } from "@lucide/svelte";
+  import {
+    ArrowLeft,
+    BarChart3,
+    CheckCircle,
+    Pencil,
+    Power,
+    Projector,
+    Trophy,
+    Users,
+    X,
+  } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { get } from "svelte/store";
   import { goto } from "$app/navigation";
@@ -9,6 +19,7 @@
   import Podium from "$lib/components/ui/Podium.svelte";
   import RankingsTable from "$lib/components/ui/RankingsTable.svelte";
   import QuestionCard from "$lib/components/host/QuestionCard.svelte";
+  import ConfirmDialog from "$lib/components/ui/ConfirmDialog.svelte";
 
   let phase = $state<HostPhase>(get(hostSession.phase));
   let pin = $state<string | null>(get(hostSession.pin));
@@ -35,9 +46,8 @@
 
   let selectedTimeLimit = $state(30);
   let lobbyStarted = $state(get(hostSession.lobbyStarted));
-  // Dupla confirmação do encerramento — armado por alguns segundos
+  // Encerramento exige confirmação explícita (ConfirmDialog)
   let confirmAbort = $state(false);
-  let abortTimer: ReturnType<typeof setTimeout> | null = null;
 
   const TIME_PRESETS = [
     { label: "15s", value: 15 },
@@ -111,12 +121,9 @@
     hostSession.endSession();
   }
   function handleAbortSession() {
-    if (!confirmAbort) {
-      confirmAbort = true;
-      abortTimer = setTimeout(() => (confirmAbort = false), 5000);
-      return;
-    }
-    if (abortTimer) clearTimeout(abortTimer);
+    confirmAbort = true;
+  }
+  function handleConfirmAbort() {
     confirmAbort = false;
     hostSession.abortSession(get(hostSession.sessionId) ?? "");
   }
@@ -214,21 +221,17 @@
         </span>
       </span>
 
-      <!-- Encerrar sessão (dupla confirmação) -->
+      <!-- Encerrar sessão (pede confirmação) -->
       {#if phase !== "idle" && phase !== "ended"}
         <button
           onclick={handleAbortSession}
           class="inline-flex items-center gap-1.5 shrink-0 px-3 py-2 rounded-lg border-2 border-ink text-sm font-bold
             shadow-soft transition-all active:translate-y-[2px] active:shadow-none
-            {confirmAbort
-            ? 'bg-tomato-600 text-white animate-pulse-soft'
-            : 'bg-surface-raised text-danger hover:bg-tomato-50'}"
-          title={confirmAbort
-            ? "Clique novamente para confirmar o encerramento"
-            : "Encerrar sessão"}
+            bg-surface-raised text-danger hover:bg-tomato-50"
+          title="Encerrar sessão"
         >
           <Power class="w-4 h-4" />
-          {confirmAbort ? "Confirmar encerrar?" : "Encerrar"}
+          Encerrar
         </button>
       {/if}
     </div>
@@ -550,6 +553,30 @@
             <RankingsTable entries={leaderboard} />
           {/if}
 
+          <!-- Fecha o loop: sessão → quiz (relatório/edição) sem voltar ao dashboard -->
+          {#if quizId}
+            <div class="flex flex-col sm:flex-row gap-3">
+              <a
+                href={resolve(`/quiz/${quizId}/report`)}
+                class="flex-1 inline-flex items-center justify-center gap-2 py-4 rounded-xl border-2 border-ink bg-ocean-50
+                  text-ocean-800 text-lg font-bold shadow-lift hover:bg-ocean-100 active:bg-ocean-100
+                  active:translate-y-[3px] active:shadow-none transition-all"
+              >
+                <BarChart3 class="w-5 h-5" />
+                Ver Relatório
+              </a>
+              <a
+                href={resolve(`/quiz/${quizId}/edit`)}
+                class="flex-1 inline-flex items-center justify-center gap-2 py-4 rounded-xl border-2 border-ink
+                  bg-surface-raised text-ink-soft text-lg font-bold shadow-lift hover:bg-sand-50
+                  active:translate-y-[3px] active:shadow-none transition-all"
+              >
+                <Pencil class="w-5 h-5" />
+                Editar Quiz
+              </a>
+            </div>
+          {/if}
+
           <button
             onclick={handleBackToDashboard}
             class="w-full py-4 rounded-xl border-2 border-ink bg-primary text-white text-xl font-bold
@@ -562,3 +589,17 @@
     </div>
   </main>
 </div>
+
+<!-- Confirmação de encerramento -->
+<ConfirmDialog
+  open={confirmAbort}
+  title="Encerrar sessão?"
+  message={playerCount > 0
+    ? `${playerCount} jogador${playerCount !== 1 ? "es" : ""} serão desconectados e a sessão não poderá ser retomada.`
+    : "A sessão será encerrada e não poderá ser retomada."}
+  confirmLabel="Encerrar sessão"
+  cancelLabel="Cancelar"
+  variant="danger"
+  onconfirm={handleConfirmAbort}
+  oncancel={() => (confirmAbort = false)}
+/>

@@ -11,6 +11,9 @@
     X,
   } from "@lucide/svelte";
   import { auth } from "$lib/stores/auth.store";
+  import { quizEditor } from "$lib/stores/quiz-editor.store";
+  import { useQuizList } from "$lib/api/quizzes/quizzes.queries";
+  import { useActiveSessions } from "$lib/api/sessions/sessions.queries";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { onMount } from "svelte";
@@ -22,11 +25,22 @@
   let pathname = $state("");
   let mobileOpen = $state(false);
 
+  // Contagens para badges do menu (queries deduplicadas com as páginas)
+  const quizQuery = useQuizList();
+  const activeQuery = useActiveSessions();
+
+  // Último quiz no contexto (draft do editor) — atalho mesmo fora da página do quiz
+  let storeQuizId = $state<string | null>(null);
+
   onMount(() => {
     const unsubAuth = auth.isAuthenticated.subscribe((v) => (isAuthenticated = v));
     const unsubPage = page.subscribe((p) => {
       pathname = p.url.pathname;
       mobileOpen = false;
+    });
+    const unsubEditor = quizEditor.subscribe((q) => {
+      const id = q?.id;
+      storeQuizId = id && id !== "" && !id.startsWith("temp_") ? id : null;
     });
 
     if (!isAuthenticated) {
@@ -38,6 +52,7 @@
     return () => {
       unsubAuth();
       unsubPage();
+      unsubEditor();
     };
   });
 
@@ -46,8 +61,13 @@
     return pathname.startsWith(route);
   }
 
-  // Quiz aberto no momento (/quiz/:id/edit ou /quiz/:id/report) → atalhos no menu
-  let currentQuizId = $derived(pathname.match(/^\/quiz\/([^/]+)\/(edit|report)$/)?.[1] ?? null);
+  // Quiz aberto no momento: página do quiz (URL) ou último quiz no store → atalhos no menu
+  let currentQuizId = $derived(
+    pathname.match(/^\/quiz\/([^/]+)\/(edit|report)$/)?.[1] ?? storeQuizId,
+  );
+
+  let quizCount = $derived(quizQuery.data?.total ?? null);
+  let activeCount = $derived(activeQuery.data?.length ?? null);
 
   function handleLogout() {
     auth.logout().then(() => goto(resolve("/login")));
@@ -88,80 +108,111 @@
 
       <!-- Navigation — agrupada por ação -->
       <nav class="flex-1 px-4 py-5 overflow-y-auto">
-        <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">
-          Meus Quizzes
-        </p>
-        <a
-          href={resolve("/dashboard")}
-          class="flex items-center gap-3 px-3 py-3 mb-5 rounded-xl text-base font-semibold transition-colors
-            {isActive('/dashboard')
-            ? 'bg-ocean-500 text-white shadow-soft'
-            : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
-        >
-          <LayoutDashboard class="w-5 h-5 shrink-0" />
-          Dashboard
-        </a>
-
-        <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">Criar</p>
-        <a
-          href={resolve("/quiz/new")}
-          class="flex items-center gap-3 px-3 py-3 mb-5 rounded-xl text-base font-semibold transition-colors
-            {isActive('/quiz/new')
-            ? 'bg-ocean-500 text-white shadow-soft'
-            : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
-        >
-          <Plus class="w-5 h-5 shrink-0" />
-          Novo Quiz
-        </a>
-
-        <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">Jogar</p>
-        <a
-          href={resolve("/sessions")}
-          class="flex items-center gap-3 px-3 py-3 mb-5 rounded-xl text-base font-semibold transition-colors
-            {isActive('/sessions')
-            ? 'bg-ocean-500 text-white shadow-soft'
-            : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
-        >
-          <Radio class="w-5 h-5 shrink-0" />
-          Sessões ativas
-        </a>
-
-        <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">Explorar</p>
-        <a
-          href={resolve("/quizzes/public")}
-          class="flex items-center gap-3 px-3 py-3 mb-5 rounded-xl text-base font-semibold transition-colors
-            {isActive('/quizzes/public')
-            ? 'bg-ocean-500 text-white shadow-soft'
-            : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
-        >
-          <Globe class="w-5 h-5 shrink-0" />
-          Quizzes Públicos
-        </a>
-
-        {#if currentQuizId}
-          <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">
-            Quiz Atual
+        <!-- Quizzes: gestão (lista + criar) no mesmo grupo -->
+        <div class="mb-5">
+          <p
+            class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint flex items-center gap-2"
+          >
+            Quizzes
+            {#if quizCount !== null}
+              <span
+                class="inline-flex items-center justify-center min-w-5 px-1.5 h-5 rounded-full bg-sand-100 border-2 border-ink
+                text-[10px] font-bold text-ink-faint">{quizCount}</span
+              >
+            {/if}
           </p>
           <a
-            href={resolve(`/quiz/${currentQuizId}/edit`)}
-            class="flex items-center gap-3 px-3 py-3 mb-1 rounded-xl text-base font-semibold transition-colors
-              {isActive(`/quiz/${currentQuizId}/edit`)
+            href={resolve("/dashboard")}
+            class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-semibold transition-colors
+              {isActive('/dashboard')
               ? 'bg-ocean-500 text-white shadow-soft'
               : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
           >
-            <Pencil class="w-5 h-5 shrink-0" />
-            Editar
+            <LayoutDashboard class="w-5 h-5 shrink-0" />
+            Meus Quizzes
           </a>
           <a
-            href={resolve(`/quiz/${currentQuizId}/report`)}
+            href={resolve("/quiz/new")}
+            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors
+              {isActive('/quiz/new')
+              ? 'bg-ocean-500 text-white shadow-soft'
+              : 'text-ink-faint hover:bg-sand-100 hover:text-ink-soft'}"
+          >
+            <Plus class="w-4 h-4 shrink-0" />
+            Novo Quiz
+          </a>
+        </div>
+
+        <!-- Ao vivo: sessões em andamento -->
+        <div class="mb-5">
+          <p
+            class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint flex items-center gap-2"
+          >
+            Ao Vivo
+            {#if activeCount !== null && activeCount > 0}
+              <span
+                class="inline-flex items-center justify-center min-w-5 px-1.5 h-5 rounded-full border-2 border-ink
+                text-[10px] font-bold bg-mango-100 text-mango-800 animate-pulse-soft"
+                >{activeCount}</span
+              >
+            {/if}
+          </p>
+          <a
+            href={resolve("/sessions")}
             class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-semibold transition-colors
-              {isActive(`/quiz/${currentQuizId}/report`)
+              {isActive('/sessions')
               ? 'bg-ocean-500 text-white shadow-soft'
               : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
           >
-            <BarChart3 class="w-5 h-5 shrink-0" />
-            Relatório
+            <Radio class="w-5 h-5 shrink-0" />
+            Sessões ativas
           </a>
+        </div>
+
+        <!-- Comunidade: descoberta -->
+        <div class="mb-5">
+          <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">
+            Comunidade
+          </p>
+          <a
+            href={resolve("/quizzes/public")}
+            class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-semibold transition-colors
+              {isActive('/quizzes/public')
+              ? 'bg-ocean-500 text-white shadow-soft'
+              : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
+          >
+            <Globe class="w-5 h-5 shrink-0" />
+            Quizzes Públicos
+          </a>
+        </div>
+
+        <!-- Quiz em contexto — atalhos de edição/relatório (fade-in ao aparecer) -->
+        {#if currentQuizId}
+          <div class="animate-fade-in">
+            <p class="px-3 pb-2 text-xs font-bold uppercase tracking-widest text-ink-faint">
+              Quiz Atual
+            </p>
+            <a
+              href={resolve(`/quiz/${currentQuizId}/edit`)}
+              class="flex items-center gap-3 px-3 py-3 mb-1 rounded-xl text-base font-semibold transition-colors
+                {isActive(`/quiz/${currentQuizId}/edit`)
+                ? 'bg-ocean-500 text-white shadow-soft'
+                : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
+            >
+              <Pencil class="w-5 h-5 shrink-0" />
+              Editar
+            </a>
+            <a
+              href={resolve(`/quiz/${currentQuizId}/report`)}
+              class="flex items-center gap-3 px-3 py-3 rounded-xl text-base font-semibold transition-colors
+                {isActive(`/quiz/${currentQuizId}/report`)
+                ? 'bg-ocean-500 text-white shadow-soft'
+                : 'text-ink-soft hover:bg-sand-100 hover:text-ink'}"
+            >
+              <BarChart3 class="w-5 h-5 shrink-0" />
+              Relatório
+            </a>
+          </div>
         {/if}
       </nav>
 

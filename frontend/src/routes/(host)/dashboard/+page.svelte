@@ -10,11 +10,15 @@
     X,
   } from "@lucide/svelte";
   import { onMount } from "svelte";
+  import { get } from "svelte/store";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { hostSession } from "$lib/stores/host-session.store";
+  import { toast } from "$lib/stores/toast.store";
   import { useQuizList } from "$lib/api/quizzes/quizzes.queries";
   import { useDeleteQuiz } from "$lib/api/quizzes/quizzes.mutations";
+  import ConfirmDialog from "$lib/components/ui/ConfirmDialog.svelte";
+  import PageSpinner from "$lib/components/ui/PageSpinner.svelte";
   import type { QuizListItem } from "$lib/api/quizzes/quizzes.types";
 
   let sessionError = $state<string | null>(null);
@@ -28,9 +32,21 @@
     quizQuery.error ? "Não foi possível carregar os quizzes" : null,
   );
 
+  // Confirmação de exclusão via ConfirmDialog (nada de confirm() nativo)
+  let confirmDelete = $state<{ id: string; title: string } | null>(null);
+
+  $effect(() => {
+    if (deleteQuiz.isSuccess) toast.success("Quiz excluído");
+  });
+
+  let isCreating = $state(get(hostSession.creatingSession));
+
   onMount(() => {
-    const unsub = hostSession.error.subscribe((v) => (sessionError = v));
-    return () => unsub();
+    const unsubs = [
+      hostSession.error.subscribe((v) => (sessionError = v)),
+      hostSession.creatingSession.subscribe((v) => (isCreating = v)),
+    ];
+    return () => unsubs.forEach((fn) => fn());
   });
 
   $effect(() => {
@@ -40,15 +56,14 @@
   });
 
   function handleStartSession(id: string) {
+    if (isCreating) return;
     hostSession.clearError();
     hostSession.connect();
     hostSession.createSession(id);
   }
 
-  function handleDelete(id: string) {
-    if (confirm("Excluir este quiz permanentemente?")) {
-      deleteQuiz.mutate(id);
-    }
+  function handleDelete(id: string, title: string) {
+    confirmDelete = { id, title };
   }
 </script>
 
@@ -74,17 +89,21 @@
 
   <!-- Loading -->
   {#if isLoading}
-    <div class="flex items-center justify-center py-20">
-      <div
-        class="w-8 h-8 border-2 border-sand-200 border-t-ocean-500 rounded-full animate-spin"
-      ></div>
-      <span class="ml-3 text-sm text-ink-faint">Carregando...</span>
-    </div>
+    <PageSpinner />
 
     <!-- Error -->
   {:else if listError}
-    <div class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700">
-      {listError}
+    <div
+      class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 text-sm text-tomato-700 flex items-center justify-between"
+    >
+      <span>{listError}</span>
+      <button
+        onclick={() => quizQuery.refetch()}
+        class="ml-3 shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-tomato-300 font-semibold
+          text-tomato-700 hover:bg-tomato-100 transition-colors"
+      >
+        Tentar novamente
+      </button>
     </div>
   {:else if sessionError}
     <div
@@ -126,10 +145,12 @@
           class="group bg-surface-raised rounded-organic border-2 border-ink shadow-soft hover:shadow-lift hover:-translate-y-1
           transition-all duration-200 flex flex-col"
         >
-          <!-- Card content -->
-          <div class="p-5 flex-1">
+          <!-- Card content — clicável, leva ao editor (Fitts: área grande de alvo) -->
+          <a href={resolve(`/quiz/${quiz.id}/edit`)} class="p-5 flex-1 block group/title">
             <div class="flex items-start justify-between gap-3 mb-3">
-              <h2 class="font-display text-base font-bold text-ink leading-snug">
+              <h2
+                class="font-display text-base font-bold text-ink leading-snug group-hover/title:underline decoration-2 underline-offset-4"
+              >
                 {quiz.title}
               </h2>
               <span
@@ -148,7 +169,7 @@
             {:else}
               <p class="text-sm text-ink-faint italic">Sem descrição</p>
             {/if}
-          </div>
+          </a>
 
           <!-- Card actions -->
           <div class="px-5 py-3 border-t-2 border-ink flex items-center gap-2">
@@ -164,12 +185,20 @@
             {#if quiz.isPublished}
               <button
                 onclick={() => handleStartSession(quiz.id)}
+                disabled={isCreating}
                 class="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border-2 border-ink
                   text-xs font-semibold text-white bg-primary shadow-soft hover:bg-primary-hover active:bg-coral-800
-                  active:translate-y-[2px] active:shadow-none transition-all"
+                  active:translate-y-[2px] active:shadow-none transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <Play class="w-3.5 h-3.5" />
-                Iniciar
+                {#if isCreating}
+                  <div
+                    class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"
+                  ></div>
+                  Criando...
+                {:else}
+                  <Play class="w-3.5 h-3.5" />
+                  Iniciar
+                {/if}
               </button>
             {:else}
               <span
@@ -182,7 +211,7 @@
               </span>
             {/if}
             <button
-              onclick={() => handleDelete(quiz.id)}
+              onclick={() => handleDelete(quiz.id, quiz.title)}
               class="shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-lg border-2 border-ink bg-surface-raised
                 text-ink-faint shadow-soft hover:text-danger hover:bg-tomato-50 active:translate-y-[2px] active:shadow-none transition-all"
               title="Excluir quiz"
@@ -195,3 +224,19 @@
     </div>
   {/if}
 </div>
+
+<ConfirmDialog
+  open={confirmDelete !== null}
+  title="Excluir quiz?"
+  message={confirmDelete
+    ? `"${confirmDelete.title}" será excluído permanentemente. Essa ação não pode ser desfeita.`
+    : ""}
+  confirmLabel="Excluir"
+  cancelLabel="Cancelar"
+  variant="danger"
+  onconfirm={() => {
+    if (confirmDelete) deleteQuiz.mutate(confirmDelete.id);
+    confirmDelete = null;
+  }}
+  oncancel={() => (confirmDelete = null)}
+/>

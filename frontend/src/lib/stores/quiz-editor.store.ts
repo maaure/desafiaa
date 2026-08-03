@@ -8,27 +8,38 @@ import type { Quiz } from "$lib/api/quizzes/quizzes.types";
 function createQuizEditorStore() {
   const quiz = writable<Quiz | null>(null);
   const selectedQuestionIdx = writable<number | null>(null);
+  // Snapshot do último estado carregado/salvo — base da comparação de dirty
+  let original: Quiz | null = null;
 
   const selectedQuestion = derived([quiz, selectedQuestionIdx], ([$q, $i]) =>
     $i !== null && $q ? $q.questions[$i] : null,
   );
 
+  /** Há alterações não salvas no draft? (JSON-serializable — comparação simples) */
+  const isDirty = derived(quiz, ($q) => {
+    if (!$q || !original) return false;
+    return JSON.stringify($q) !== JSON.stringify(original);
+  });
+
   return {
     subscribe: quiz.subscribe,
     selectedQuestion,
+    isDirty,
 
-    /** Alimenta o draft com os dados do servidor (via query) */
+    /** Alimenta o draft com os dados do servidor (via query) — reseta o snapshot */
     setQuiz(data: Quiz) {
+      original = data;
       quiz.set(data);
     },
 
     /** Descarta o draft (ex.: quiz não encontrado / sem permissão) */
     clear() {
+      original = null;
       quiz.set(null);
     },
 
     initNew(title: string) {
-      quiz.set({
+      const draft: Quiz = {
         id: "",
         title,
         description: null,
@@ -36,7 +47,9 @@ function createQuizEditorStore() {
         isPublic: false,
         createdAt: "",
         questions: [],
-      });
+      };
+      original = draft;
+      quiz.set(draft);
     },
 
     updateTitle(title: string) {
