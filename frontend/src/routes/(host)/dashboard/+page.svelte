@@ -41,19 +41,23 @@
   });
 
   let isCreating = $state(get(hostSession.creatingSession));
+  // Evita goto duplicado (o $effect + auto-subscription dispara 2× e remonta a página,
+  // fazendo o cleanup do host page resetar o store no meio da navegação)
+  let navigatingToSession = false;
 
   onMount(() => {
+    const unsubNav = hostSession.subscribe((s) => {
+      if (navigatingToSession) return;
+      if (!s.sessionId || s.phase === "ended" || s.phase === "idle") return;
+      navigatingToSession = true;
+      goto(resolve(`/session/${s.sessionId}/host`)).catch(() => (navigatingToSession = false));
+    });
     const unsubs = [
+      unsubNav,
       hostSession.error.subscribe((v) => (sessionError = v)),
       hostSession.creatingSession.subscribe((v) => (isCreating = v)),
     ];
     return () => unsubs.forEach((fn) => fn());
-  });
-
-  $effect(() => {
-    const id = $hostSession.sessionId;
-    const p = $hostSession.phase;
-    if (id && p !== "ended" && p !== "idle") goto(resolve(`/session/${id}/host`));
   });
 
   function handleStartSession(id: string) {

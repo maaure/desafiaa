@@ -12,6 +12,9 @@
   import type { ActiveSession } from "$lib/api/sessions/sessions.types";
 
   let sessionError = $state<string | null>(get(hostSession.error));
+  // Evita goto duplicado (o $effect + auto-subscription dispara 2× e remonta a página,
+  // fazendo o cleanup do host page resetar o store no meio da navegação)
+  let navigatingToSession = false;
 
   const activeQuery = useActiveSessions();
   const queryClient = useQueryClient();
@@ -28,12 +31,22 @@
   let confirmAbort = $state<ActiveSession | null>(null);
 
   onMount(() => {
-    const unsub = hostSession.error.subscribe((v) => {
+    // Navegação única para a tela do host quando o rejoin restaura a sessão
+    const unsubNav = hostSession.subscribe((s) => {
+      if (navigatingToSession) return;
+      if (!s.sessionId || s.phase === "ended" || s.phase === "idle") return;
+      navigatingToSession = true;
+      goto(resolve(`/session/${s.sessionId}/host`)).catch(() => (navigatingToSession = false));
+    });
+    const unsubErr = hostSession.error.subscribe((v) => {
       sessionError = v;
       // Erro (ex.: abort falhou) → refetch devolve a verdade da listagem
       if (v) queryClient.invalidateQueries({ queryKey: sessionKeys.active });
     });
-    return () => unsub();
+    return () => {
+      unsubNav();
+      unsubErr();
+    };
   });
 
   function handleRefresh() {
@@ -65,12 +78,6 @@
     if (mins < 60) return `há ${mins} min`;
     return `há ${Math.floor(mins / 60)}h`;
   }
-
-  $effect(() => {
-    const id = $hostSession.sessionId;
-    const p = $hostSession.phase;
-    if (id && p !== "ended" && p !== "idle") goto(resolve(`/session/${id}/host`));
-  });
 </script>
 
 <div class="px-4 sm:px-8 py-8 sm:py-10 max-w-5xl">

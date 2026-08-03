@@ -320,6 +320,8 @@ function createHostSessionStore() {
   function createSession(quizId: string) {
     // Persist quizId for page-refresh survival
     localStorage.setItem("currentQuizId", quizId);
+    // Nova sessão = recomeço: id antigo de sessão não vale mais
+    localStorage.removeItem("currentSessionId");
 
     // Reset state before starting a new session
     state.update((s) => ({
@@ -408,8 +410,9 @@ function createHostSessionStore() {
 
   function reset() {
     disconnect();
-    localStorage.removeItem("currentQuizId");
-    localStorage.removeItem("currentSessionId");
+    // Mantém currentSessionId/currentQuizId no localStorage: se o host page for
+    // remontado (navegação duplicada etc.), o onMount reconecta na sessão salva
+    // em vez de criar uma nova (createSession limpa o id antigo ao recomeçar).
     state.set({
       phase: "idle",
       pin: null,
