@@ -150,8 +150,8 @@
           class="group bg-surface-raised rounded-organic border-2 border-ink shadow-soft hover:shadow-lift hover:-translate-y-1
           transition-all duration-200 flex flex-col"
         >
-          <!-- Card content — clicável, leva ao editor (Fitts: área grande de alvo) -->
-          <a href={resolve(`/quiz/${quiz.id}/edit`)} class="p-5 flex-1 block group/title">
+          <!-- Card content — clicável, leva à visualização (Fitts: área grande de alvo) -->
+          <a href={resolve(`/quiz/${quiz.id}`)} class="p-5 flex-1 block group/title">
             <div class="flex items-start justify-between gap-3 mb-3">
               <h2
                 class="font-display text-base font-bold text-ink leading-snug group-hover/title:underline decoration-2 underline-offset-4"

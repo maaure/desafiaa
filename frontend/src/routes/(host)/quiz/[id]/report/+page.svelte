@@ -29,7 +29,7 @@
   <Breadcrumb
     items={[
       { label: "Meus Quizzes", href: "/dashboard" },
-      { label: quizQuery.data?.title ?? "Quiz", href: `/quiz/${quizId}/edit` },
+      { label: quizQuery.data?.title ?? "Quiz", href: `/quiz/${quizId}` },
       { label: "Relatório" },
     ]}
   />

@@ -142,9 +142,12 @@
 </script>
 
 <div class="px-4 sm:px-8 py-8 sm:py-10 max-w-4xl">
-  <!-- Trilha: Meus Quizzes > Quiz (tabs mostram Editar/Relatório) -->
+  <!-- Trilha: Meus Quizzes > Quiz (título leva à visualização) -->
   <Breadcrumb
-    items={[{ label: "Meus Quizzes", href: "/dashboard" }, { label: quiz?.title ?? "Quiz" }]}
+    items={[
+      { label: "Meus Quizzes", href: "/dashboard" },
+      { label: quiz?.title ?? "Quiz", href: `/quiz/${quizId}` },
+    ]}
   />
 
   <!-- Tabs irmãs: Editar ⇄ Relatório -->

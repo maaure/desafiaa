@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { BarChart3, Pencil } from "@lucide/svelte";
+  import { BarChart3, Eye, Pencil } from "@lucide/svelte";
   import { page } from "$app/stores";
 
-  // Tabs irmãs do quiz: Editar ⇄ Relatório — visíveis nas duas páginas
+  // Tabs irmãs do quiz: Visualizar ⇄ Editar ⇄ Relatório — visíveis nas três páginas
   let quizId = $page.params.id;
   let pathname = $page.url.pathname;
 
   const TABS = [
+    { href: `/quiz/${quizId}`, label: "Visualizar", icon: Eye },
     { href: `/quiz/${quizId}/edit`, label: "Editar", icon: Pencil },
     { href: `/quiz/${quizId}/report`, label: "Relatório", icon: BarChart3 },
   ];
