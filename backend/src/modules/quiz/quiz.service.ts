@@ -33,6 +33,35 @@ async function assertQuizOwnershipByAlt(userId: string, alternativeId: string): 
 
 // ── Service ───────────────────────────────────────────────────────
 
+/** Normaliza quiz + questões + alternativas para a resposta da API */
+function toFull(
+  quiz: NonNullable<Awaited<ReturnType<typeof quizRepo.getWithQuestions>>>,
+): QuizFull {
+  return {
+    id: quiz.id,
+    title: quiz.title,
+    description: quiz.description,
+    isPublished: quiz.isPublished,
+    isPublic: quiz.isPublic,
+    createdAt: quiz.createdAt.toISOString(),
+    questions: quiz.questions.map((q) => ({
+      id: q.id,
+      text: q.text,
+      imageUrl: q.imageUrl ?? null,
+      questionType: q.questionType as "multiple_choice" | "true_false",
+      basePoints: q.basePoints,
+      sortOrder: q.sortOrder,
+      alternatives: q.alternatives.map((a) => ({
+        id: a.id,
+        text: a.text,
+        imageUrl: a.imageUrl ?? null,
+        isCorrect: a.isCorrect,
+        sortOrder: a.sortOrder,
+      })),
+    })),
+  };
+}
+
 export const quizService = {
   // ── Quizzes ───────────────────────────────────────────────────
 
@@ -80,30 +109,14 @@ export const quizService = {
   async getById(quizId: string, userId: string): Promise<QuizFull> {
     const quiz = await quizRepo.getWithQuestions(quizId, userId);
     if (!quiz) throw new NotFoundError("Quiz");
+    return toFull(quiz);
+  },
 
-    return {
-      id: quiz.id,
-      title: quiz.title,
-      description: quiz.description,
-      isPublished: quiz.isPublished,
-      isPublic: quiz.isPublic,
-      createdAt: quiz.createdAt.toISOString(),
-      questions: quiz.questions.map((q) => ({
-        id: q.id,
-        text: q.text,
-        imageUrl: q.imageUrl ?? null,
-        questionType: q.questionType as "multiple_choice" | "true_false",
-        basePoints: q.basePoints,
-        sortOrder: q.sortOrder,
-        alternatives: q.alternatives.map((a) => ({
-          id: a.id,
-          text: a.text,
-          imageUrl: a.imageUrl ?? null,
-          isCorrect: a.isCorrect,
-          sortOrder: a.sortOrder,
-        })),
-      })),
-    };
+  /** Leitura de quiz público — sem checagem de posse */
+  async getPublicById(quizId: string): Promise<QuizFull & { authorName: string }> {
+    const quiz = await quizRepo.getPublicWithQuestions(quizId);
+    if (!quiz) throw new NotFoundError("Quiz");
+    return { ...toFull(quiz), authorName: quiz.author.name };
   },
 
   /**

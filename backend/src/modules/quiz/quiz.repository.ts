@@ -43,6 +43,22 @@ export const quizRepo = {
     });
   },
 
+  /** Quiz público completo (leitura para qualquer usuário) */
+  async getPublicWithQuestions(quizId: string) {
+    return db.query.quizzes.findFirst({
+      where: and(eq(schema.quizzes.id, quizId), eq(schema.quizzes.isPublic, true)),
+      with: {
+        author: true,
+        questions: {
+          orderBy: asc(schema.questions.sortOrder),
+          with: {
+            alternatives: { orderBy: asc(schema.alternatives.sortOrder) },
+          },
+        },
+      },
+    });
+  },
+
   // ── Públicos ─────────────────────────────────────────────────
 
   async countPublic(search: string) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Globe, MessageCircleMore, Play, Search, User, X } from "@lucide/svelte";
+  import { Eye, Globe, MessageCircleMore, Play, Search, User, X } from "@lucide/svelte";
   import { onMount } from "svelte";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
@@ -157,10 +157,20 @@
             <span class="ml-auto">{timeAgo(quiz.createdAt)}</span>
           </div>
 
-          <div class="px-5 pb-4">
+          <div class="px-5 pb-4 flex items-center gap-2">
+            <a
+              href={resolve(`/quizzes/public/${quiz.id}`)}
+              class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg border-2 border-ink
+                text-sm font-bold text-ocean-800 bg-ocean-50 shadow-soft hover:bg-ocean-100
+                active:translate-y-[2px] active:shadow-none transition-all"
+              title="Ver perguntas e respostas antes de aplicar"
+            >
+              <Eye class="w-4 h-4" />
+              Ver
+            </a>
             <button
               onclick={() => handleApply(quiz.id)}
-              class="w-full inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg border-2 border-ink
+              class="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-lg border-2 border-ink
                 text-sm font-bold text-white bg-primary shadow-soft hover:bg-primary-hover active:bg-coral-800
                 active:translate-y-[2px] active:shadow-none transition-all"
               title="Iniciar uma sessão com este quiz"

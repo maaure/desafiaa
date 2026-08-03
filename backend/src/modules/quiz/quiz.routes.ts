@@ -51,6 +51,17 @@ export async function quizRoutes(app: FastifyInstance) {
     },
   );
 
+  // Pré-visualização de quiz público (perguntas + respostas) — sem posse
+  app.get<{ Params: { id: string } }>(
+    "/api/quizzes/public/:id",
+    {
+      schema: { tags: ["quizzes"] },
+    },
+    async (request) => {
+      return quizService.getPublicById(request.params.id);
+    },
+  );
+
   app.get<{ Params: { id: string } }>(
     "/api/quizzes/:id",
     {

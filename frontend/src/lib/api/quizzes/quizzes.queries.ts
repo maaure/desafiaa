@@ -34,3 +34,11 @@ export function usePublicQuizzes(getSearch: () => string) {
     placeholderData: (previous) => previous, // mantém a lista visível durante novas buscas
   }));
 }
+
+export function usePublicQuiz(id: string) {
+  return createQuery(() => ({
+    queryKey: ["quizzes", "public", "detail", id],
+    queryFn: () => quizRequests.getPublic(id),
+    enabled: !!id,
+  }));
+}
