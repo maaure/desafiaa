@@ -44,6 +44,7 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?defina GOOGLE_CLIENT_ID no .env}
       HOST: "0.0.0.0"
       PORT: "3000"
       UPLOAD_DIR: /app/uploads
@@ -55,6 +56,9 @@ services:
     build:
       context: ../frontend
       dockerfile: Dockerfile
+      # VITE_* é build-time — entra no bundle do botão Google
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?defina GOOGLE_CLIENT_ID no .env}
     ports:
       - "3001:3001"
     depends_on:

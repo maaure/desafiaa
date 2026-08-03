@@ -11,6 +11,10 @@ RUN pnpm install --frozen-lockfile
 # Assim a camada do pnpm install permanece em cache entre builds.
 COPY svelte.config.js vite.config.ts tsconfig.json ./
 COPY src/ ./src/
+
+# VITE_GOOGLE_CLIENT_ID é substituído no build (import.meta.env) — vem do compose
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 RUN pnpm build
 
 # ── Run stage ────────────────────────────────────────────────────────
