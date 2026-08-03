@@ -11,7 +11,6 @@
     X,
   } from "@lucide/svelte";
   import { auth } from "$lib/stores/auth.store";
-  import { quizEditor } from "$lib/stores/quiz-editor.store";
   import { useQuizList } from "$lib/api/quizzes/quizzes.queries";
   import { useActiveSessions } from "$lib/api/sessions/sessions.queries";
   import { goto } from "$app/navigation";
@@ -29,18 +28,11 @@
   const quizQuery = useQuizList();
   const activeQuery = useActiveSessions();
 
-  // Último quiz no contexto (draft do editor) — atalho mesmo fora da página do quiz
-  let storeQuizId = $state<string | null>(null);
-
   onMount(() => {
     const unsubAuth = auth.isAuthenticated.subscribe((v) => (isAuthenticated = v));
     const unsubPage = page.subscribe((p) => {
       pathname = p.url.pathname;
       mobileOpen = false;
-    });
-    const unsubEditor = quizEditor.subscribe((q) => {
-      const id = q?.id;
-      storeQuizId = id && id !== "" && !id.startsWith("temp_") ? id : null;
     });
 
     if (!isAuthenticated) {
@@ -52,7 +44,6 @@
     return () => {
       unsubAuth();
       unsubPage();
-      unsubEditor();
     };
   });
 
@@ -61,10 +52,9 @@
     return pathname.startsWith(route);
   }
 
-  // Quiz aberto no momento: página do quiz (URL) ou último quiz no store → atalhos no menu
-  let currentQuizId = $derived(
-    pathname.match(/^\/quiz\/([^/]+)\/(edit|report)$/)?.[1] ?? storeQuizId,
-  );
+  // Quiz aberto no momento (/quiz/:id/edit ou /quiz/:id/report) → atalhos no menu.
+  // Só aparece dentro da página do quiz — sai da edição, some do menu.
+  let currentQuizId = $derived(pathname.match(/^\/quiz\/([^/]+)\/(edit|report)$/)?.[1] ?? null);
 
   let quizCount = $derived(quizQuery.data?.total ?? null);
   let activeCount = $derived(activeQuery.data?.length ?? null);
