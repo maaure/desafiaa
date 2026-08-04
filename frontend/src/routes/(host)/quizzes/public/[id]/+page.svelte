@@ -58,7 +58,7 @@
         id: "",
         title: `${quiz.title} (cópia)`,
         description: quiz.description,
-        isPublished: false,
+        isPublished: true,
         isPublic: false,
         createdAt: quiz.createdAt,
         questions: quiz.questions.map((q) => ({

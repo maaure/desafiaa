@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Image, X } from "@lucide/svelte";
+  import { ArrowDown, ArrowUp, Image, Trash2, X } from "@lucide/svelte";
   import { quizEditor } from "$lib/stores/quiz-editor.store";
   import { useUploadImage } from "$lib/api/quizzes/quizzes.mutations";
   import type { Alternative } from "$lib/api/quizzes/quizzes.types";
@@ -8,10 +8,16 @@
     alt,
     questionId,
     letter,
+    manageable,
+    canMoveUp,
+    canMoveDown,
   }: {
     alt: Alternative;
     questionId: string;
     letter: string;
+    manageable: boolean;
+    canMoveUp: boolean;
+    canMoveDown: boolean;
   } = $props();
 
   const uploadImage = useUploadImage();
@@ -23,6 +29,18 @@
 
   function handleCorrect() {
     quizEditor.markCorrect(questionId, alt.id);
+  }
+
+  function handleMoveUp() {
+    quizEditor.moveAlternative(questionId, alt.id, -1);
+  }
+
+  function handleMoveDown() {
+    quizEditor.moveAlternative(questionId, alt.id, 1);
+  }
+
+  function handleRemove() {
+    quizEditor.removeAlternative(questionId, alt.id);
   }
 
   async function handleImageUpload(e: Event) {
@@ -111,6 +129,37 @@
       </div>
     {/if}
   </div>
+
+  <!-- Reorder / remove (apenas múltipla escolha) -->
+  {#if manageable}
+    <div class="flex flex-col items-center shrink-0">
+      <button
+        onclick={handleMoveUp}
+        disabled={!canMoveUp}
+        title="Mover para cima"
+        class="p-0.5 rounded text-ink-faint hover:text-ocean-600 hover:bg-ocean-50
+          disabled:opacity-25 disabled:pointer-events-none transition-colors"
+      >
+        <ArrowUp class="w-3.5 h-3.5" />
+      </button>
+      <button
+        onclick={handleMoveDown}
+        disabled={!canMoveDown}
+        title="Mover para baixo"
+        class="p-0.5 rounded text-ink-faint hover:text-ocean-600 hover:bg-ocean-50
+          disabled:opacity-25 disabled:pointer-events-none transition-colors"
+      >
+        <ArrowDown class="w-3.5 h-3.5" />
+      </button>
+    </div>
+    <button
+      onclick={handleRemove}
+      title="Remover alternativa"
+      class="p-1.5 rounded text-ink-faint hover:text-danger hover:bg-tomato-50 transition-colors shrink-0"
+    >
+      <Trash2 class="w-3.5 h-3.5" />
+    </button>
+  {/if}
 
   <!-- Correct toggle -->
   <label class="flex items-center gap-1.5 cursor-pointer shrink-0" title="Marcar como correta">

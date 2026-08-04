@@ -21,7 +21,8 @@ export function buildSavePayload(draft: Quiz): QuizSavePayload {
     id: draft.id || undefined,
     title: draft.title,
     description: draft.description,
-    isPublished: draft.isPublished,
+    // Todo quiz é criado publicado — não existe mais rascunho não publicado
+    isPublished: true,
     isPublic: draft.isPublic,
     questions: draft.questions.map((q) => ({
       ...(isRealId(q.id) ? { id: q.id } : {}),

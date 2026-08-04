@@ -123,7 +123,14 @@
       <p class="text-xs font-semibold text-ink-faint uppercase tracking-wide mb-2">Alternativas</p>
       <div class="space-y-2">
         {#each question.alternatives as alt, i (alt.id)}
-          <AlternativeInput {alt} questionId={question.id} letter={String.fromCharCode(65 + i)} />
+          <AlternativeInput
+            {alt}
+            questionId={question.id}
+            letter={String.fromCharCode(65 + i)}
+            manageable={question.questionType === "multiple_choice"}
+            canMoveUp={i > 0}
+            canMoveDown={i < question.alternatives.length - 1}
+          />
         {/each}
       </div>
 

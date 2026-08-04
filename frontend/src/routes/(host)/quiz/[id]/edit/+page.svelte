@@ -19,7 +19,6 @@
 
   let quizId = $page.params.id;
   let quiz = $state<Quiz | null>(get(quizEditor));
-  let validationErrors = $state<Record<string, string>>({});
   let isLoading = $state(true);
 
   // Query alimenta o draft do editor (estado local); o save é mutation composta
@@ -27,10 +26,11 @@
   const saveQuiz = useSaveQuiz();
 
   let isSaving = $derived(saveQuiz.isPending);
-  let errors = $derived.by(() => {
-    const saveError = saveQuiz.error?.message;
-    return saveError ? { ...validationErrors, save: saveError } : validationErrors;
-  });
+
+  /** Erros de validação do draft → pop-up no rodapé (mesmo feedback do sucesso) */
+  function showValidationErrors(ve: Record<string, string>) {
+    toast.error(`Corrija os seguintes erros: ${Object.values(ve).join("; ")}`);
+  }
 
   // Guarda de alterações não salvas — bloqueia saída e oferece Salvar/Descartar/Cancelar
   let isDirty = $state(false);
@@ -78,11 +78,10 @@
     if (!draft) return;
     const ve = validateQuiz(draft);
     if (Object.keys(ve).length > 0) {
-      validationErrors = ve;
+      showValidationErrors(ve);
       confirmLeave = false;
       return;
     }
-    validationErrors = {};
     try {
       const saved = await saveQuiz.mutateAsync(draft);
       quizEditor.setQuiz(saved);
@@ -120,10 +119,9 @@
     if (!draft) return;
     const ve = validateQuiz(draft);
     if (Object.keys(ve).length > 0) {
-      validationErrors = ve;
+      showValidationErrors(ve);
       return;
     }
-    validationErrors = {};
     try {
       const saved = await saveQuiz.mutateAsync(draft);
       quizEditor.setQuiz(saved);
@@ -213,39 +211,6 @@
               transition-colors outline-none"></textarea>
         </div>
 
-        <!-- Publish toggle -->
-        <div class="pt-3 border-t-2 border-ink">
-          <button
-            onclick={() => quizEditor.togglePublished()}
-            class="inline-flex items-center gap-3 group"
-            type="button"
-          >
-            <span class="relative inline-flex items-center cursor-pointer">
-              <span
-                class="block w-10 h-5.5 rounded-full border-2 border-ink transition-colors duration-200"
-                class:bg-leaf-500={quiz.isPublished}
-                class:bg-sand-300={!quiz.isPublished}
-              >
-                <span
-                  class="absolute top-0.5 left-0.5 w-4.5 h-4.5 rounded-full bg-white border border-ink shadow-soft transition-transform duration-200"
-                  class:translate-x-[18px]={quiz.isPublished}
-                  class:translate-x-0={!quiz.isPublished}
-                ></span>
-              </span>
-            </span>
-            <div class="text-left">
-              <p class="text-sm font-semibold text-ink-soft">
-                {quiz.isPublished ? "Publicado" : "Não publicado"}
-              </p>
-              <p class="text-xs text-ink-faint">
-                {quiz.isPublished
-                  ? "Jogadores podem participar de sessões deste quiz"
-                  : "Apenas você pode ver. Ninguém consegue iniciar uma sessão."}
-              </p>
-            </div>
-          </button>
-        </div>
-
         <!-- Public toggle -->
         <div class="pt-3 border-t-2 border-ink">
           <button
@@ -280,18 +245,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Validation errors -->
-    {#if Object.keys(errors).length > 0}
-      <div class="rounded-lg border border-tomato-200 bg-tomato-50 px-4 py-3 mb-6">
-        <p class="text-sm font-semibold text-tomato-700 mb-1">Corrija os seguintes erros:</p>
-        <ul class="list-disc list-inside">
-          {#each Object.entries(errors) as [key, msg] (key)}
-            <li class="text-sm text-tomato-600">{msg}</li>
-          {/each}
-        </ul>
-      </div>
-    {/if}
 
     <!-- Questions header -->
     <div class="flex items-center justify-between mb-4">

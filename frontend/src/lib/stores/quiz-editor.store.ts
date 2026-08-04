@@ -43,7 +43,7 @@ function createQuizEditorStore() {
         id: "",
         title,
         description: null,
-        isPublished: false,
+        isPublished: true, // todo quiz já nasce publicado
         isPublic: false,
         createdAt: "",
         questions: [],
@@ -58,10 +58,6 @@ function createQuizEditorStore() {
 
     updateDescription(description: string | null) {
       quiz.update((q) => (q ? { ...q, description } : q));
-    },
-
-    togglePublished() {
-      quiz.update((q) => (q ? { ...q, isPublished: !q.isPublished } : q));
     },
 
     togglePublic() {
@@ -114,6 +110,40 @@ function createQuizEditorStore() {
                   ...qn,
                   alternatives: qn.alternatives.map((a) => (a.id === altId ? { ...a, text } : a)),
                 }
+              : qn,
+          ),
+        };
+      });
+    },
+
+    /** Move alternativa uma posição (dir: -1 sobe, 1 desce) — backend renumera sortOrder pelo índice no save */
+    moveAlternative(questionId: string, altId: string, dir: -1 | 1) {
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) => {
+            if (qn.id !== questionId) return qn;
+            const alts = [...qn.alternatives];
+            const i = alts.findIndex((a) => a.id === altId);
+            const j = i + dir;
+            if (i < 0 || j < 0 || j >= alts.length) return qn;
+            const [moved] = alts.splice(i, 1);
+            alts.splice(j, 0, moved);
+            return { ...qn, alternatives: alts };
+          }),
+        };
+      });
+    },
+
+    removeAlternative(questionId: string, altId: string) {
+      quiz.update((q) => {
+        if (!q) return q;
+        return {
+          ...q,
+          questions: q.questions.map((qn) =>
+            qn.id === questionId
+              ? { ...qn, alternatives: qn.alternatives.filter((a) => a.id !== altId) }
               : qn,
           ),
         };
