@@ -47,6 +47,9 @@ db-push:                     ## Push direto do schema (dev apenas)
 db-generate:                 ## Gera migration a partir do schema (roda no host)
 	npx drizzle-kit generate
 
+db:                          ## Conecta no banco com psql (usando DATABASE_URL do .env)
+	psql "$$(grep '^DATABASE_URL=' .env | cut -d= -f2-)"
+
 # ── Utilidades ───────────────────────────────────────────────────────
 
 clean:                       ## Remove tudo: containers, volumes e imagens do projeto
