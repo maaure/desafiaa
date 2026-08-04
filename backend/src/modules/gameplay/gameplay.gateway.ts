@@ -2,6 +2,7 @@ import { Namespace } from "socket.io";
 import { redis } from "../../redis/client";
 import { keys } from "../../redis/keys";
 import { scoringService } from "./scoring.service";
+import { leaderboardService } from "./leaderboard.service";
 import { db, schema } from "../../db";
 import { eq } from "drizzle-orm";
 
@@ -15,9 +16,6 @@ export function registerPlayGateway(io: Namespace) {
     const status = await redis.get(keys.sessionStatus(pin));
     if (!status || status === "finished") {
       return next(new Error("Sessão inválida ou encerrada"));
-    }
-    if (status === "playing") {
-      return next(new Error("A partida já está em andamento"));
     }
     socket.data.pin = pin;
     next();
@@ -35,6 +33,16 @@ export function registerPlayGateway(io: Namespace) {
             message: "Apelido deve ter entre 2 e 20 caracteres",
           });
           return;
+        }
+
+        // Em partida em andamento, só quem já estava e caiu pode (re)entrar
+        const status = await redis.get(keys.sessionStatus(pin));
+        if (status === "playing") {
+          const oldSocketId = await redis.hget(keys.disconnectedPlayers(pin), normalizedNick);
+          if (!oldSocketId) {
+            socket.emit("error", { message: "A partida já está em andamento" });
+            return;
+          }
         }
 
         // Atomic uniqueness check via SADD (Issue 2: TOCTOU fix)
@@ -85,9 +93,78 @@ export function registerPlayGateway(io: Namespace) {
         }
 
         socket.join(`session:${pin}`);
+
+        // Reconexão em partida em andamento → restaura o estado antes do player:joined,
+        // para o cliente não cair na tela de lobby
+        if (status === "playing") {
+          const config = await redis.hgetall(keys.sessionConfig(pin));
+          const currentIndex = parseInt(config.current_question_index ?? "0", 10);
+          const timeLimit = parseInt(config.time_limit_seconds ?? "30", 10);
+          const question = await db.query.questions.findFirst({
+            where: eq(schema.questions.quizId, config.quiz_id),
+            with: { alternatives: true },
+            orderBy: (q, { asc }) => [asc(q.sortOrder)],
+            offset: currentIndex - 1,
+          });
+          if (question) {
+            const revealedTs = await redis.get(keys.questionRevealed(pin, currentIndex));
+            const remainingMs = revealedTs
+              ? Math.max(0, parseInt(revealedTs, 10) + timeLimit * 1000 - Date.now())
+              : timeLimit * 1000;
+
+            // Ordem importa: show reseta hasAnswered → ack precisa vir depois;
+            // e o ack precisa vir antes do timeout (senão timedOut fica preso em true)
+            if (remainingMs > 0) {
+              socket.emit("game:question:show", {
+                questionIndex: currentIndex,
+                text: config.presentation_mode === "1" ? "" : question.text,
+                imageUrl: question.imageUrl ?? null,
+                timeLimit: Math.max(1, Math.ceil(remainingMs / 1000)),
+                alternatives: question.alternatives.map((a) => ({
+                  id: a.id,
+                  text: a.text,
+                  imageUrl: a.imageUrl ?? null,
+                  sortOrder: a.sortOrder,
+                })),
+              });
+            }
+
+            // Já tinha respondido → re-emite o ack (restaura placar e fase de feedback)
+            const answered = await redis.hget(
+              keys.questionAnswers(pin, currentIndex),
+              normalizedNick,
+            );
+            if (answered) {
+              const data = JSON.parse(answered);
+              const totalScore = await redis.zscore(keys.sessionScores(pin), socket.id);
+              socket.emit("player:answer:ack", {
+                isCorrect: question.alternatives.some(
+                  (a) => a.isCorrect && (a.text === data.answer || a.id === data.answer),
+                ),
+                pointsEarned: data.points ?? 0,
+                totalScore: parseInt(totalScore ?? "0", 10),
+              });
+            }
+
+            if (remainingMs <= 0) {
+              // O timeout já foi emitido para a sala antes do socket entrar — re-emite aqui
+              const correctAlt = question.alternatives.find((a) => a.isCorrect);
+              socket.emit("game:question:timeout", {
+                correctAnswer: config.presentation_mode === "1" ? "" : (correctAlt?.text ?? "?"),
+              });
+            }
+          }
+        } else if (status === "leaderboard" || status === "drumroll") {
+          const rankings = await leaderboardService.getTop(pin);
+          socket.emit(status === "drumroll" ? "game:drumroll" : "game:leaderboard:show", {
+            rankings,
+          });
+        }
+
         socket.emit("player:joined", {
           sessionId: await redis.get(keys.pinLookup(pin)),
           totalPlayers: await redis.scard(keys.sessionPlayers(pin)),
+          status,
         });
 
         // Notifica lobby
@@ -97,10 +174,10 @@ export function registerPlayGateway(io: Namespace) {
           const p = await redis.hgetall(keys.sessionPlayer(pin, sid));
           nicknames.push(p.nickname ?? "?");
         }
-        io.server.of("/host").to(`session:${pin}`).emit("player:lobby:update", {
-          playerCount: members.length,
-          nicknames,
-        });
+        // Lobby update para todos — antes só o host sabia que alguém entrou
+        const lobbyPayload = { playerCount: members.length, nicknames };
+        io.server.of("/host").to(`session:${pin}`).emit("player:lobby:update", lobbyPayload);
+        io.server.of("/play").to(`session:${pin}`).emit("player:lobby:update", lobbyPayload);
       } catch (err) {
         socket.emit("error", { message: "Erro interno" });
       }

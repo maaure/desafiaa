@@ -140,15 +140,26 @@ function createPlayerSessionStore() {
       state.update((s) => ({ ...s, isConnected: false }));
     });
 
-    socket.on("player:joined", (payload: { sessionId: string; totalPlayers: number }) => {
-      state.update((s) => ({
-        ...s,
-        phase: "lobby",
-        sessionId: payload.sessionId,
-        totalPlayers: payload.totalPlayers,
-        isSubmitting: false,
-      }));
+    // Falha no handshake (PIN inválido, sessão encerrada) — sem isso o botão
+    // ficava preso em "Entrando..."
+    socket.on("connect_error", (err: Error) => {
+      state.update((s) => ({ ...s, error: err.message, isSubmitting: false }));
     });
+
+    socket.on(
+      "player:joined",
+      (payload: { sessionId: string; totalPlayers: number; status?: string }) => {
+        state.update((s) => ({
+          ...s,
+          // Reconexão em partida em andamento: o estado real já veio antes
+          // (question:show / answer:ack / leaderboard) — só vai pro lobby se é lobby
+          phase: payload.status === "lobby" || !payload.status ? "lobby" : s.phase,
+          sessionId: payload.sessionId,
+          totalPlayers: payload.totalPlayers,
+          isSubmitting: false,
+        }));
+      },
+    );
 
     socket.on("player:lobby:update", (payload: { playerCount: number; nicknames: string[] }) => {
       state.update((s) => ({
