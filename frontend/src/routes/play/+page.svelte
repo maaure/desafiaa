@@ -1,6 +1,7 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
+  import BetaBadge from "$lib/components/ui/BetaBadge.svelte";
   import { playerSession } from "$lib/stores/player-session.store";
 
   let pin = $state("");
@@ -54,9 +55,12 @@
       style="animation-delay: -7s"
     ></div>
     <div class="relative text-center">
-      <h1 class="font-display text-5xl font-extrabold text-ink tracking-tight mb-4">
-        Desafia<span class="text-primary">.</span>
-      </h1>
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <h1 class="font-display text-5xl font-extrabold text-ink tracking-tight">
+          Desafia<span class="text-primary">.</span>
+        </h1>
+        <BetaBadge />
+      </div>
       <p class="text-xl text-ink-soft max-w-sm leading-relaxed">
         Participe de quizzes ao vivo.<br />Responda rápido, suba no ranking.
       </p>
@@ -79,9 +83,12 @@
     <div class="w-full max-w-sm relative">
       <!-- Mobile logo -->
       <div class="lg:hidden text-center mb-8">
-        <h1 class="font-display text-3xl font-extrabold text-ink tracking-tight">
-          Desafia<span class="text-primary">.</span>
-        </h1>
+        <div class="flex items-center justify-center gap-2">
+          <h1 class="font-display text-3xl font-extrabold text-ink tracking-tight">
+            Desafia<span class="text-primary">.</span>
+          </h1>
+          <BetaBadge />
+        </div>
         <p class="text-sm text-ink-faint mt-1">Entre na partida</p>
       </div>
 

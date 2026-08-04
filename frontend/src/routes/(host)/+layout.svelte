@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Globe, LayoutDashboard, LogOut, Menu, Plus, Radio, X } from "@lucide/svelte";
+  import BetaBadge from "$lib/components/ui/BetaBadge.svelte";
   import { auth } from "$lib/stores/auth.store";
   import { useQuizList } from "$lib/api/quizzes/quizzes.queries";
   import { useActiveSessions } from "$lib/api/sessions/sessions.queries";
@@ -93,9 +94,12 @@
         <!-- Brand -->
         <div class="px-6 py-5 border-b-2 border-ink flex items-center justify-between">
           <a href={resolve("/dashboard")} class="block">
-            <span class="font-display text-2xl font-extrabold tracking-tight text-ink"
-              >Desafia<span class="text-primary">.</span></span
-            >
+            <span class="flex items-center gap-2">
+              <span class="font-display text-2xl font-extrabold tracking-tight text-ink"
+                >Desafia<span class="text-primary">.</span></span
+              >
+              <BetaBadge />
+            </span>
             <span class="block text-sm text-ink-faint mt-0.5 font-medium">Painel do Host</span>
           </a>
           <button
