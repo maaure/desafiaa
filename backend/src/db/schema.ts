@@ -115,7 +115,7 @@ export const playerAnswers = pgTable(
       .references(() => gameSessions.id, { onDelete: "cascade" })
       .notNull(),
     questionId: uuid("question_id")
-      .references(() => questions.id)
+      .references(() => questions.id, { onDelete: "cascade" })
       .notNull(),
     playerNickname: varchar("player_nickname", { length: 50 }).notNull(),
     selectedAnswer: varchar("selected_answer", { length: 255 }).notNull(),
