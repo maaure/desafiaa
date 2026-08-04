@@ -1,4 +1,5 @@
 import axios, { type AxiosRequestConfig } from "axios";
+import { setAccessToken } from "$lib/api/auth/auth.utils";
 
 export class ApiError extends Error {
   constructor(
@@ -28,20 +29,40 @@ instance.interceptors.request.use((config) => {
   return config;
 });
 
+let refreshPromise: Promise<string> | null = null;
+
+async function refreshAccessToken(): Promise<string> {
+  const { accessToken } = await api.post<{ accessToken: string }>("/api/auth/refresh");
+  setAccessToken(accessToken);
+  return accessToken;
+}
+
 // Response interceptor — unwrap .data, normalize errors
 instance.interceptors.response.use(
   (response) => {
     if (response.status === 204) return undefined;
     return response.data;
   },
-  (error) => {
+  async (error) => {
     if (axios.isAxiosError(error) && error.response) {
       const body = error.response.data ?? {};
-      throw new ApiError(
-        error.response.status,
-        body.error ?? "UNKNOWN",
-        body.message ?? "Erro desconhecido",
-      );
+      const status = error.response.status;
+      const config = error.config as (AxiosRequestConfig & { _retried?: boolean }) | undefined;
+
+      const canRefresh =
+        status === 401 && !config?._retried && !config?.url?.includes("/api/auth/");
+      if (canRefresh) {
+        refreshPromise ??= refreshAccessToken().finally(() => (refreshPromise = null));
+        try {
+          await refreshPromise;
+          config!._retried = true;
+          return instance(config!);
+        } catch {
+          // refresh falhou → cai no erro original (401)
+        }
+      }
+
+      throw new ApiError(status, body.error ?? "UNKNOWN", body.message ?? "Erro desconhecido");
     }
     throw new ApiError(0, "NETWORK_ERROR", "Erro de rede ou servidor indisponível");
   },
