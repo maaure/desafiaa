@@ -69,6 +69,36 @@ function clearSession() {
   }
 }
 
+// --- Wake Lock (Screen Wake Lock API): mantém a tela do celular acesa durante a
+// partida. Sem isso, a tela bloqueia por inatividade → timers da aba congelam →
+// socket cai → jogador perde o avanço do host. Native, sem dependência.
+
+let wakeLock: WakeLockSentinel | null = null;
+
+async function acquireWakeLock() {
+  if (typeof document === "undefined" || !("wakeLock" in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request("screen");
+    wakeLock.addEventListener("release", () => {
+      wakeLock = null;
+    });
+  } catch {
+    // Não suportado ou bloqueado pelo navegador — o rejoin na reconexão cobre
+  }
+}
+
+function releaseWakeLock() {
+  wakeLock?.release().catch(() => {});
+  wakeLock = null;
+}
+
+// O lock é liberado quando a aba vai pra background; re-adquire ao voltar
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && !wakeLock) acquireWakeLock();
+  });
+}
+
 const initialState: PlayerSessionState = {
   phase: "join",
   pin: null,
@@ -143,6 +173,7 @@ function createPlayerSessionStore() {
       if (s.nickname && s.pin === pin) {
         socket?.emit("player:join", { nickname: s.nickname });
         saveSession(pin, s.nickname);
+        acquireWakeLock();
       }
     });
 
@@ -279,6 +310,7 @@ function createPlayerSessionStore() {
           };
         });
         clearSession();
+        releaseWakeLock();
       },
     );
 
@@ -289,6 +321,7 @@ function createPlayerSessionStore() {
 
   function disconnect() {
     stopCountdown();
+    releaseWakeLock();
     if (socket) {
       socket.removeAllListeners();
       socket.disconnect();
