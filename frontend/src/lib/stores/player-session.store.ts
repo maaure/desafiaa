@@ -1,4 +1,4 @@
-import { writable, derived } from "svelte/store";
+import { writable, derived, get } from "svelte/store";
 import type { Socket } from "socket.io-client";
 import { createPlayerSocket } from "$lib/game/socket-player";
 import { setLeaderboard, resetLeaderboard } from "$lib/stores/leaderboard.store";
@@ -134,6 +134,16 @@ function createPlayerSessionStore() {
 
     socket.on("connect", () => {
       state.update((s) => ({ ...s, isConnected: true, error: null }));
+
+      // A reconexão automática do socket.io (celular em background, queda de rede)
+      // cria um socket novo no servidor, sem nickname e fora do room — o join só era
+      // emitido uma vez (once), então o jogador ficava órfão e perdia os avanços do host.
+      // Re-emite a cada conexão; o servidor migra o socket e restaura o estado da partida.
+      const s = get(state);
+      if (s.nickname && s.pin === pin) {
+        socket?.emit("player:join", { nickname: s.nickname });
+        saveSession(pin, s.nickname);
+      }
     });
 
     socket.on("disconnect", () => {
@@ -307,18 +317,8 @@ function createPlayerSessionStore() {
       isSubmitting: true,
     }));
 
+    // O player:join é emitido no handler "connect" (cobre primeira conexão e reconexões)
     connect(pin);
-
-    socket?.once("connect", () => {
-      socket?.emit("player:join", { nickname: trimmedNick });
-      saveSession(pin, trimmedNick);
-    });
-
-    // If already connected (reconnection path)
-    if (socket?.connected) {
-      socket.emit("player:join", { nickname: trimmedNick });
-      saveSession(pin, trimmedNick);
-    }
   }
 
   function reconnect(expectedPin?: string) {
@@ -334,15 +334,8 @@ function createPlayerSessionStore() {
       error: null,
     }));
 
+    // O player:join é emitido no handler "connect" (cobre primeira conexão e reconexões)
     connect(saved.pin);
-
-    socket?.once("connect", () => {
-      socket?.emit("player:join", { nickname: saved.nickname });
-    });
-
-    if (socket?.connected) {
-      socket.emit("player:join", { nickname: saved.nickname });
-    }
   }
 
   function submitAnswer(questionIndex: number, answer: string) {
