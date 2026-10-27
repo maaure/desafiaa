@@ -1,13 +1,14 @@
+# O HTTPS fica com o Caddy compartilhado da VPS (/opt/caddy), que alcança
+# desafia-api e desafia-frontend pela rede "web". Nenhuma porta é publicada no host.
 services:
   postgres:
     container_name: desafia-db
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
       POSTGRES_USER: quiz
       POSTGRES_PASSWORD: ${DB_PASSWORD:-quizpass}
       POSTGRES_DB: quizplatform
-    ports:
-      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -19,8 +20,7 @@ services:
   redis:
     container_name: desafia-redis
     image: redis:7-alpine
-    ports:
-      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 2s
@@ -32,8 +32,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "3100:3000"
+    restart: unless-stopped
+    networks: [default, web]
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,11 +59,17 @@ services:
       # VITE_* é build-time — entra no bundle do botão Google
       args:
         VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?defina GOOGLE_CLIENT_ID no .env}
-    ports:
-      - "3001:3001"
+    restart: unless-stopped
+    networks: [web]
+    environment:
+      # adapter-node atrás de proxy: sem isso $page.url.origin vira http://desafia-frontend:3001 (og:image quebra)
+      ORIGIN: ${ORIGIN:-https://desafia.fun}
     depends_on:
       - app
-    # Proxy reverso: Caddy na VPS (ver Caddyfile). As portas 80/443 ficam com o Caddy.
+
+networks:
+  web:
+    external: true
 
 volumes:
   pgdata:

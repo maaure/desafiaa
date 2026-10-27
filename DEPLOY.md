@@ -1,150 +1,76 @@
 # Deploy
 
-A aplicação é toda containerizada — o host só precisa de Docker e de um proxy reverso com SSL. O build acontece dentro dos containers.
+Produção: **https://desafia.fun** na VPS `ubuntu@80.190.81.6`, em `/opt/desafia`.
+
+A aplicação é toda containerizada. O HTTPS fica com o **Caddy compartilhado da VPS** (`/opt/caddy`, também em container), que alcança os containers pela rede Docker externa `web`. Nenhuma porta do projeto é publicada no host.
 
 ## Arquitetura
 
-| Componente          | Onde roda                          |
-| ------------------- | ---------------------------------- |
-| PostgreSQL, Redis   | Containers (Docker Compose)        |
-| API (Fastify+WS)    | Container, porta **3100** no host  |
-| Frontend (SvelteKit)| Container, porta **3001** no host  |
-| Proxy + SSL         | Caddy no host (fora dos containers)|
+| Componente           | Container          | Rede             |
+| -------------------- | ------------------ | ---------------- |
+| PostgreSQL           | `desafia-db`       | interna          |
+| Redis                | `desafia-redis`    | interna          |
+| API (Fastify + WS)   | `desafia-api:3000` | interna + `web`  |
+| Frontend (SvelteKit) | `desafia-frontend:3001` | `web`       |
+| Proxy + SSL          | `caddy` (`/opt/caddy`) | `web`        |
 
-As portas publicadas no host são definidas no `ports:` do `backend/docker-compose.yml` — se ajustar, atualize também os `reverse_proxy` do Caddy.
+Roteamento (`desafia.caddy`): `/api/*`, `/socket.io/*`, `/uploads/*` → API; resto → frontend; `www` redireciona para o domínio raiz. O Caddy emite e renova o certificado Let's Encrypt sozinho.
 
-## Pré-requisitos no host
+## Primeiro deploy
 
-- Docker + Docker Compose
-- Caddy instalado (`apt install caddy`, ou https://caddyserver.com/docs/install)
-- Domínio apontando para o IP do host (A record)
-- Portas 80 e 443 liberadas no firewall (Caddy)
-
-## 1. Instalar Docker e Caddy
+Pré-requisitos na VPS: Docker, a rede `web` e o Caddy compartilhado rodando (ver `/opt/caddy/README.md`). DNS (registro A) de `desafia.fun` e `www` apontando para a VPS.
 
 ```bash
-curl -fsSL https://get.docker.com | sh
-systemctl enable --now docker
-apt install -y caddy git
-```
+# da máquina local, na raiz do repo
+ssh ubuntu@80.190.81.6 'sudo mkdir -p /opt/desafia && sudo chown ubuntu: /opt/desafia'
+git ls-files | rsync -az --files-from=- . ubuntu@80.190.81.6:/opt/desafia/
 
-## 2. Clonar e configurar variáveis de ambiente
-
-```bash
-git clone <url-do-repo> /opt/desafia
-cd /opt/desafia
-
-cp backend/.env.example backend/.env
-openssl rand -hex 32  # → JWT_SECRET
-openssl rand -hex 32  # → JWT_REFRESH_SECRET
-```
-
-Edite `backend/.env` e preencha `JWT_SECRET` e `JWT_REFRESH_SECRET`.
-
-> **Nota:** `DB_PASSWORD` define a senha do Postgres. Se trocar, troque antes do primeiro `docker compose up` — depois que o volume for criado, mudar a senha não funciona sem recriar o volume.
-
-## 3. Subir a stack
-
-```bash
+# na VPS
 cd /opt/desafia/backend
+umask 077; cat > .env <<EOF
+DB_PASSWORD=$(openssl rand -hex 24)
+JWT_SECRET=$(openssl rand -hex 32)
+JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+GOOGLE_CLIENT_ID=<id>.apps.googleusercontent.com
+EOF
 docker compose up --build -d
+
+cp /opt/desafia/desafia.caddy /opt/caddy/sites/desafia.caddy
+docker exec caddy caddy validate --config /etc/caddy/Caddyfile
+docker exec caddy caddy reload --config /etc/caddy/Caddyfile
 ```
 
-O `--build` faz o build dos containers (API e frontend). Na primeira vez demora um pouco; depois, sem `--build`, sobe instantâneo.
+> **`DB_PASSWORD`** só vale na criação do volume. Trocar depois exige recriar o volume (perde dados).
+>
+> **`GOOGLE_CLIENT_ID`** entra no bundle do frontend em build-time: se mudar, rode `docker compose up --build -d`. O cliente OAuth precisa ter `https://desafia.fun` em "Origens JavaScript autorizadas".
 
-Verifique:
+As migrations rodam automaticamente no entrypoint da API.
+
+## Atualizar (nova versão)
 
 ```bash
-docker compose ps
+# da máquina local, na raiz do repo
+git ls-files | rsync -az --files-from=- . ubuntu@80.190.81.6:/opt/desafia/
+ssh ubuntu@80.190.81.6 'cd /opt/desafia/backend && docker compose up --build -d'
 ```
 
-Devem aparecer 4 containers `Up` (db, redis, api, frontend). As migrations rodam automaticamente no entrypoint da API antes de ela iniciar.
+Se `desafia.caddy` mudou, copie de novo para `/opt/caddy/sites/` e recarregue o Caddy.
 
-## 4. Configurar o Caddy
-
-Adicione um site block por domínio no `/etc/caddy/Caddyfile`. O exemplo abaixo assume as portas padrão do compose (3100 API, 3001 frontend):
-
-```
-desafia.fun {
-    encode zstd gzip
-
-    # API + WebSocket + uploads → backend
-    handle /api/* {
-        reverse_proxy localhost:3100
-    }
-    handle /socket.io/* {
-        reverse_proxy localhost:3100
-    }
-    handle /uploads/* {
-        reverse_proxy localhost:3100
-    }
-
-    # Frontend
-    handle {
-        reverse_proxy localhost:3001
-    }
-}
-```
-
-- O Caddy emite e renova o certificado Let's Encrypt automaticamente — não há certbot nem cron.
-- O `reverse_proxy` do Caddy faz o upgrade WebSocket automaticamente (Socket.IO funciona sem configuração extra).
-- Se o Caddyfile já tem outros domínios, é só adicionar o bloco — os site blocks são independentes.
-
-Valide e aplique:
+## Comandos úteis (na VPS, em `/opt/desafia/backend`)
 
 ```bash
-caddy validate --config /etc/caddy/Caddyfile
-systemctl reload caddy
-```
-
-## Atualizar o app (deploy de nova versão)
-
-```bash
-cd /opt/desafia
-git pull
-cd backend
-docker compose up --build -d
-```
-
-Só o que mudou é rebuildado — o restante continua rodando.
-
-## Comandos úteis
-
-```bash
-cd /opt/desafia/backend
-
-docker compose ps                # status dos containers
-docker compose logs -f           # logs em tempo real (todos)
-docker compose logs -f app       # logs só da API
-docker compose logs -f frontend  # logs só do frontend
+docker compose ps                # status
+docker compose logs -f app       # logs da API
+docker compose logs -f frontend  # logs do frontend
 docker compose restart app       # reinicia só a API
 docker compose down              # para tudo (dados persistem)
-docker compose up -d             # sobe de novo
 docker compose down -v           # DESTRÓI tudo (banco + uploads)
+docker logs -f caddy             # logs do proxy / certificados
+docker exec -it desafia-db psql -U quiz quizplatform   # psql
 ```
 
 ## Troubleshooting
 
-**API não sobe:**
-```bash
-docker compose logs app | head -30
-```
-Causa comum: variáveis de ambiente ausentes/inválidas (`backend/.env`).
-
-**Erro de conexão no banco:**
-Os containers estão na rede interna do compose — `app` acessa `postgres:5432`. Verifique se o healthcheck do postgres passou: `docker compose ps postgres`.
-
-**Migrations não rodaram:**
-O entrypoint do `app` roda `drizzle-kit migrate` antes de iniciar. Logs:
-```bash
-docker compose logs app | head -20
-```
-
-**Porta em uso no host:**
-Se a porta publicada já está ocupada por outro processo, ajuste o lado esquerdo do mapeamento em `ports:` (ex.: `"3100:3000"` → `"3200:3000"`) e o `reverse_proxy` correspondente no Caddyfile.
-
-**Frontend não builda:**
-O Dockerfile do frontend usa `pnpm` via corepack. Se falhar na etapa de install, verifique se o `pnpm-lock.yaml` está atualizado no repositório:
-```bash
-git status frontend/pnpm-lock.yaml
-```
+- **API não sobe:** `docker compose logs app | head -30` — geralmente variável ausente/inválida no `.env`.
+- **502 no site:** o container caiu ou não está na rede `web` — `docker network inspect web`.
+- **Certificado não sai:** DNS ainda não propagou — `docker logs caddy | grep desafia`. O Caddy tenta de novo sozinho.

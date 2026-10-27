@@ -1,0 +1,18 @@
+# Site do Desafia no Caddy compartilhado da VPS: copiar para /opt/caddy/sites/desafia.caddy
+desafia.fun {
+	encode zstd gzip
+
+	# API + WebSocket (Socket.IO) + uploads → backend
+	@api path /api/* /socket.io/* /uploads/*
+	handle @api {
+		reverse_proxy desafia-api:3000
+	}
+
+	handle {
+		reverse_proxy desafia-frontend:3001
+	}
+}
+
+www.desafia.fun {
+	redir https://desafia.fun{uri} permanent
+}
